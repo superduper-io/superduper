@@ -4,9 +4,9 @@ from abc import abstractmethod
 from superduper.backends.base.backends import BaseBackend
 
 if t.TYPE_CHECKING:
-    from superduper.components.component import Component
     from superduper.base.datalayer import Datalayer
     from superduper.base.event import Job
+    from superduper.components.component import Component
 
 
 class ComputeBackend(BaseBackend):
@@ -23,12 +23,8 @@ class ComputeBackend(BaseBackend):
     def release_futures(self, context: str):
         """Release futures from backend.
 
-        :param context: Context of futures to release.
+        :param context: Futures context to release.
         """
-        pass
-
-    def get_local_client(self):
-        """Returns a local version of self."""
         pass
 
     @abstractmethod
@@ -45,14 +41,15 @@ class ComputeBackend(BaseBackend):
         """Disconnect the client."""
         pass
 
+    @abstractmethod
     def initialize(self):
         """Connect to address."""
 
+    @abstractmethod
     def put_component(self, component: 'Component'):
         """Create handler on component declare.
 
-        :param args: *args for `create_handler`
-        :param kwargs: *kwargs for `create_handler`
+        :param component: Component to put.
         """
 
     @property
@@ -68,8 +65,10 @@ class ComputeBackend(BaseBackend):
         """
         self._db = value
 
-    def drop_component(self, uuid: str):
+    @abstractmethod
+    def drop_component(self, component: str, identifier: str):
         """Drop the component from compute.
 
-        :param uuid: Component uuid.
+        :param component: Component name.
+        :param identifier: Component identifier.
         """

@@ -28,16 +28,6 @@ class LocalComputeBackend(ComputeBackend):
         self._db = None
         self.futures: t.DefaultDict = defaultdict(lambda: {})
 
-    @property
-    def type(self) -> str:
-        """The type of the backend."""
-        return "local"
-
-    @property
-    def name(self) -> str:
-        """The name of the backend."""
-        return "local"
-
     def release_futures(self, context: str):
         """Release futures for a given context.
 
@@ -75,13 +65,6 @@ class LocalComputeBackend(ComputeBackend):
         assert job.job_id is not None
         return job.job_id
 
-    def __delitem__(self, item):
-        pass
-
-    def _put(self, component):
-        """Deploy a component on the compute."""
-        pass
-
     def list_components(self):
         """List all components on the compute."""
         return []
@@ -90,11 +73,16 @@ class LocalComputeBackend(ComputeBackend):
         """List all UUIDs on the compute."""
         return []
 
+    def drop_component(self, component: str, identifier: str):
+        """Drop a component from the compute."""
+
+    def put_component(self, component: 'Component'):
+        """Create a handler on compute."""
+
     def initialize(self):
         """Initialize the compute."""
-        pass
 
-    def drop(self, component: t.Optional['Component'] = None):
+    def drop(self):
         """Drop the compute.
 
         :param component: Component to remove.
@@ -102,4 +90,3 @@ class LocalComputeBackend(ComputeBackend):
 
     def disconnect(self) -> None:
         """Disconnect the local client."""
-        pass

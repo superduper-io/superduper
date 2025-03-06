@@ -1,8 +1,8 @@
 # TODO rename queue + crontab to scheduler
 import dataclasses as dc
 import time
-from abc import ABC, abstractmethod
 import typing as t
+from abc import ABC, abstractmethod
 
 from superduper.backends.base.cache import Cache
 from superduper.backends.base.cdc import CDCBackend
@@ -16,16 +16,15 @@ from superduper.backends.base.vector_search import VectorSearchBackend
 class Cluster(ABC):
     """Cluster object for managing the backend.
 
-    :param compute: The compute backend.
     :param cache: The cache backend.
-    :param queue: The queue backend.
+    :param scheduler: The scheduler backend.
     :param vector_search: The vector search backend.
     :param cdc: The change data capture backend.
     :param crontab: The crontab backend.
     """
 
-    cache: Cache                
-    scheduler: BaseScheduler 
+    cache: Cache
+    scheduler: BaseScheduler
     vector_search: VectorSearchBackend
     cdc: CDCBackend
     crontab: CrontabBackend
@@ -87,11 +86,7 @@ class Cluster(ABC):
                 plugin = self.db.load('Plugin', plugin)
 
     def initialize(self):
-        """Initialize the cluster.
-
-        :param with_compute: Boolean to init
-                             compute.
-        """
+        """Initialize the cluster."""
         from superduper import logging
 
         start = time.time()

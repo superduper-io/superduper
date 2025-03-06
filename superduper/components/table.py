@@ -42,23 +42,17 @@ class Table(Component):
             self.fields = self.cls._new_fields
         super().postinit()
 
-    def cleanup(self, db):
-        """Cleanup the table, on removal of the component.
-
-        :param db: The Datalayer instance
-        """
+    def cleanup(self):
+        """Cleanup the table, on removal of the component."""
         if self.identifier.startswith(CFG.output_prefix):
-            db.databackend.drop_table(self.identifier)
+            self.db.databackend.drop_table(self.identifier)
 
-    def on_create(self, db: 'Datalayer'):
-        """Create the table, on creation of the component.
-
-        :param db: The Datalayer instance
-        """
+    def on_create(self):
+        """Create the table, on creation of the component."""
         assert self.schema is not None, "Schema must be set"
 
         try:
-            db.databackend.create_table_and_schema(
+            self.db.databackend.create_table_and_schema(
                 self.identifier, self.schema, self.primary_id
             )
         except Exception as e:

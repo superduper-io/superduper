@@ -329,10 +329,6 @@ class Base(metaclass=BaseMeta):
         r['_path'] = self.__class__.__module__ + '.' + self.__class__.__name__
         return Document(r, schema=self.class_schema)
 
-    def unpack(self):
-        """Unpack object."""
-        return self
-
     @classmethod
     def build(cls, r):
         """Build object from an encoded data.

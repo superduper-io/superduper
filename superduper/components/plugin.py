@@ -17,17 +17,19 @@ class Plugin(Component):
     :param cache_path: Path to the cache directory where the plugin will be stored.
     """
 
+    breaks = ('path',)
+
     path: st.File
     identifier: str = ""
     cache_path: str = "~/.superduper/plugins"
 
     def postinit(self):
         """Post initialization method."""
-        if isinstance(self.path, FileItem):
-            self._prepare_plugin()
-        else:
-            path_name = os.path.basename(self.path.rstrip("/"))
-            self.identifier = self.identifier or f"plugin-{path_name}".replace(".", "_")
+        self.init()
+        self._prepare_plugin()
+
+        path_name = os.path.basename(self.path.rstrip("/"))
+        self.identifier = self.identifier or f"plugin-{path_name}".replace(".", "_")
         self._install()
         super().postinit()
 
@@ -52,6 +54,7 @@ class Plugin(Component):
 
             logging.debug(f"Plugin {self.identifier} is a package")
             self._pip_install(os.path.join(package_path, "requirements.txt"))
+
         else:
             module_name = module_name.split(".")[0]
             import_package_path = package_path
@@ -91,19 +94,23 @@ class Plugin(Component):
 
     def _prepare_plugin(self):
         plugin_name_tag = f"{self.identifier}"
-        assert isinstance(self.path, FileItem)
+        if isinstance(self.path, FileItem):
+            self.path = self.path.unpack()
+
         cache_path = os.path.expanduser(self.cache_path)
         uuid_path = os.path.join(cache_path, self.uuid)
+
         # Check if plugin is already in cache
         if os.path.exists(uuid_path):
+            logging.info(f'Plugin {self.path} already exists in cache')
             names = os.listdir(uuid_path)
             names = [name for name in names if name != "__pycache__"]
             assert len(names) == 1, f"Multiple plugins found in {uuid_path}"
             self.path = os.path.join(uuid_path, names[0])
+            sys.path.append(uuid_path)
             return
 
         logging.info(f"Preparing plugin {plugin_name_tag}")
-        self.path = self.path.unpack()
         assert os.path.exists(
             self.path
         ), f"Plugin {plugin_name_tag} not found at {self.path}"

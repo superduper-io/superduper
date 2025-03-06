@@ -46,7 +46,9 @@ def test_reload(db):
     db.apply(m)
 
     reloaded = db.load('ObjectModel', 'test')
-    reloaded.unpack()
+    reloaded.init()
+
+    assert reloaded.object(1) == 2
 
 
 def test_init(db, monkeypatch):

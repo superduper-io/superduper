@@ -117,6 +117,11 @@ class VectorIndex(CDC):
         self.cdc_table = self.cdc_table or self.indexing_listener.outputs
         super().postinit()
 
+    def declare_component(self):
+        """Declare the component to the cluster."""
+        super().declare_component()
+        self.db.cluster.vector_search.put_component(self)
+
     def _pre_create(self, db: Datalayer, startup_cache: t.Dict = {}):
         assert isinstance(self.indexing_listener, Listener)
         assert hasattr(self.indexing_listener, 'output_table')
@@ -124,10 +129,6 @@ class VectorIndex(CDC):
         assert isinstance(self.indexing_listener, Listener)
         assert isinstance(self.indexing_listener.output_table, Table)
         try:
-            assert isinstance(
-                self.indexing_listener.output_table.schema,
-                Schema,
-            )
             next(
                 v
                 for v in self.indexing_listener.output_table.schema.fields.values()
@@ -139,18 +140,16 @@ class VectorIndex(CDC):
                 f'{self.indexing_listener.output_table.schema}'
             )
 
-    # TODO consider a flag such as depends='*'
-    # so that an "apply" trigger runs after all of the other
-    # triggers
-    @trigger('apply', 'insert', 'update')
-    def copy_vectors(self, ids: t.Sequence[str] | None = None):
-        """Copy vectors to the vector index."""
+    def get_vectors(self, ids: t.Sequence[str] | None = None):
+        """Get vectors from the vector index.
+
+        :param ids: A list of ids to match
+        """
         if not hasattr(self.indexing_listener.model, 'datatype'):
             self.indexing_listener.model = self.db.load(
                 uuid=self.indexing_listener.model.uuid
             )
         assert isinstance(self.db, Datalayer)
-        self.db.cluster.vector_search.put_component(self)
         select = self.db[self.cdc_table].select()
 
         # TODO do this using the backfill_vector_search functionality here
@@ -190,22 +189,32 @@ class VectorIndex(CDC):
             if hasattr(r['vector'], 'numpy'):
                 r['vector'] = r['vector'].numpy()
 
+        return vectors
+
+    # TODO consider a flag such as depends='*'
+    # so that an "apply" trigger runs after all of the other
+    # triggers
+    @trigger('apply', 'insert', 'update')
+    def copy_vectors(self, ids: t.Sequence[str] | None = None):
+        """Copy vectors to the vector index."""
+        vectors = self.get_vectors(ids=ids)
         # TODO combine logic from backfill
         if vectors:
-            searcher = self.db.cluster.vector_search[self.identifier]
-            searcher.add([VectorItem(**vector) for vector in vectors])
+            self.db.cluster.vector_search.add(
+                self.uuid, [VectorItem(**vector) for vector in vectors]
+            )
 
     @trigger('delete')
     def delete_vectors(self, ids: t.Sequence[str] | None = None):
         """Delete vectors from the vector index."""
         self.db.cluster.vector_search[self.uuid].delete(ids)
 
+    # TODO refactor to improve readability
     def get_vector(
         self,
         like: Document,
         models: t.Dict,
         keys: KeyType,
-        db: t.Any = None,
         outputs: t.Optional[t.Dict] = None,
     ):
         """Peform vector search.
@@ -216,7 +225,6 @@ class VectorIndex(CDC):
         :param like: The document to compare against
         :param models: List of models to retrieve outputs
         :param keys: Keys available to retrieve outputs of model
-        :param db: A datalayer instance.
         :param outputs: (optional) update `like` with outputs
 
         """
@@ -261,8 +269,6 @@ class VectorIndex(CDC):
     def get_nearest(
         self,
         like: Document,
-        db: t.Any,
-        id_field: str = '_id',
         outputs: t.Optional[t.Dict] = None,
         ids: t.Optional[t.Sequence[str]] = None,
         n: int = 100,
@@ -273,8 +279,6 @@ class VectorIndex(CDC):
         two parallel lists of result IDs and scores.
 
         :param like: The document to compare against
-        :param db: The datalayer to use
-        :param id_field: Identifier field
         :param outputs: An optional dictionary
         :param ids: A list of ids to match
         :param n: Number of items to return
@@ -284,30 +288,24 @@ class VectorIndex(CDC):
             raise ValueError(f'len(model={models}) != len(keys={keys})')
         within_ids = ids or ()
 
-        searcher = db.cluster.vector_search[self.identifier]
-
-        if isinstance(like, dict) and id_field in like:
-            return searcher.find_nearest_from_id(
-                str(like[id_field]), within_ids=within_ids, limit=n
-            )
-
         h = self.get_vector(
             like=like,
             models=models,
             keys=keys,
-            db=db,
             outputs=outputs,
         )[0]
 
-        return searcher.find_nearest_from_array(h, within_ids=within_ids, n=n)
+        return self.db.cluster.vector_search.find_nearest_from_array(
+            vector_index=self.identifier,
+            h=h,
+            n=n,
+            within_ids=within_ids,
+        )
 
-    def cleanup(self, db: Datalayer):
-        """Clean up the vector index.
-
-        :param db: The datalayer to cleanup
-        """
-        super().cleanup(db=db)
-        db.cluster.vector_search.drop(self)
+    def cleanup(self):
+        """Clean up the vector index."""
+        super().cleanup()
+        self.db.cluster.vector_search.drop_component(self.component, self.identifier)
 
     @property
     def models_keys(self):

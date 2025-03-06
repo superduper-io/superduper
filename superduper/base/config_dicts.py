@@ -100,7 +100,8 @@ def _combine_one(target, source):
 
         elif (
             not (isinstance(v, type(old_v)) or isinstance(old_v, type(v)))
-            and old_v is not None and v is not None
+            and old_v is not None
+            and v is not None
         ):
             err = f'Expected {type(old_v)} but got {type(v)} for {k}={v}'
             raise ValueError(err)

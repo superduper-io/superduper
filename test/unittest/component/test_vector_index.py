@@ -16,7 +16,7 @@ def test_vector_index_recovery(db):
     sample_data = table.select().execute()[50]
 
     # Simulate restart
-    del db.cluster.vector_search[vector_index]
+    db.cluster.vector_search.drop_component("VectorIndex", vector_index)
 
     db.cluster.vector_search.initialize()
 

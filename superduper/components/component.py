@@ -1,8 +1,4 @@
 """The component module provides the base class for all components in superduper.io."""
-
-# TODO: why do I need this? Aren't we already in the future?
-from __future__ import annotations
-
 import dataclasses as dc
 import json
 import os
@@ -25,7 +21,6 @@ from superduper.misc.importing import import_object
 from superduper.misc.utils import hash_item
 
 if t.TYPE_CHECKING:
-    from superduper import Document
     from superduper.base.datalayer import Datalayer
 
 
@@ -469,7 +464,7 @@ class Component(Base, metaclass=ComponentMeta):
         if not self.identifier:
             raise ValueError('identifier cannot be empty or None')
 
-    def cleanup(self, db: Datalayer):
+    def cleanup(self, db: 'Datalayer'):
         """Method to clean the component.
 
         :param db: The `Datalayer` to use for the operation.
@@ -526,10 +521,10 @@ class Component(Base, metaclass=ComponentMeta):
 
         return self
 
-    def _pre_create(self, db: Datalayer, startup_cache: t.Dict = {}):
+    def _pre_create(self, db: 'Datalayer', startup_cache: t.Dict = {}):
         self.status = Status.initializing
 
-    def pre_create(self, db: Datalayer):
+    def pre_create(self, db: 'Datalayer'):
         """Called the first time this component is created.
 
         :param db: the db that creates the component.
@@ -539,7 +534,7 @@ class Component(Base, metaclass=ComponentMeta):
             child.pre_create(db)
         self._pre_create(db)
 
-    def on_create(self, db: Datalayer) -> None:
+    def on_create(self, db: 'Datalayer') -> None:
         """Called after the first time this component is created.
 
         Generally used if ``self.version`` is important in this logic.
@@ -557,7 +552,7 @@ class Component(Base, metaclass=ComponentMeta):
         pass
 
     @staticmethod
-    def read(path: str, db: t.Optional[Datalayer] = None):
+    def read(path: str, db: t.Optional['Datalayer'] = None):
         """
         Read a `Component` instance from a directory created with `.export`.
 

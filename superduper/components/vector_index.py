@@ -150,7 +150,7 @@ class VectorIndex(CDC):
                 uuid=self.indexing_listener.model.uuid
             )
         assert isinstance(self.db, Datalayer)
-        self.db.cluster.vector_search.put(self)
+        self.db.cluster.vector_search.put_component(self)
         select = self.db[self.cdc_table].select()
 
         # TODO do this using the backfill_vector_search functionality here

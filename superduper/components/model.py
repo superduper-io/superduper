@@ -342,8 +342,9 @@ class Model(Component, metaclass=ModelMeta):
         :param cluster: Cluster instance to declare the model.
         """
         super().declare_component(cluster)
+        # TODO why both of these options??
         if self.deploy or self.serve:
-            cluster.compute.put(self)
+            cluster.scheduler.compute_put_component(self)
 
     @abstractmethod
     def predict(self, *args, **kwargs) -> t.Any:

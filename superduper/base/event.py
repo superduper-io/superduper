@@ -4,6 +4,8 @@ import typing as t
 import uuid
 from abc import ABC, abstractmethod
 
+from superduper.backends.base.compute import ComputeBackend
+
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
 
@@ -63,6 +65,7 @@ class Signal(Event):
     def execute(
         self,
         db: 'Datalayer',
+        compute: ComputeBackend,
     ):
         """Execute the signal.
 
@@ -70,7 +73,7 @@ class Signal(Event):
 
         """
         if self.msg.lower() == 'done':
-            db.cluster.compute.release_futures(self.context)
+            compute.release_futures(self.context)
 
 
 @dc.dataclass(kw_only=True)
@@ -101,6 +104,7 @@ class Change(Event):
     def execute(
         self,
         db: 'Datalayer',
+        **kwargs,
     ):
         """Execute the change event.
 
@@ -132,7 +136,7 @@ class Create(Event):
     def component(self):
         return self.path.split('.')[-1]
 
-    def execute(self, db: 'Datalayer'):
+    def execute(self, db: 'Datalayer', **kwargs):
         """Execute the create event.
 
         :param db: Datalayer instance.
@@ -190,6 +194,7 @@ class Update(Event):
     def execute(
         self,
         db: 'Datalayer',
+        **kwargs,
     ):
         """Execute the create event.
 
@@ -251,7 +256,7 @@ class Job(Event):
 
         :param futures: dict of futures
         """
-        from superduper.backends.base.queue import Future
+        from superduper.backends.base.scheduler import Future
 
         dependencies = []
         if self.dependencies:
@@ -274,6 +279,7 @@ class Job(Event):
     def execute(
         self,
         db: 'Datalayer',
+        compute: ComputeBackend,
     ):
         """Execute the job event.
 
@@ -281,7 +287,7 @@ class Job(Event):
         """
         meta = {k: v for k, v in self.dict().items() if k not in {'genus', 'queue'}}
         db.metadata.create_job(meta)
-        return db.cluster.compute.submit(self)
+        return compute.submit(self)
 
 
 events = {

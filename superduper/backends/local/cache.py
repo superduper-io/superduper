@@ -20,10 +20,6 @@ class LocalCache(Cache):
         del self._cache[item]
 
     def __setitem__(self, key, value):
-        if isinstance(value, str):
-            import pdb
-
-            pdb.set_trace()
         self._cache[key] = copy.deepcopy(value)
 
     def __getitem__(self, item):

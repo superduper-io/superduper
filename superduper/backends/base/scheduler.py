@@ -8,6 +8,7 @@ import networkx as nx
 
 from superduper import CFG, logging
 from superduper.backends.base.backends import BaseBackend
+from superduper.backends.base.compute import ComputeBackend
 from superduper.base.event import Event, Job
 
 DependencyType = t.Union[t.Dict[str, str], t.Sequence[t.Dict[str, str]]]
@@ -18,62 +19,7 @@ if t.TYPE_CHECKING:
 BATCH_SIZE = 100
 
 
-def _chunked_list(lst, batch_size=BATCH_SIZE):
-    if len(lst) <= batch_size:
-        return [lst]
-    return [lst[i : i + batch_size] for i in range(0, len(lst), batch_size)]
-
-
-class BaseQueueConsumer(ABC):
-    """
-    Base class for handling consumer process.
-
-    This class is an implementation of message broker between
-    producers (superduper db client) and consumers i.e listeners.
-
-    :param uri: Uri to connect.
-    :param queue_name: Queue to consume.
-    :param callback: Callback for consumed messages.
-    """
-
-    def __init__(
-        self,
-        uri: t.Optional[str] = '',
-        queue_name: str = '',
-        callback: t.Optional[t.Callable] = None,
-    ):
-        self.uri = uri
-        self.callback = callback
-        self.queue_name = queue_name
-        self.futures: t.DefaultDict = defaultdict(lambda: {})
-
-    @abstractmethod
-    def start_consuming(self):
-        """Abstract method to start consuming messages."""
-        pass
-
-    @abstractmethod
-    def close_connection(self):
-        """Abstract method to close connection."""
-        pass
-
-    def consume(self, *args, **kwargs):
-        """Start consuming messages from queue.
-
-        :param args: positional arguments
-        :param kwargs: keyword arguments
-        """
-        logging.info(f"Started consuming on queue: {self.queue_name}")
-        try:
-            self.start_consuming()
-        except KeyboardInterrupt:
-            logging.info("KeyboardInterrupt: Stopping consumer...")
-        finally:
-            self.close_connection()
-            logging.info(f"Stopped consuming on queue: {self.queue_name}")
-
-
-class BaseQueuePublisher(BaseBackend):
+class BaseScheduler(BaseBackend):
     """
     Base class for handling publisher and consumer process.
 
@@ -82,18 +28,6 @@ class BaseQueuePublisher(BaseBackend):
 
     :param uri: Uri to connect.
     """
-
-    def __init__(self, uri: t.Optional[str]):
-        super().__init__()
-        self.uri: t.Optional[str] = uri
-        self.queue: t.Dict = defaultdict(lambda: [])
-
-    @abstractmethod
-    def build_consumer(self, **kwargs) -> BaseQueueConsumer:
-        """Build a consumer instance.
-
-        :param kwargs: keyword arguments to consumer.
-        """
 
     @abstractmethod
     def publish(self, events: t.List[Event]):
@@ -124,7 +58,7 @@ class JobFutureException(Exception):
     """
 
 
-def consume_streaming_events(events, table, db):
+def consume_streaming_events(events, table, db, compute: ComputeBackend):
     """
     Consumer work from streaming events.
 
@@ -145,6 +79,7 @@ def consume_streaming_events(events, table, db):
             ids=ids,
             table=table,
             db=db,
+            compute=compute,
         )
 
 
@@ -159,7 +94,7 @@ class Future:
     job_id: str
 
 
-def _consume_event_type(event_type, ids, table, db: 'Datalayer'):
+def _consume_event_type(event_type, ids, table, db: 'Datalayer', compute: ComputeBackend):
     # contains all components triggered by the table
     # and all components triggered by the output of these components etc.
     # "uuid" -> dict("trigger_method": future)
@@ -201,22 +136,13 @@ def _consume_event_type(event_type, ids, table, db: 'Datalayer'):
         jobs += sub_jobs
         logging.info(f'Streaming with {component.component}:{component.identifier}')
 
-    if False:  # db.metadata.batched:
-        for chunk in _chunked_list(jobs):
-            for job in chunk:
-                job.execute(db)
-            db.metadata.commit()
-    else:
-        for job in jobs:
-            job.execute(db)
+    for job in jobs:
+        job.execute(db, compute=compute)
 
-    db.cluster.compute.release_futures(context)
+    compute.release_futures(context)
 
 
-table_components = {'Table', 'Data', 'Dataset'}
-
-
-def consume_events(events, table: str, db=None):
+def consume_events(events, table: str, db: 'Datalayer', compute: ComputeBackend):
     """
     Consume events from table queue.
 
@@ -225,8 +151,8 @@ def consume_events(events, table: str, db=None):
     :param db: Datalayer instance.
     """
     if table != '_apply':
-        consume_streaming_events(events=events, table=table, db=db)
+        consume_streaming_events(events=events, table=table, db=db, compute=compute)
     else:
         for event in events:
-            event.execute(db)
+            event.execute(db, compute=compute)
         return

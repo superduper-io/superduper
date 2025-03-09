@@ -613,11 +613,15 @@ class MetaDataStore:
         if uuid in self.preset_uuids:
             return self.preset_uuids[uuid]
 
+        r = None
         if self.cache:
             try:
                 r = self.cache.get_with_uuid(uuid)
             except KeyError:
-                r = self.db[component].get(uuid=uuid, raw=True)
+                pass
+        
+        if r is None:
+            r = self.db[component].get(uuid=uuid, raw=True)
 
         if r is None:
             raise NonExistentMetadataError(
@@ -631,6 +635,7 @@ class MetaDataStore:
         try:
             metadata = self.preset_components[('Table', component)]
         except KeyError:
+            metadata = None
             if self.cache:
                 metadata = self.cache.get_with_component_identifier('Table', component)
             if metadata is None:

@@ -2,12 +2,13 @@
 import dataclasses as dc
 import time
 from abc import ABC, abstractmethod
+import typing as t
 
 from superduper.backends.base.cache import Cache
 from superduper.backends.base.cdc import CDCBackend
 from superduper.backends.base.compute import ComputeBackend
 from superduper.backends.base.crontab import CrontabBackend
-from superduper.backends.base.queue import BaseQueuePublisher
+from superduper.backends.base.scheduler import BaseScheduler
 from superduper.backends.base.vector_search import VectorSearchBackend
 
 
@@ -23,9 +24,8 @@ class Cluster(ABC):
     :param crontab: The crontab backend.
     """
 
-    compute: ComputeBackend
-    cache: Cache
-    queue: BaseQueuePublisher
+    cache: Cache                
+    scheduler: BaseScheduler 
     vector_search: VectorSearchBackend
     cdc: CDCBackend
     crontab: CrontabBackend
@@ -39,8 +39,8 @@ class Cluster(ABC):
 
         :param force: Skip confirmation.
         """
-        self.compute.drop()
-        self.queue.drop()
+        # self.compute.drop()
+        self.scheduler.drop()
         self.vector_search.drop()
         self.cdc.drop()
         self.crontab.drop()
@@ -71,11 +71,9 @@ class Cluster(ABC):
         :param value: ``Datalayer`` instance.
         """
         self._db = value
-        self.cache.db = value
-        self.queue.db = value
+        self.scheduler.db = value
         self.vector_search.db = value
         self.crontab.db = value
-        self.compute.db = value
         self.cdc.db = value
 
     def load_custom_plugins(self):
@@ -88,7 +86,7 @@ class Cluster(ABC):
                 logging.info(f"Loading plugin: {plugin}")
                 plugin = self.db.load('Plugin', plugin)
 
-    def initialize(self, with_compute: bool = False):
+    def initialize(self):
         """Initialize the cluster.
 
         :param with_compute: Boolean to init
@@ -101,11 +99,7 @@ class Cluster(ABC):
 
         self.load_custom_plugins()
 
-        if with_compute:
-            self.compute.initialize()
-
-        self.cache.initialize()
-        self.queue.initialize()
+        self.scheduler.initialize()
         self.vector_search.initialize()
         self.crontab.initialize()
         self.cdc.initialize()

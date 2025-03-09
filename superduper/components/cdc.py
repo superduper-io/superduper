@@ -31,8 +31,8 @@ class CDC(Component):
         :param cluster: The cluster to declare the component to.
         """
         super().declare_component(cluster)
-        self.db.cluster.queue.put(self)
-        self.db.cluster.cdc.put(self)
+        self.db.cluster.scheduler.put_component(self)
+        self.db.cluster.cdc.put_component(self)
 
     @property
     def dependencies(self):

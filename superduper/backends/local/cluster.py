@@ -15,7 +15,7 @@ from superduper.backends.local.cache import LocalCache
 from superduper.backends.local.cdc import LocalCDCBackend
 from superduper.backends.local.compute import LocalComputeBackend
 from superduper.backends.local.crontab import LocalCrontabBackend
-from superduper.backends.local.queue import LocalQueuePublisher
+from superduper.backends.local.scheduler import LocalScheduler
 from superduper.backends.local.vector_search import LocalVectorSearchBackend
 from superduper.misc.importing import load_plugin
 
@@ -25,7 +25,7 @@ class LocalCluster(Cluster):
 
     :param compute: The compute backend.
     :param cache: The cache backend.
-    :param queue: The queue backend.
+    :param scheduler: The scheduler backend.
     :param vector_search: The vector search backend.
     :param cdc: The change data capture backend.
     :param crontab: The crontab backend.
@@ -35,16 +35,18 @@ class LocalCluster(Cluster):
     def build(cls, CFG, **kwargs):
         """Build the local cluster."""
         searcher_impl = load_plugin(CFG.vector_search_engine).VectorSearcher
-        if CFG.cache.startswith('redis'):
+        cache = None
+        if CFG.cache and CFG.cache.startswith('redis'):
             cache = load_plugin('redis').Cache(uri=CFG.cache)
-        else:
+        elif CFG.cache:
             assert CFG.cache == 'in-process'
             cache = LocalCache()
 
+        compute = LocalComputeBackend()
+
         return LocalCluster(
-            compute=LocalComputeBackend(),
             cache=cache,
-            queue=LocalQueuePublisher(),
+            scheduler=LocalScheduler(compute=compute),
             vector_search=LocalVectorSearchBackend(searcher_impl=searcher_impl),
             cdc=LocalCDCBackend(),
             crontab=LocalCrontabBackend(),
@@ -61,7 +63,8 @@ class LocalCluster(Cluster):
                 default=False,
             ):
                 logging.warn("Aborting...")
-        return self.cache.drop()
+        if self.cache is not None:
+            return self.cache.drop()
 
 
 class InMemoryVectorSearcher(BaseVectorSearcher):

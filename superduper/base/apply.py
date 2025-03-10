@@ -120,7 +120,7 @@ def apply(
             default=True,
         ):
             return object
-    db.cluster.queue.publish(events=events)
+    db.cluster.scheduler.publish(events=events)
     if wait:
         unique_create_events = list(create_events.values())
         _wait_on_events(db, unique_create_events)

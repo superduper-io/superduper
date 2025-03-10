@@ -1,8 +1,4 @@
 """The component module provides the base class for all components in superduper.io."""
-
-# TODO: why do I need this? Aren't we already in the future?
-from __future__ import annotations
-
 import dataclasses as dc
 import json
 import os
@@ -25,7 +21,6 @@ from superduper.misc.importing import import_object
 from superduper.misc.utils import hash_item
 
 if t.TYPE_CHECKING:
-    from superduper import Document
     from superduper.base.datalayer import Datalayer
 
 
@@ -61,8 +56,8 @@ def _build_info_from_path(path: str):
         files = {}
         for file_id in os.listdir(os.path.join(path, "files")):
             sub_paths = os.listdir(os.path.join(path, "files", file_id))
-            assert len(sub_paths) == 1, f"Multiple files found in {file_id}"
-            file_name = sub_paths[0]
+            # assert len(sub_paths) == 1, f"Multiple files found in {file_id}"
+            file_name = next(x for x in sub_paths if not x.startswith(".") or x.startswith("_"))
             files[file_id] = os.path.join(path, "files", file_id, file_name)
         config_object[KEY_FILES] = files
 
@@ -469,7 +464,7 @@ class Component(Base, metaclass=ComponentMeta):
         if not self.identifier:
             raise ValueError('identifier cannot be empty or None')
 
-    def cleanup(self, db: Datalayer):
+    def cleanup(self, db: 'Datalayer'):
         """Method to clean the component.
 
         :param db: The `Datalayer` to use for the operation.
@@ -489,19 +484,16 @@ class Component(Base, metaclass=ComponentMeta):
         """Get dependencies on the component."""
         return ()
 
-    # TODO why both methods?
     def init(self):
         """Method to help initiate component field dependencies."""
-        self.unpack()
 
-    def unpack(self):
-        """Method to unpack the component.
-
-        This method is used to initialize all the fields of the component and leaf
-        """
+        def mro(item):
+            objects = item.__class__.__mro__
+            return [f'{o.__module__}.{o.__name__}' for o in objects]
 
         def _init(item):
-            if isinstance(item, Component):
+            
+            if 'superduper.components.component.Component' in mro(item):
                 item.init()
                 return item
 
@@ -526,10 +518,10 @@ class Component(Base, metaclass=ComponentMeta):
 
         return self
 
-    def _pre_create(self, db: Datalayer, startup_cache: t.Dict = {}):
+    def _pre_create(self, db: 'Datalayer', startup_cache: t.Dict = {}):
         self.status = Status.initializing
 
-    def pre_create(self, db: Datalayer):
+    def pre_create(self, db: 'Datalayer'):
         """Called the first time this component is created.
 
         :param db: the db that creates the component.
@@ -539,17 +531,17 @@ class Component(Base, metaclass=ComponentMeta):
             child.pre_create(db)
         self._pre_create(db)
 
-    def on_create(self, db: Datalayer) -> None:
+    def on_create(self) -> None:
         """Called after the first time this component is created.
 
         Generally used if ``self.version`` is important in this logic.
 
         :param db: the db that creates the component.
         """
-        assert db
-        self.declare_component(db.cluster)
+        assert self.db is not None
+        self.declare_component()
 
-    def declare_component(self, cluster):
+    def declare_component(self):
         """Declare the component to the cluster.
 
         :param cluster: The cluster to declare the component to.
@@ -557,7 +549,7 @@ class Component(Base, metaclass=ComponentMeta):
         pass
 
     @staticmethod
-    def read(path: str, db: t.Optional[Datalayer] = None):
+    def read(path: str):
         """
         Read a `Component` instance from a directory created with `.export`.
 
@@ -571,45 +563,8 @@ class Component(Base, metaclass=ComponentMeta):
         |_files/*
         ```
         """
-        was_zipped = False
-        if path.endswith('.zip'):
-            was_zipped = True
-            import shutil
-
-            shutil.unpack_archive(path)
-            path = path.replace('.zip', '')
-
         config_object = _build_info_from_path(path=path)
-
-        from superduper import Document
-
-        if db is not None:
-            for blob in os.listdir(path + '/' + 'blobs'):
-                with open(path + '/blobs/' + blob, 'rb') as f:
-                    data = f.read()
-                    db.artifact_store.put_bytes(data, blob)
-
-            out = Document.decode(config_object, db=db).unpack()
-        else:
-            from superduper.base.artifacts import FileSystemArtifactStore
-
-            artifact_store = FileSystemArtifactStore(
-                conn=path,
-                name='tmp_artifact_store',
-                files='files',
-                blobs='blobs',
-            )
-            db = namedtuple('tmp_db', field_names=('artifact_store',))(
-                artifact_store=artifact_store
-            )
-            cls = import_object(config_object['_path'])
-            out = Document.decode(
-                config_object, schema=cls.class_schema, db=db
-            ).unpack()
-            out = cls.from_dict(out, db=db)
-            if was_zipped:
-                shutil.rmtree(path)
-        return out
+        return Component.decode(config_object)
 
     def export(
         self,

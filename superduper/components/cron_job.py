@@ -14,9 +14,9 @@ class CronJob(Component):
 
     schedule: str = '0 0 * * *'
 
-    def declare_component(self, cluster):
+    def declare_component(self):
         """Declare component."""
-        cluster.crontab.put(self)
+        self.db.cluster.crontab.put_component(self)
 
     @ensure_initialized
     def run(self):
@@ -40,6 +40,12 @@ class FunctionCronJob(CronJob):
     """
 
     function: t.Callable
+    identifier: str = ''
+
+    def postinit(self):
+        if not self.identifier:
+            self.identifier = self.function.__name__
+        return super().postinit()
 
     @ensure_initialized
     def run(self):

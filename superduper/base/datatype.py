@@ -211,7 +211,9 @@ def _decode_leaf(r, builds, db: t.Optional['Datalayer'] = None):
             db=db,
         )
     else:
-        assert issubclass(cls, Base)
+        mro = [f'{x.__module__}.{x.__name__}' for x in cls.__mro__]
+
+        assert issubclass(cls, Base) or 'superduper.base.base.Base' in mro
         dict_ = cls.class_schema.decode_data(dict_, builds=builds, db=db)
         out = cls.from_dict(dict_, db=db)
 
@@ -272,7 +274,7 @@ class SList(BaseDataType):
         :param context: A context object containing caches.
         """
         assert isinstance(item, list)
-        return [
+        out = [
             (
                 ComponentType().encode_data(
                     r,
@@ -283,6 +285,7 @@ class SList(BaseDataType):
             )
             for r in item
         ]
+        return out
 
     def decode_data(self, item, builds, db):
         """Decode the item from `bytes`.
@@ -310,7 +313,8 @@ class FDict(BaseDataType):
         :param context: A context object containing caches.
         """
         assert isinstance(item, dict)
-        return {k: File().encode_data(v, context) for k, v in item.items()}
+        out = {k: File().encode_data(v, context) for k, v in item.items()}
+        return out
 
     def decode_data(self, item, builds, db):
         """Decode the item from `bytes`.
@@ -633,9 +637,11 @@ class File(BaseDataType):
         :param context: A context object containing caches.
         """
         if isinstance(item, FileItem):
-            return item.reference
-        assert os.path.exists(item)
-        file = FileItem(identifier=self.hash(item), path=item)
+            file = item
+        else:
+            assert os.path.exists(item)
+            file = FileItem(identifier=self.hash(item), path=item)
+
         context.files[file.identifier] = file.path
         return file.reference
 
@@ -646,7 +652,9 @@ class File(BaseDataType):
         :param builds: The build cache.
         :param db: Datalayer.
         """
-        return FileItem(identifier=item.split(':')[-1], db=db)
+        file_id = item.split(':')[-1]
+        path = db.artifact_store.get_file(file_id)
+        return FileItem(identifier=file_id, path=path, db=db)
 
     @classmethod
     def hash(cls, item):

@@ -213,6 +213,7 @@ class Base(metaclass=BaseMeta):
             from superduper.misc.importing import import_object
 
             cls = import_object(r['_path'])
+
         r = Document.decode(r, schema=cls.class_schema, db=db)
         return cls.from_dict(r, db=None)
 
@@ -234,7 +235,7 @@ class Base(metaclass=BaseMeta):
         for k, v in kwargs.items():
             setattr(context, k, v)
 
-        r = self.dict()  # metadata=context.metadata, defaults=context.defaults)
+        r = self.dict()
         r = self.class_schema.encode_data(r, context=context)
 
         def _replace_loads_with_references(record, lookup):
@@ -273,7 +274,6 @@ class Base(metaclass=BaseMeta):
                 del r['uuid']
             r = _replace_uuids_with_keys(r)
 
-        # TODO deprecate this wrapper (not needed)
         return {
             **r,
             KEY_BUILDS: context.builds,

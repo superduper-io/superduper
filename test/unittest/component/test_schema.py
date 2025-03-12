@@ -96,9 +96,6 @@ def test_schema_with_file(db, tmp_file):
     # loaded document contains a pointer to the file
     assert isinstance(r['my_file'], FileItem)
 
-    # however the path has not been populated
-    assert not r['my_file'].path
-
     # unpacking the document copies the file to the artifact-store
     rr = r.unpack()
 

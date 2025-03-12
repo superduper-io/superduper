@@ -23,3 +23,14 @@ def import_object(path):
     module = '.'.join(path.split('.')[:-1])
     cls = path.split('.')[-1]
     return getattr(importlib.import_module(module), cls)
+
+
+def isreallyinstance(this, cls):
+    """Check if the component is an instance of a class.
+
+    :param this: The component to check.
+    :param cls: The class to check.
+    """
+    # no idea why this is sometimes necessary - may be IPython autoreload related
+    mro = [f'{o.__module__}.{o.__name__}' for o in this.__class__.__mro__]
+    return isinstance(this, cls) or f'{cls.__module__}.{cls.__name__}' in mro

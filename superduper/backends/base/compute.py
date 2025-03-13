@@ -2,6 +2,7 @@ import typing as t
 from abc import abstractmethod
 
 from superduper.backends.base.backends import BaseBackend
+from superduper.misc.importing import isreallysubclass
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
@@ -41,9 +42,15 @@ class ComputeBackend(BaseBackend):
         """Disconnect the client."""
         pass
 
-    @abstractmethod
     def initialize(self):
         """Connect to address."""
+
+        from superduper.components.model import Model
+        metadata = self.db.load('Table')
+        for c in metadata:
+            if isreallysubclass(c.cls, Model) and c.serve:
+                for m in self.db.load(c.identifier):
+                    self.put_component(m)
 
     @abstractmethod
     def put_component(self, component: 'Component'):

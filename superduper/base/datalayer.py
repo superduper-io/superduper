@@ -326,6 +326,7 @@ class Datalayer:
         uuid: t.Optional[str] = None,
         huuid: t.Optional[str] = None,
         allow_hidden: bool = False,
+        **kwargs,
     ) -> Component:
         """
         Load a component using uniquely identifying information.
@@ -342,6 +343,7 @@ class Datalayer:
         :param huuid: [Optional] human-readable UUID of the component to load.
         :param allow_hidden: Toggle to ``True`` to allow loading
                              of deprecated components.
+        :param kwargs: Additional keyword arguments to filter by.
         """
         if version is not None:
             assert component is not None
@@ -372,9 +374,8 @@ class Datalayer:
                 builds=builds,
                 db=self,
             )
-        else:
+        elif identifier is not None:
             assert component is not None
-            assert identifier is not None
             logging.info(f'Load ({component, identifier}) from metadata...')
             info = self.metadata.get_component(
                 component=component,
@@ -386,6 +387,22 @@ class Datalayer:
                 builds=info.get('_builds', {}),
                 db=self,
             )
+        else:
+            identifiers = self.metadata.show_components(component=component)
+            out = []
+            for identifier in identifiers:
+                try:
+                    c = self.load(component, identifier)
+                    applies = True
+                    for k, v in kwargs.items():
+                        if getattr(c, k) != v:
+                            applies = False
+                            break
+                    if applies:
+                        out.append(c)
+                except NonExistentMetadataError:
+                    continue
+            return out
         return c
 
     def _remove_component_version(

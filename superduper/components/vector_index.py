@@ -201,7 +201,7 @@ class VectorIndex(CDC):
         # TODO combine logic from backfill
         if vectors:
             self.db.cluster.vector_search.add(
-                self.uuid, [VectorItem(**vector) for vector in vectors]
+                uuid=self.uuid, vectors=[VectorItem(**vector) for vector in vectors]
             )
 
     @trigger('delete')

@@ -1,4 +1,3 @@
-import os
 import typing as t
 
 import click
@@ -42,11 +41,10 @@ class LocalCluster(Cluster):
             assert CFG.cache == 'in-process'
             cache = LocalCache()
 
-        compute = LocalComputeBackend()
-
         return LocalCluster(
             cache=cache,
-            scheduler=LocalScheduler(compute=compute),
+            scheduler=LocalScheduler(),
+            compute=LocalComputeBackend(),
             vector_search=LocalVectorSearchBackend(searcher_impl=searcher_impl),
             cdc=LocalCDCBackend(),
             crontab=LocalCrontabBackend(),

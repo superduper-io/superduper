@@ -66,15 +66,13 @@ class Signal(Event):
     def execute(
         self,
         db: 'Datalayer',
-        compute: ComputeBackend,
     ):
         """Execute the signal.
 
         :param db: Datalayer instance.
-        :param compute: The compute backend.
         """
         if self.msg.lower() == 'done':
-            compute.release_futures(self.context)
+            db.cluster.compute.release_futures(self.context)
 
 
 @dc.dataclass(kw_only=True)
@@ -105,12 +103,10 @@ class Change(Event):
     def execute(
         self,
         db: 'Datalayer',
-        **kwargs,
     ):
         """Execute the change event.
 
         :param db: Datalayer instance.
-        :param kwargs: additional arguments.
         """
         raise NotImplementedError('Not relevant for this event class')
 
@@ -138,11 +134,10 @@ class Create(Event):
     def component(self):
         return self.path.split('.')[-1]
 
-    def execute(self, db: 'Datalayer', **kwargs):
+    def execute(self, db: 'Datalayer'):
         """Execute the create event.
 
         :param db: Datalayer instance.
-        :param kwargs: additional arguments.
         """
         # TODO decide where to assign version
         logging.info(
@@ -202,12 +197,10 @@ class Update(Event):
     def execute(
         self,
         db: 'Datalayer',
-        **kwargs,
     ):
         """Execute the create event.
 
         :param db: Datalayer instance.
-        :param kwargs: additional arguments.
         """
         # TODO decide where to assign version
         artifact_ids, _ = db._find_artifacts(self.data)
@@ -288,16 +281,14 @@ class Job(Event):
     def execute(
         self,
         db: 'Datalayer',
-        compute: ComputeBackend,
     ):
         """Execute the job event.
 
         :param db: Datalayer instance
-        :param compute: The compute backend.
         """
         meta = {k: v for k, v in self.dict().items() if k not in {'genus', 'queue'}}
         db.metadata.create_job(meta)
-        return compute.submit(self)
+        return db.cluster.compute.submit(self)
 
 
 events = {

@@ -1,7 +1,7 @@
 import dataclasses as dc
 import typing as t
 import uuid
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from collections import defaultdict
 
 import networkx as nx
@@ -48,24 +48,6 @@ class BaseScheduler(BaseBackend):
         """
         self._db = value
 
-    @abstractmethod
-    def compute_put_component(self, component: str, identifier: str):
-        """
-        Drop component from compute backend.
-
-        :param component: Component name.
-        :param identifier: Component identifier.
-        """
-
-    @abstractmethod
-    def compute_drop_component(self, component: str, identifier: str):
-        """
-        Drop component from compute backend.
-
-        :param component: Component name.
-        :param identifier: Component identifier.
-        """
-
 
 class JobFutureException(Exception):
     """Exception when futures are not ready.
@@ -74,7 +56,7 @@ class JobFutureException(Exception):
     """
 
 
-def consume_streaming_events(events, table, db, compute: ComputeBackend):
+def consume_streaming_events(events, table, db):
     """
     Consumer work from streaming events.
 
@@ -83,7 +65,6 @@ def consume_streaming_events(events, table, db, compute: ComputeBackend):
     :param events: list of events.
     :param table: table on which events were found.
     :param db: Datalayer instance.
-    :param compute: Compute backend.
     """
     out = defaultdict(lambda: [])
     for event in events:
@@ -96,7 +77,6 @@ def consume_streaming_events(events, table, db, compute: ComputeBackend):
             ids=ids,
             table=table,
             db=db,
-            compute=compute,
         )
 
 
@@ -112,7 +92,7 @@ class Future:
 
 
 def _consume_event_type(
-    event_type, ids, table, db: 'Datalayer', compute: ComputeBackend
+    event_type, ids, table, db: 'Datalayer'
 ):
     # contains all components triggered by the table
     # and all components triggered by the output of these components etc.
@@ -156,23 +136,22 @@ def _consume_event_type(
         logging.info(f'Streaming with {component.component}:{component.identifier}')
 
     for job in jobs:
-        job.execute(db, compute=compute)
+        job.execute(db)
 
-    compute.release_futures(context)
+    db.cluster.compute.release_futures(context)
 
 
-def consume_events(events, table: str, db: 'Datalayer', compute: ComputeBackend):
+def consume_events(events: t.List[Event], table: str, db: 'Datalayer'):
     """
     Consume events from table queue.
 
     :param events: List of events to be consumed.
     :param table: Queue Table.
     :param db: Datalayer instance.
-    :param compute: Compute backend.
     """
     if table != '_apply':
-        consume_streaming_events(events=events, table=table, db=db, compute=compute)
+        consume_streaming_events(events=events, table=table, db=db)
     else:
         for event in events:
-            event.execute(db, compute=compute)
+            event.execute(db)
         return

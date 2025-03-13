@@ -35,6 +35,7 @@ if t.TYPE_CHECKING:
 Signature = t.Literal['*args', '**kwargs', '*args,**kwargs', 'singleton']
 
 
+# TODO remove
 def model(
     item: t.Optional[t.Callable] = None,
     identifier: t.Optional[str] = None,
@@ -42,7 +43,6 @@ def model(
     model_update_kwargs: t.Optional[t.Dict] = None,
     output_schema: t.Optional[Schema] = None,
     num_workers: int = 0,
-    example: t.Any | None = None,
 ):
     """Decorator to wrap a function with `ObjectModel`.
 
@@ -55,7 +55,6 @@ def model(
     :param model_update_kwargs: Dictionary to define update kwargs.
     :param output_schema: Schema for the model outputs.
     :param num_workers: Number of workers to use for parallel processing
-    :param example: Example to auto-determine the schema/ datatype.
     """
     if item is not None and (inspect.isclass(item) or callable(item)):
         if inspect.isclass(item):
@@ -69,7 +68,6 @@ def model(
                     model_update_kwargs=model_update_kwargs or {},
                     output_schema=output_schema,
                     num_workers=num_workers,
-                    example=example,
                 )
 
             return object_model_factory
@@ -82,7 +80,6 @@ def model(
                 model_update_kwargs=model_update_kwargs or {},
                 output_schema=output_schema,
                 num_workers=num_workers,
-                example=example,
             )
     else:
 
@@ -98,7 +95,6 @@ def model(
                         model_update_kwargs=model_update_kwargs or {},
                         output_schema=output_schema,
                         num_workers=num_workers,
-                        example=example,
                     )
 
                 return object_model_factory
@@ -111,7 +107,6 @@ def model(
                     model_update_kwargs=model_update_kwargs or {},
                     output_schema=output_schema,
                     num_workers=num_workers,
-                    example=example,
                 )
 
         return decorated_function
@@ -257,8 +252,6 @@ class Model(Component, metaclass=ModelMeta):
     :param serve: Creates an http endpoint and serve the model with
                   ``compute_kwargs`` on a distributed cluster.
     :param trainer: `Trainer` instance to use for training.
-    :param example: An example to auto-determine the schema/ datatype.
-    :param deploy: Creates a standalone class instance on compute cluster.
     """
 
     breaks: t.ClassVar[t.Sequence] = ('trainer',)
@@ -273,12 +266,6 @@ class Model(Component, metaclass=ModelMeta):
     num_workers: int = 0
     serve: bool = False
     trainer: t.Optional[Trainer] = None
-    example: dc.InitVar[t.Any | None] = None
-    deploy: bool = False
-
-    def __post_init__(self, db, example):
-        self.example = example
-        super().__post_init__(db)
 
     def postinit(self):
         """Post-initialization method."""
@@ -305,7 +292,7 @@ class Model(Component, metaclass=ModelMeta):
     def cleanup(self):
         """Clean up when the model is deleted."""
         super().cleanup()
-        self.db.cluster.scheduler.compute_drop_component(
+        self.db.cluster.compute.drop_component(
             self.component, self.identifier
         )
 
@@ -339,8 +326,8 @@ class Model(Component, metaclass=ModelMeta):
         """Declare model on cluster."""
         super().declare_component()
         # TODO why both of these options??
-        if self.deploy or self.serve:
-            self.db.cluster.scheduler.compute_put_component(self)
+        if self.serve:
+            self.db.cluster.compute.put_component(self)
 
     @abstractmethod
     def predict(self, *args, **kwargs) -> t.Any:
@@ -610,8 +597,9 @@ class ObjectModel(Model):
     object: t.Callable
     method: t.Optional[str] = None
 
-    def __post_init__(self, db, example):
-        super().__post_init__(db, example)
+    # TODO use postinit?
+    def __post_init__(self, db):
+        super().__post_init__(db)
         self._inferred_signature = None
 
     @property
@@ -898,6 +886,5 @@ class ModelRouter(Model):
         """
         if hasattr(self.models[self.model], 'shape'):
             self.shape = getattr(self.models[self.model], 'shape')
-        self.example = self.models[self.model].example
         self.signature = self.models[self.model].signature
         self.models[self.model].init()

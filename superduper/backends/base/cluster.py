@@ -1,4 +1,4 @@
-# TODO rename queue + crontab to scheduler
+import click
 import dataclasses as dc
 import time
 import typing as t
@@ -19,6 +19,7 @@ class Cluster(ABC):
     :param cache: The cache backend.
     :param scheduler: The scheduler backend.
     :param vector_search: The vector search backend.
+    :param compute: The compute backend.
     :param cdc: The change data capture backend.
     :param crontab: The crontab backend.
     """
@@ -26,19 +27,22 @@ class Cluster(ABC):
     cache: Cache
     scheduler: BaseScheduler
     vector_search: VectorSearchBackend
+    compute: ComputeBackend
     cdc: CDCBackend
     crontab: CrontabBackend
 
     def __post_init__(self):
         self._db = None
 
-    # TODO use the `force` parameter.
     def drop(self, force: bool = False):
         """Drop all of the backends.
 
         :param force: Skip confirmation.
         """
-        # self.compute.drop()
+        if not force and not click.confirm("Are you sure you want to drop the cluster?"):
+            return
+
+        self.compute.drop()
         self.scheduler.drop()
         self.vector_search.drop()
         self.cdc.drop()
@@ -73,6 +77,7 @@ class Cluster(ABC):
         self.scheduler.db = value
         self.vector_search.db = value
         self.crontab.db = value
+        self.compute.db = value
         self.cdc.db = value
 
     def load_custom_plugins(self):
@@ -95,6 +100,7 @@ class Cluster(ABC):
         self.load_custom_plugins()
 
         self.scheduler.initialize()
+        self.compute.initialize()
         self.vector_search.initialize()
         self.crontab.initialize()
         self.cdc.initialize()

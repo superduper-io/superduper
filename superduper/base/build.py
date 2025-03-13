@@ -109,7 +109,7 @@ def build_datalayer(cfg=None, **kwargs) -> Datalayer:
     artifact_store = _build_artifact_store()
 
     backend = getattr(load_plugin(cfg.cluster_engine), 'Cluster')
-    cluster = backend.build(cfg, **kwargs)
+    cluster = backend.build(cfg)
 
     datalayer = Datalayer(
         databackend=databackend_obj,

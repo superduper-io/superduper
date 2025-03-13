@@ -40,11 +40,10 @@ class LocalScheduler(Bookkeeping, BaseScheduler):
     :param uri: uri to connect.
     """
 
-    def __init__(self, compute: ComputeBackend):
+    def __init__(self):
         Bookkeeping.__init__(self)
         BaseScheduler.__init__(self)
 
-        self.compute = compute
         self.lock = threading.Lock()
         self.Q: t.Dict = {'_apply': []}
 
@@ -55,7 +54,6 @@ class LocalScheduler(Bookkeeping, BaseScheduler):
     @db.setter
     def db(self, value):
         self._db = value
-        self.compute.db = value
 
     def drop(self):
         """Drop the queue."""
@@ -90,12 +88,6 @@ class LocalScheduler(Bookkeeping, BaseScheduler):
         queues = list(self.Q.keys())
         for queue in queues:
             consume_events(
-                events=self.Q[queue], table=queue, db=self.db, compute=self.compute
+                events=self.Q[queue], table=queue, db=self.db,
             )
             self.Q[queue] = []
-
-    def compute_drop_component(self, component, identifier):
-        return self.compute.drop_component(component, identifier)
-
-    def compute_put_component(self, component):
-        return self.compute.put_component(component)

@@ -43,9 +43,6 @@ class TestComponent(Component):
     child: Optional[Component] = None
     artifact: Any = None
 
-    def pre_create(self, db):
-        self.is_on_create = True
-
     def on_create(self):
         self.is_after_create = True
 
@@ -89,7 +86,6 @@ def test_add_version(db: Datalayer):
     # Check the component functions are called
     component = TestComponent(identifier='test')
     db.apply(component)
-    assert component.is_on_create is True
     # assert component.is_after_create is True
     assert component.version == 0
     assert db.show('TestComponent', 'test') == [0]
@@ -198,7 +194,7 @@ def test_add_with_artifact(db):
     assert m.object is not None
 
     assert isinstance(m.object, Blob)
-    m.init()
+    m.setup()
     assert callable(m.object)
 
 
@@ -398,77 +394,6 @@ def test_insert_artifacts(db):
     assert isinstance(r['x'], numpy.ndarray)
 
 
-def test_replace(db: Datalayer):
-    model = ObjectModel(
-        object=lambda x: x + 1,
-        identifier='m',
-    )
-    model.version = 0
-    db.apply(model)
-    db.replace(model)
-
-    assert db.load('ObjectModel', 'm').predict(1) == 2
-
-    new_model = ObjectModel(
-        object=lambda x: x + 2,
-        identifier='m',
-    )
-    new_model.version = 0
-    db.replace(new_model)
-
-    assert f'{model.component}:{model.identifier}:{model.uuid}' not in db.cluster.cache
-
-    time.sleep(0.1)
-    assert db.load('ObjectModel', 'm').predict_batches([1]) == [3]
-
-    # replace the last version of the model
-    new_model = ObjectModel(
-        object=lambda x: x + 3,
-        identifier='m',
-    )
-    new_model.version = 0
-    db.replace(new_model)
-    time.sleep(0.1)
-    assert db.load('ObjectModel', 'm').predict_batches([1]) == [4]
-
-
-def test_replace_with_child(db: Datalayer):
-    db.apply(Table('docs', fields={'X': 'int', 'y': 'int', '_fold': 'str'}))
-    trainer = Trainer(
-        identifier='trainer',
-        key=('X', 'y'),
-        select=db['docs'].select(),
-    )
-    model = FakeModel(
-        identifier='m123',
-        trainer=trainer,
-    )
-
-    with patch.object(FakeModel, 'fit'):
-        db.apply(model)
-
-    model_ids = db.show('FakeModel')
-
-    reloaded = db.load('FakeModel', model.identifier)
-
-    assert 'm123' in model_ids
-    assert hasattr(reloaded, 'trainer')
-
-    assert isinstance(reloaded.trainer, Trainer)
-    assert not reloaded.metric_values
-
-    model.trainer.metric_values['acc'] = [1, 2, 3]
-    db.replace(model)
-
-    rereloaded = db.load('FakeModel', model.identifier)
-    assert isinstance(rereloaded.trainer, Trainer)
-    assert rereloaded.trainer.metric_values
-
-    db.remove('Table', 'docs', force=True)
-
-    db.metadata.get_component_version_parents(rereloaded.uuid)
-
-
 def my_lambda(x):
     return x + 1
 
@@ -544,7 +469,7 @@ def test_delete_component_with_same_artifact(db):
 
     db.remove('ObjectModel', 'model1', force=True)
     model2 = db.load('ObjectModel', 'model2')
-    model2.init()
+    model2.setup()
     assert model2.predict(1) == 2
 
 

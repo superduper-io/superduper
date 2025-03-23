@@ -17,9 +17,10 @@ from superduper import logging
 from superduper.base.annotations import trigger
 from superduper.base.query import Query
 from superduper.base.schema import Schema
-from superduper.components.component import Component, ComponentMeta, ensure_initialized
+from superduper.components.component import Component, ComponentMeta, ensure_setup
 from superduper.components.metric import Metric
 from superduper.misc import typing as st
+from superduper.misc.importing import isreallyinstance
 from superduper.misc.schema import (
     _map_type_to_superduper,
     _safe_resolve_annotation,
@@ -35,81 +36,27 @@ if t.TYPE_CHECKING:
 Signature = t.Literal['*args', '**kwargs', '*args,**kwargs', 'singleton']
 
 
-# TODO remove
-def model(
-    item: t.Optional[t.Callable] = None,
-    identifier: t.Optional[str] = None,
-    datatype=None,
-    model_update_kwargs: t.Optional[t.Dict] = None,
-    output_schema: t.Optional[Schema] = None,
-    num_workers: int = 0,
-):
-    """Decorator to wrap a function with `ObjectModel`.
+def method_wrapper(method, item, signature: str):
+    """Wrap the item with the model.
 
-    When a function is wrapped with this decorator,
-    the function comes out as an `ObjectModel`.
-
-    :param item: Callable to wrap with `ObjectModel`.
-    :param identifier: Identifier for the `ObjectModel`.
-    :param datatype: Datatype for the model outputs.
-    :param model_update_kwargs: Dictionary to define update kwargs.
-    :param output_schema: Schema for the model outputs.
-    :param num_workers: Number of workers to use for parallel processing
+    :param method: Method to execute.
+    :param item: Item to wrap.
+    :param signature: Signature of the method.
     """
-    if item is not None and (inspect.isclass(item) or callable(item)):
-        if inspect.isclass(item):
-
-            def object_model_factory(*args, **kwargs):
-                object_ = item(*args, **kwargs)
-                return ObjectModel(
-                    object=object_,
-                    identifier=identifier or object_.__class__.__name__,
-                    datatype=datatype,
-                    model_update_kwargs=model_update_kwargs or {},
-                    output_schema=output_schema,
-                    num_workers=num_workers,
-                )
-
-            return object_model_factory
-        else:
-            assert callable(item)
-            return ObjectModel(
-                identifier=item.__name__,
-                object=item,
-                datatype=datatype,
-                model_update_kwargs=model_update_kwargs or {},
-                output_schema=output_schema,
-                num_workers=num_workers,
-            )
-    else:
-
-        def decorated_function(item):
-            if inspect.isclass(item):
-
-                def object_model_factory(*args, **kwargs):
-                    object_ = item(*args, **kwargs)
-                    return ObjectModel(
-                        identifier=identifier or item.__name__,
-                        object=object_,
-                        datatype=datatype,
-                        model_update_kwargs=model_update_kwargs or {},
-                        output_schema=output_schema,
-                        num_workers=num_workers,
-                    )
-
-                return object_model_factory
-            else:
-                assert callable(item)
-                return ObjectModel(
-                    identifier=identifier or item.__name__,
-                    object=item,
-                    datatype=datatype,
-                    model_update_kwargs=model_update_kwargs or {},
-                    output_schema=output_schema,
-                    num_workers=num_workers,
-                )
-
-        return decorated_function
+    if signature == 'singleton':
+        return method(item)
+    if signature == '*args':
+        assert isinstance(item, (list, tuple))
+        return method(*item)
+    if signature == '**kwargs':
+        assert isinstance(item, dict)
+        return method(**item)
+    if signature == '*args,**kwargs':
+        assert isinstance(item, (list, tuple))
+        assert isinstance(item[0], (list, tuple))
+        assert isinstance(item[1], dict)
+        return method(*item[0], **item[1])
+    raise ValueError(f'Unexpected signature {signature}')
 
 
 # TODO migrate this to its own module
@@ -130,7 +77,7 @@ class Trainer(Component):
     """
 
     key: st.JSON
-    select: st.LeafType  # TODO change LeafType to BaseType
+    select: st.BaseType
     transform: t.Optional[t.Callable] = None
     metric_values: t.Dict = dc.field(default_factory=lambda: {})
     in_memory: bool = True
@@ -185,7 +132,7 @@ class Validation(Component):
 
 
 def init_decorator(func):
-    """Decorator to set _is_initialized to True after init method is called.
+    """Decorator to set _is_setup to `True` after init method is called.
 
     :param func: init function.
     """
@@ -193,8 +140,35 @@ def init_decorator(func):
     @wraps(func)
     def wrapper(self, *args, **kwargs):
         result = func(self, *args, **kwargs)
-        self._is_initialized = True
+        self._is_setup = True
         return result
+
+    return wrapper
+
+
+def serve(f):
+    """Decorator to serve the model on the associated cluster.
+
+    :param f: Method to serve.
+    """
+
+    @wraps(f)
+    def wrapper(self, *args, **kwargs):
+        if (
+            self.serve
+            and self.db is not None
+            and self.db.cluster is not None
+            and self.db.cluster.compute is not None
+        ):
+            logging.info('Using remote method on cluster serving...')
+            return self.db.cluster.compute.remote(
+                self.huuid,
+                f.__name__,
+                *args,
+                **kwargs,
+            )
+        else:
+            return f(self, *args, **kwargs)
 
     return wrapper
 
@@ -205,13 +179,16 @@ class ModelMeta(ComponentMeta):
     def __new__(mcls, name, bases, dct):
         """Create a new class with merged docstrings # noqa."""
         # Ensure the instance is initialized before calling predict/predict_batches
+
         if 'predict' in dct:
-            dct['predict'] = ensure_initialized(dct['predict'])
+            dct['predict'] = serve(ensure_setup(dct['predict']))
+
         if 'predict_batches' in dct:
-            dct['predict_batches'] = ensure_initialized(dct['predict_batches'])
-        # If instance call init method, set _is_initialized to True
-        if 'init' in dct:
-            dct['init'] = init_decorator(dct['init'])
+            dct['predict_batches'] = serve(ensure_setup(dct['predict_batches']))
+
+        # If instance call init method, set _is_setup to True
+        if 'setup' in dct:
+            dct['setup'] = init_decorator(dct['setup'])
         cls = super().__new__(mcls, name, bases, dct)
 
         signature = inspect.signature(cls.predict)
@@ -224,6 +201,7 @@ class ModelMeta(ComponentMeta):
                 pos.append(k)
             else:
                 kw.append(k)
+
         if len(pos) == 1 and not kw:
             cls._signature = 'singleton'
         elif pos and not kw:
@@ -240,7 +218,6 @@ class Model(Component, metaclass=ModelMeta):
     """Base class for components which can predict.
 
     :param datatype: DataType instance.
-    :param output_schema: Output schema (mapping of encoders).
     :param model_update_kwargs: The kwargs to use for model update.
     :param predict_kwargs: Additional arguments to use at prediction time.
     :param compute_kwargs: Kwargs used for compute backend job submit.
@@ -257,7 +234,6 @@ class Model(Component, metaclass=ModelMeta):
     breaks: t.ClassVar[t.Sequence] = ('trainer',)
 
     datatype: str | None = None
-    output_schema: t.Optional[t.Dict] = None
     model_update_kwargs: t.Dict = dc.field(default_factory=dict)
     predict_kwargs: t.Dict = dc.field(default_factory=dict)
     compute_kwargs: t.Dict = dc.field(default_factory=dict)
@@ -269,7 +245,7 @@ class Model(Component, metaclass=ModelMeta):
 
     def postinit(self):
         """Post-initialization method."""
-        self._is_initialized = False
+        self._is_setup = False
         if self.datatype is None:
             annotation = self.predict.__annotations__.get('return')
             if annotation is None:
@@ -292,9 +268,7 @@ class Model(Component, metaclass=ModelMeta):
     def cleanup(self):
         """Clean up when the model is deleted."""
         super().cleanup()
-        self.db.cluster.compute.drop_component(
-            self.component, self.identifier
-        )
+        self.db.cluster.compute.drop_component(self.component, self.identifier)
 
     @staticmethod
     def _infer_signature(object):
@@ -322,11 +296,11 @@ class Model(Component, metaclass=ModelMeta):
             self._signature = self._infer_signature(self.predict)
         return self._signature
 
-    def declare_component(self):
+    def on_create(self):
         """Declare model on cluster."""
-        super().declare_component()
-        # TODO why both of these options??
+        super().on_create()
         if self.serve:
+            logging.info(f'Serving model {self.identifier}...')
             self.db.cluster.compute.put_component(self)
 
     @abstractmethod
@@ -341,25 +315,12 @@ class Model(Component, metaclass=ModelMeta):
         """
         pass
 
-    def _wrapper(self, item):
+    def _wrapper(self, item: t.Any):
         """Wrap the item with the model.
 
         :param item: Item to wrap.
         """
-        if self.signature == 'singleton':
-            return self.predict(item)
-        if self.signature == '*args':
-            assert isinstance(item, (list, tuple))
-            return self.predict(*item)
-        if self.signature == '**kwargs':
-            assert isinstance(item, dict)
-            return self.predict(**item)
-        if self.signature == '*args,**kwargs':
-            assert isinstance(item, (list, tuple))
-            assert isinstance(item[0], (list, tuple))
-            assert isinstance(item[1], dict)
-            return self.predict(*item[0], **item[1])
-        raise ValueError(f'Unexpected signature {self.signature}')
+        return method_wrapper(self.predict, item, self.signature)
 
     def predict_batches(self, dataset: t.List) -> t.List:
         """Execute on a series of data points defined in the dataset.
@@ -377,28 +338,6 @@ class Model(Component, metaclass=ModelMeta):
             for i in range(len(dataset)):
                 outputs.append(self._wrapper(dataset[i]))
         return outputs
-
-    @staticmethod
-    def check_input_type(data, signature):
-        """Method to transform data with respect to signature.
-
-        :param data: Data to be transformed
-        :param signature: Data signature for transforming
-        """
-        if signature == 'singleton':
-            return (data,), {}
-        elif signature == '*args':
-            return data, {}
-        elif signature == '**kwargs':
-            return (), data
-        elif signature == '*args,**kwargs':
-            return data[0], data[1]
-        else:
-            raise ValueError(
-                f'Unexpected signature {data}: '
-                f'Possible values: \'*args\', \'**kwargs\', '
-                '\'singleton\', \'*args,**kwargs\'.'
-            )
 
     def validate(self, key, dataset: Dataset, metrics: t.Sequence[Metric]):
         """Validate `dataset` on metrics.
@@ -435,7 +374,7 @@ class Model(Component, metaclass=ModelMeta):
             self.metric_values[f'{dataset.identifier}/{dataset.version}'] = results
 
         # TODO create self.save()
-        self.db.replace(self)
+        self.db.apply(self, jobs=False)
 
     def _create_datasets(self, X, db, select):
         train_dataset = self._create_dataset(
@@ -502,13 +441,7 @@ class Model(Component, metaclass=ModelMeta):
         :param valid_dataset: The validation ``Dataset`` instances to use.
         :param db: The datalayer.
         """
-        assert isinstance(self.trainer, Trainer)
-        if isinstance(self, Component) and self.identifier not in db.show(
-            self.component
-        ):
-            logging.info(f'Adding model {self.identifier} to db')
-            assert isinstance(self, Component)
-            db.apply(self)
+        assert isinstance(self.trainer, Trainer), 'Trainer must be set for `.fit`'
         return self.trainer.fit(
             self,
             train_dataset=train_dataset,
@@ -550,32 +483,14 @@ class Model(Component, metaclass=ModelMeta):
 
 @dc.dataclass(kw_only=True)
 class _DeviceManaged:
-    preferred_devices: t.Sequence[str] = ('cuda', 'mps', 'cpu')
+    preferred_devices: t.List[str] = dc.field(
+        default_factory=lambda: ['cuda', 'mps', 'cpu']
+    )
     device: t.Optional[str] = None
 
     @abstractmethod
     def to(self, device):
         pass
-
-
-class _Node:
-    def __init__(self, position):
-        self.position = position
-
-
-@dc.dataclass
-class IndexableNode:
-    """
-    Base indexable node for `ObjectModel`.
-
-    :param types: Sequence of types
-    """
-
-    types: t.Sequence[t.Type]
-
-    def __getitem__(self, item):
-        assert type(item) in self.types
-        return _Node(item)
 
 
 class ObjectModel(Model):
@@ -603,17 +518,13 @@ class ObjectModel(Model):
         self._inferred_signature = None
 
     @property
-    @ensure_initialized
+    @ensure_setup
     def signature(self):
         if self._inferred_signature is None:
             self._inferred_signature = self._infer_signature(self.object)
         return self._inferred_signature
 
-    @property
-    def outputs(self):
-        """Get an instance of ``IndexableNode`` to index outputs."""
-        return IndexableNode([int])
-
+    # TODO this looks like legacy code.
     @property
     def training_keys(self) -> t.List:
         """Retrieve training keys."""
@@ -639,9 +550,7 @@ class ObjectModel(Model):
         """
         object = self.object
         if self.method is not None:
-            return self.object(*args, **kwargs)
             object = getattr(object, self.method)
-
         return object(*args, **kwargs)
 
 
@@ -663,7 +572,6 @@ class APIBaseModel(Model):
             self.model = self.identifier
         super().postinit()
 
-    @ensure_initialized
     def predict_batches(self, dataset: t.List, *args, **kwargs) -> t.List:
         """Use multi-threading to predict on a series of data points.
 
@@ -752,7 +660,7 @@ class QueryModel(Model):
         if self.preprocess is not None:
             kwargs = self.preprocess(**kwargs)
         select = self.select.set_variables(db=self.db, **kwargs)
-        out = self.db.execute(select)
+        out = select.execute()
         if self.postprocess is not None:
             return self.postprocess(out)
         return out
@@ -808,7 +716,7 @@ class SequentialModel(Model):
         :param kwargs: Keyword arguments to predict on.
         """
         for i, p in enumerate(self.models):
-            assert isinstance(p, Model), f'Expected `Model`, got {type(p)}'
+            assert isreallyinstance(p, Model), f'Expected `Model`, got {type(p)}'
             if i == 0:
                 out = p.predict(*args, **kwargs)
             else:
@@ -830,61 +738,9 @@ class SequentialModel(Model):
         :param dataset: Series of data point to predict on.
         """
         for i, p in enumerate(self.models):
-            assert isinstance(p, Model), f'Expected `Model`, got {type(p)}'
+            assert isreallyinstance(p, Model), f'Expected `Model`, got {type(p)}'
             if i == 0:
                 out = p.predict_batches(dataset)
             else:
                 out = p.predict_batches(out)
         return out
-
-
-class ModelRouter(Model):
-    """ModelRouter component which routes the model to the correct model.
-
-    :param models: A dictionary of models to use
-    :param model: The model to use
-    """
-
-    breaks: t.ClassVar[t.Sequence] = ('models',)
-    models: t.Dict[str, Model]
-    model: str
-
-    def _pre_create(self, db):
-        if not self.datatype:
-            self.datatype = self.models[self.model].datatype
-
-    def predict(self, *args, **kwargs) -> t.Any:
-        """Predict on a single data point.
-
-        :param args: Positional arguments to predict on.
-        :param kwargs: Keyword arguments to predict on.
-        """
-        logging.info(f'Predicting with model {self.model}')
-        return self.models[self.model].predict(*args, **kwargs)
-
-    def fit(self, *args, **kwargs) -> t.Any:
-        """Fit the model on the given data.
-
-        :param args: Arguments to fit on.
-        :param kwargs: Keyword arguments to fit on.
-        """
-        logging.info(f'Fitting with model {self.model}')
-        return self.models[self.model].fit(*args, **kwargs)
-
-    def predict_batches(self, dataset) -> t.List:
-        """Predict on a series of data points defined in the dataset.
-
-        :param dataset: Series of data points to predict on.
-        """
-        logging.info(f'Predicting with model {self.model}')
-        return self.models[self.model].predict_batches(dataset)
-
-    def init(self, db=None):
-        """Initialize the model.
-
-        :param db: DataLayer instance.
-        """
-        if hasattr(self.models[self.model], 'shape'):
-            self.shape = getattr(self.models[self.model], 'shape')
-        self.signature = self.models[self.model].signature
-        self.models[self.model].init()

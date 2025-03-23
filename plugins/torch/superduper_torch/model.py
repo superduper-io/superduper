@@ -8,12 +8,14 @@ from contextlib import contextmanager
 import torch
 from superduper.base.datalayer import Datalayer
 from superduper.base.query_dataset import QueryDataset
-from superduper.components.component import ensure_initialized
+from superduper.components.component import ensure_setup
 from superduper.components.model import (
     Model,
     Signature,
     _DeviceManaged,
+    method_wrapper,
 )
+from superduper.misc.utils import hash_item
 from torch.utils import data
 from tqdm import tqdm
 
@@ -82,13 +84,11 @@ class BasicDataset(data.Dataset):
         return len(self.items)
 
     def __getitem__(self, item):
-        out = self.items[item]
+        item = self.items[item]
         if self.transform is not None:
-            from superduper.components.model import Model
 
-            args, kwargs = Model.handle_input_type(out, self.signature)
-            return self.transform(*args, **kwargs)
-        return out
+            return method_wrapper(self.transform, item, signature=self.signature)
+        return item
 
 
 class TorchModel(Model, _DeviceManaged):
@@ -129,45 +129,101 @@ class TorchModel(Model, _DeviceManaged):
 
     """
 
+    breaks = ('object', 'trainer')
+
     object: torch.nn.Module
     preprocess: t.Optional[t.Callable] = None
-    preprocess_signature: Signature = 'singleton'
     postprocess: t.Optional[t.Callable] = None
-    postprocess_signature: Signature = 'singleton'
-    forward_method: str = '__call__'
-    forward_signature: Signature = 'singleton'
-    train_forward_method: str = '__call__'
-    train_forward_signature: Signature = 'singleton'
+    forward_method: str = 'forward'
+    train_forward_method: str = 'forward'
     train_preprocess: t.Optional[t.Callable] = None
-    train_preprocess_signature: Signature = 'singleton'
     collate_fn: t.Optional[t.Callable] = None
     optimizer_state: t.Optional[t.Any] = None
     loader_kwargs: t.Dict = dc.field(default_factory=lambda: {})
 
-    def init(self):
+    def get_merkle_tree(self, breaks):
+        """Get the merkle tree of the model."""
+        t = super().get_merkle_tree(breaks)
+        self.setup()
+        w = next(iter(self.object.state_dict().values()))
+        model_h = hash_item(w.tolist())
+        t['object'] = model_h
+        return t
+
+    def postinit(self):
+        """Post initialization hook."""
+        self._preprocess_signature = None
+        self._postprocess_signature = None
+        self._forward_signature = None
+        return super().postinit()
+
+    def setup(self):
         """Initialize the model data."""
-        super().init()
+        super().setup()
         if self.optimizer_state is not None:
             self.optimizer.load_state_dict(self.optimizer_state)
         self._validation_set_cache = {}
 
     @property
+    @ensure_setup
+    def preprocess_signature(self):
+        """Infer signature of preprocessor."""
+        if self._preprocess_signature is None and self.preprocess:
+            self._preprocess_signature = self._infer_signature(self.preprocess)
+        return self._preprocess_signature
+
+    @property
+    @ensure_setup
+    def forward_signature(self):
+        """Infer signature of forward pass."""
+        if self._forward_signature is None:
+            self._forward_signature = self._infer_signature(
+                getattr(self.object, self.forward_method)
+            )
+        return self._forward_signature
+
+    @property
+    @ensure_setup
+    def train_forward_signature(self):
+        """Infer signature of train forward pass."""
+        if (
+            self._train_forward_signature is None
+            and self.forward_method != self.train_forward_method
+        ):
+            self._train_forward_signature = self._infer_signature(
+                getattr(self.object, self.train_forward_method)
+            )
+        return self._train_forward_signature
+
+    @property
+    @ensure_setup
+    def train_preprocess_signature(self):
+        """Infer signature of train-preprocessor."""
+        if (
+            self._train_preprocess_signature is None
+            and self.forward_method != self.train_preprocess_method
+        ):
+            self._train_preprocess_signature = self._infer_signature(
+                getattr(self.object, self.train_preprocess_method)
+            )
+        return self._train_preprocess_signature
+
+    @property
+    @ensure_setup
+    def postprocess_signature(self):
+        """Infer signature of postprocessor."""
+        if self._postprocess_signature is None and self.preprocess:
+            self._postprocess_signature = self._infer_signature(self.preprocess)
+        return self._postprocess_signature
+
+    @property
+    @ensure_setup
     def signature(self):
-        """Get the signature of the model."""
+        """Get signature of the model."""
         if self.preprocess:
             return self.preprocess_signature
-        return self.forward_signature
-
-    @signature.setter
-    def signature(self, signature):
-        """Set the signature of the model.
-
-        :param signature: Signature
-        """
-        if self.preprocess:
-            self.preprocess_signature = signature
         else:
-            self.forward_signature = signature
+            return self.forward_signature
 
     def to(self, device):
         """Move the model to a device.
@@ -242,30 +298,43 @@ class TorchModel(Model, _DeviceManaged):
                     io.BytesIO(state.pop('object_bytes'))
                 )
 
-    @ensure_initialized
+    @ensure_setup
     def predict(self, *args, **kwargs):
         """Predict on a single input.
 
         :param args: Input arguments
         :param kwargs: Input keyword arguments
         """
+        if self.signature == 'singleton':
+            item = args[0]
+        elif self.signature == '*args':
+            item = args
+        elif self.signature == '**kwargs':
+            item = kwargs
+        else:
+            assert self.signature == '*args,**kwargs'
+            item = (args, kwargs)
+
         with torch.no_grad(), eval(self.object):
             if self.preprocess is not None:
-                out = self.preprocess(*args, **kwargs)
-                args, kwargs = self.handle_input_type(out, self.signature)
+                item = method_wrapper(
+                    self.preprocess, item, signature=self.preprocess_signature
+                )
+            item = to_device(item, self.device)
+            item = create_batch(item)
 
-            args, kwargs = to_device((args, kwargs), self.device)
-            args, kwargs = create_batch((args, kwargs))
-
-            method = getattr(self.object, self.forward_method)
-            output = method(*args, **kwargs)
+            output = method_wrapper(
+                self.object.forward, item, signature=self.forward_signature
+            )
             output = to_device(output, 'cpu')
-            args = unpack_batch(output)[0]
+            output = unpack_batch(output)[0]
             if self.postprocess is not None:
-                args = self.postprocess(args)
-            return args
+                output = method_wrapper(
+                    self.postprocess, output, signature=self.postprocess_signature
+                )
+            return output
 
-    @ensure_initialized
+    @ensure_setup
     def predict_batches(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
         """Predict on a dataset.
 
@@ -283,17 +352,20 @@ class TorchModel(Model, _DeviceManaged):
             out = []
             for batch in tqdm(loader, total=len(loader)):
                 batch = to_device(batch, device_of(self.object))
-                args, kwargs = self.handle_input_type(batch, self.signature)
-                method = getattr(self.object, self.forward_method)
-                tmp = method(*args, **kwargs, **self.predict_kwargs)
+                tmp = method_wrapper(
+                    getattr(self.object, self.forward_method),
+                    batch,
+                    signature=self.forward_signature,
+                )
                 tmp = to_device(tmp, 'cpu')
                 tmp = unpack_batch(tmp)
                 if self.postprocess:
                     tmp = [
-                        self.handle_input_type(x, self.postprocess_signature)
+                        method_wrapper(
+                            self.postprocess, x, signature=self.postprocess_signature
+                        )
                         for x in tmp
                     ]
-                    tmp = [self.postprocess(*x[0], **x[1]) for x in tmp]
                 out.extend(tmp)
             return out
 

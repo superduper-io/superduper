@@ -1,8 +1,9 @@
-import click
 import dataclasses as dc
 import time
 import typing as t
 from abc import ABC, abstractmethod
+
+import click
 
 from superduper.backends.base.cache import Cache
 from superduper.backends.base.cdc import CDCBackend
@@ -39,7 +40,9 @@ class Cluster(ABC):
 
         :param force: Skip confirmation.
         """
-        if not force and not click.confirm("Are you sure you want to drop the cluster?"):
+        if not force and not click.confirm(
+            "Are you sure you want to drop the cluster?"
+        ):
             return
 
         self.compute.drop()
@@ -77,7 +80,8 @@ class Cluster(ABC):
         self.scheduler.db = value
         self.vector_search.db = value
         self.crontab.db = value
-        self.compute.db = value
+        if self.compute is not None:
+            self.compute.db = value
         self.cdc.db = value
 
     def load_custom_plugins(self):

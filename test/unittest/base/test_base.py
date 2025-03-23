@@ -3,7 +3,7 @@ import json
 import typing as t
 from pprint import pprint
 
-from superduper import CFG, ObjectModel, model
+from superduper import CFG, ObjectModel
 from superduper.base.base import Base
 from superduper.base.constant import KEY_BLOBS, KEY_BUILDS
 from superduper.base.document import Document

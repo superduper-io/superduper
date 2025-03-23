@@ -13,5 +13,5 @@ def test_predict(db):
 
 
 def test_model_as_listener_model(db):
-    model = LLM(identifier="llm", model_name_or_path=TEST_MODEL_NAME)
+    model = LLM(identifier="llm", model_name_or_path=TEST_MODEL_NAME, datatype='str')
     check_llm_as_listener_model(db, model)

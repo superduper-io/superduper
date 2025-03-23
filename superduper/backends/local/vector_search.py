@@ -46,9 +46,14 @@ class LocalVectorSearchBackend(VectorSearchBackend):
         try:
             for identifier in self.db.show('VectorIndex'):
                 try:
-                    vector_index = self.db.load('VectorIndex', identifier=identifier)
+                    vector_index: VectorIndex = self.db.load(
+                        'VectorIndex', identifier=identifier
+                    )
                     self.put_component(vector_index)
-                    vector_index.copy_vectors()
+                    vectors = vector_index.get_vectors()
+                    vectors = [VectorItem(**vector) for vector in vectors]
+                    self.get_tool(vector_index.uuid).add(vectors)
+
                 except FileNotFoundError:
                     logging.error(
                         f'Could not load vector index: {identifier} '

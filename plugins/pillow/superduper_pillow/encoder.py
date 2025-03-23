@@ -1,12 +1,10 @@
 import io
-import typing as t
 
 import PIL.Image
 import PIL.JpegImagePlugin
 import PIL.PngImagePlugin
 from superduper.base.datatype import (
     BaseDataType,
-    DataTypeFactory,
     _Artifact,
     _Encodable,
 )
@@ -22,7 +20,7 @@ class _PILImageMixin(BaseDataType):
         item.save(buffer, 'png')
         return buffer.getvalue()
 
-    def decode_data(self, item):
+    def _decode_data(self, item):
         """Decode the data.
 
         :param item: The data to decode.
@@ -44,27 +42,5 @@ class PILImageHybrid(_Artifact, _PILImageMixin, BaseDataType):
     """PIL Images saved as artifacts."""
 
 
-pil_image = PILImage('pil_image')
-pil_image_hybrid = PILImage('pil_image_hybrid')
-
-
-class PilDataTypeFactory(DataTypeFactory):
-    """A factory for pil image # noqa."""
-
-    @staticmethod
-    def check(data: t.Any) -> bool:
-        """Check if the data is a image.
-
-        It's used for registering the auto schema.
-        :param data: The data to check.
-        """
-        return isinstance(data, PIL.Image.Image)
-
-    @staticmethod
-    def create(data: t.Any) -> BaseDataType:
-        """Create a pil_image datatype.
-
-        It's used for registering the auto schema.
-        :param data: The image data.
-        """
-        return pil_image
+pil_image = PILImage()
+pil_image_hybrid = PILImageHybrid()

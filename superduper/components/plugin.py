@@ -25,7 +25,7 @@ class Plugin(Component):
 
     def postinit(self):
         """Post initialization method."""
-        self.init()
+        self.setup()
         self._prepare_plugin()
 
         path_name = os.path.basename(self.path.rstrip("/"))

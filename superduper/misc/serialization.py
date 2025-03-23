@@ -43,12 +43,13 @@ def asdict(obj, *, copy_method=copy.copy) -> t.Dict[str, t.Any]:
 def _asdict_inner(obj, dict_factory, copy_method, top=False) -> t.Any:
     from superduper.base import Base
     from superduper.base.datatype import Saveable
+    from superduper.misc.importing import isreallyinstance
 
     if type(obj) in _ATOMIC_TYPES:
         return obj
-    elif not top and isinstance(obj, Base):
+    elif not top and isreallyinstance(obj, Base):
         return obj
-    elif not top and isinstance(obj, Saveable):
+    elif not top and isreallyinstance(obj, Saveable):
         return obj
     elif dc.is_dataclass(obj) and not isinstance(obj, type):
         # fast path for the common case

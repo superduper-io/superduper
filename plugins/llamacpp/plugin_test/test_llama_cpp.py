@@ -14,7 +14,7 @@ def test_llama():
         self._model = _MockedLlama()
         self.predict_kwargs = {}
 
-    LlamaCpp.init = mocked_init
+    LlamaCpp.setup = mocked_init
 
     llama = LlamaCpp(
         identifier='myllama',

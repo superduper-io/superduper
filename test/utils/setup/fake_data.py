@@ -58,40 +58,35 @@ def add_datatypes(db: Datalayer):
 
 
 def add_models(db: Datalayer):
-    # identifier, weight_shape, encoder
-    # params = [
-    #     ["linear_a", (32, 16), Array(dtype="float", shape=(16,)), False],
-    #     ["linear_a_multi", (32, 16), Array(dtype="float", shape=(16,)), True],
-    #     ["linear_b", (16, 8), Array(dtype="float", shape=(8,)), False],
-    #     ["linear_b_multi", (16, 8), Array(dtype="float", shape=(8,)), True],
-    # ]
 
-    params = [
-        ["linear_a", (32, 16), 'vector[float:16]', False],
-        ["linear_a_multi", (32, 16), 'vector[float:16]', True],
-        ["linear_b", (16, 8), 'vector[float:8]', False],
-        ["linear_b_multi", (16, 8), 'vector[float:8]', True],
-    ]
-    for identifier, weight_shape, datatype, flatten in params:
-        weight = np.random.randn(weight_shape[1])
+    m1 = ObjectModel(
+        object=lambda x: np.dot(x, np.random.randn(32, 16)),
+        identifier="linear_a",
+        datatype="vector[float:16]",
+    )
 
-        if flatten:
-            weight = np.random.randn(weight_shape[1])
-            m = ObjectModel(
-                object=lambda x: list(np.outer(x, weight)),
-                identifier=identifier,
-                datatype=datatype,
-                example=np.random.randn(weight_shape[0]),
-            )
-        else:
-            weight = np.random.randn(*weight_shape)
-            m = ObjectModel(
-                object=lambda x: np.dot(x, weight),
-                identifier=identifier,
-                datatype=datatype,
-                example=np.random.randn(weight_shape[0]),
-            )
-        db.apply(m)
+    m2 = ObjectModel(
+        object=lambda x: np.outer(x, np.random.randn(16)),
+        identifier="linear_a_multi",
+        datatype="vector[float:16]",
+    )
+
+    m3 = ObjectModel(
+        object=lambda x: np.dot(x, np.random.randn(16, 8)),
+        identifier="linear_b",
+        datatype="vector[float:8]",
+    )
+
+    m4 = ObjectModel(
+        object=lambda x: np.outer(x, np.random.randn(8)),
+        identifier="linear_b_multi",
+        datatype="vector[float:8]",
+    )
+
+    db.apply(m1)
+    db.apply(m2)
+    db.apply(m3)
+    db.apply(m4)
 
     db.show()
 
@@ -99,7 +94,6 @@ def add_models(db: Datalayer):
 def add_listeners(db: Datalayer, collection_name="documents"):
     add_models(db)
     model = db.load("ObjectModel", "linear_a")
-    model.example = np.random.randn(32)
     select = db[collection_name].select()
 
     i_list = Listener(
@@ -142,9 +136,6 @@ def add_vector_index(
     try:
         i_list = db.load("Listener", "vector-x")
         c_list = db.load("Listener", "vector-y")
-        import pdb
-
-        pdb.set_trace()
     except NonExistentMetadataError:
         i_list, c_list, _ = add_listeners(db)
 

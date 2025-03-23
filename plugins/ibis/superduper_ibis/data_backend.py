@@ -5,6 +5,7 @@ import uuid
 import click
 import ibis
 import pandas
+from ibis.common.exceptions import TableNotFound
 from sqlalchemy import MetaData, Table, create_engine
 from sqlalchemy.exc import NoSuchTableError
 from sqlalchemy.orm import sessionmaker
@@ -85,7 +86,7 @@ class IbisDataBackend(BaseDataBackend):
         try:
             self.conn.table(f"{CFG.output_prefix}{predict_id}")
             return True
-        except (NoSuchTableError, ibis.IbisError):
+        except (NoSuchTableError, ibis.IbisError, TableNotFound):
             return False
 
     def create_table_and_schema(self, identifier: str, schema: Schema, primary_id: str):

@@ -289,10 +289,10 @@ def test_model_fit(db):
         model.fit.assert_called_once()
 
     with patch.object(model, 'validate'):
-        with patch.object(db, 'replace'):
+        with patch.object(model.db, 'apply'):
             model.validate_in_db()
             model.validate.assert_called_once()
-            model.db.replace.assert_called_once()
+            model.db.apply.assert_called_once()
 
 
 @pytest.mark.skip

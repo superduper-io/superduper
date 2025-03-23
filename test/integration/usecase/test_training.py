@@ -14,7 +14,7 @@ class MyTrainer(Trainer):
     def fit(self, model, db, train_dataset, valid_dataset):
         X, y = list(zip(*list(train_dataset)))
         model.estimator.fit(X, y)
-        db.replace(model)
+        db.apply(model, force=True, jobs=False)
 
 
 class MyModel(Model):

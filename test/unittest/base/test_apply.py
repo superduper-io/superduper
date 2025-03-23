@@ -28,7 +28,7 @@ class MyComponent(Component):
     def validate_in_db(self):
         if isinstance(self.sub, MyValidator):
             self.validate_results = self.sub.run(self)
-            self.db.replace(self)
+            self.db.apply(self, jobs=False)
         return self.validate_results
 
 

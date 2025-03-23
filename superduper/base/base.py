@@ -49,13 +49,12 @@ class BaseMeta(type):
         dataclass_params = namespace.get('_dataclass_params', {}).copy()
         if bases and any(dc.is_dataclass(b) for b in bases) and not is_base:
             dataclass_params['kw_only'] = True
-            dataclass_params['repr'] = not name.endswith('Query')
             # Derived classes: kw_only=True
         else:
             # Base class: kw_only=False
             dataclass_params['kw_only'] = False
 
-        cls = dc.dataclass(**dataclass_params)(
+        cls = dc.dataclass(**dataclass_params, repr=False)(
             super().__new__(mcs, name, bases, namespace)
         )
 
@@ -83,6 +82,7 @@ class BaseMeta(type):
 class Base(metaclass=BaseMeta):
     """Base class for all superduper classes."""
 
+    verbosity: t.ClassVar[int] = 0
     set_post_init: t.ClassVar[t.Sequence[str]] = ()
 
     @lazy_classproperty
@@ -102,6 +102,7 @@ class Base(metaclass=BaseMeta):
         named_fields = cls._new_fields
         for f in named_fields:
             fields[f] = INBUILT_DATATYPES[named_fields[f]]
+
         out = Schema(fields=fields)
         return out
 
@@ -342,7 +343,7 @@ class Base(metaclass=BaseMeta):
         }
         return cls(**modified)
 
-    def init(self, db=None):
+    def setup(self, db=None):
         """Initialize object.
 
         :param db: Datalayer instance.

@@ -7,9 +7,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from superduper import logging
 from superduper.backends.base.backends import Bookkeeping
 from superduper.backends.base.crontab import CrontabBackend
-
-if t.TYPE_CHECKING:
-    from superduper.components.cron_job import CronJob
+from superduper.components.cron_job import CronJob
 
 
 class JobWrapper:
@@ -53,6 +51,8 @@ class JobWrapper:
 class LocalCrontabBackend(Bookkeeping, CrontabBackend):
     """Local crontab backend."""
 
+    cls = CronJob
+
     def __init__(self):
         Bookkeeping.__init__(self)
         CrontabBackend.__init__(self)
@@ -66,13 +66,4 @@ class LocalCrontabBackend(Bookkeeping, CrontabBackend):
 
     def initialize(self):
         """Initialize the crontab."""
-        for component_data in self.db.show():
-            component = component_data['component']
-            identifier = component_data['identifier']
-            r = self.db.show(component=component, identifier=identifier, version=-1)
-            if r.get('schedule'):
-                obj = self.db.load(component=component, identifier=identifier)
-                from superduper.components.cron_job import CronJob
-
-                if isinstance(obj, CronJob):
-                    self.put_component(obj)
+        self.initialize_with_components()

@@ -1,34 +1,38 @@
 {
-  "_path": "superduper.components.template.Template",
   "identifier": "llm-finetune",
   "upstream": null,
-  "plugins": null,
   "cache": true,
+  "status": null,
   "build_variables": null,
   "build_template": null,
   "template": {
-    "_base": "?llm",
+    "identifier": "llm",
+    "upstream": null,
+    "cache": true,
+    "status": null,
+    "build_variables": null,
+    "build_template": null,
+    "components": [
+      "?LLM:llm"
+    ],
+    "link": null,
+    "_path": "superduper.components.application.Application",
+    "version": null,
     "_builds": {
-      "sample-llm-finetuning-select": {
-        "_path": "superduper_<var:databackend>.query.parse_query",
-        "documents": [],
-        "query": "<var:table_name>.select()"
-      },
-      "trainer:llm-finetune-trainer": {
-        "_path": "superduper_transformers.training.LLMTrainer",
+      "LLMTrainer:llm-finetune-trainer": {
         "upstream": null,
-        "plugins": null,
         "cache": true,
+        "status": "ready",
         "build_variables": null,
         "build_template": null,
         "key": "text",
-        "select": "?sample-llm-finetuning-select",
+        "select": {
+          "_path": "superduper.base.query.parse_query",
+          "documents": [],
+          "query": "<var:table_name>"
+        },
         "transform": null,
         "metric_values": {},
-        "signature": "*args",
-        "data_prefetch": false,
-        "prefetch_size": 1000,
-        "prefetch_factor": 100,
         "in_memory": true,
         "compute_kwargs": {},
         "validation": null,
@@ -37,7 +41,7 @@
         "do_train": false,
         "do_eval": false,
         "do_predict": false,
-        "eval_strategy": "no",
+        "eval_strategy": "&:blob:9390298f3fb0c5b160498935d79cb139aef28e1c47358b4bbba61862b9c26e59",
         "prediction_loss_only": false,
         "per_device_train_batch_size": 1,
         "per_device_eval_batch_size": 1,
@@ -55,19 +59,19 @@
         "max_grad_norm": 1.0,
         "num_train_epochs": "<var:num_train_epochs>",
         "max_steps": -1,
-        "lr_scheduler_type": "linear",
-        "lr_scheduler_kwargs": {},
+        "lr_scheduler_type": "&:blob:7f2fe580edb35154041fa3d4b41dd6d3adaef0c85d2ff6309f1d4b520eeecda3",
+        "lr_scheduler_kwargs": "&:blob:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
         "warmup_ratio": 0.0,
         "warmup_steps": 0,
         "log_level": "passive",
         "log_level_replica": "warning",
         "log_on_each_node": true,
         "logging_dir": null,
-        "logging_strategy": "steps",
+        "logging_strategy": "&:blob:b7595e2a863957fc6c225ed540d335dd1e859dd3032451c2e11bceb0329defa6",
         "logging_first_step": false,
         "logging_steps": 1,
         "logging_nan_inf_filter": true,
-        "save_strategy": "steps",
+        "save_strategy": "&:blob:b7595e2a863957fc6c225ed540d335dd1e859dd3032451c2e11bceb0329defa6",
         "save_steps": 100,
         "save_total_limit": 10,
         "save_safetensors": true,
@@ -92,7 +96,7 @@
         "ddp_backend": null,
         "tpu_num_cores": null,
         "tpu_metrics_debug": false,
-        "debug": "",
+        "debug": "&:blob:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         "dataloader_drop_last": false,
         "eval_steps": 100,
         "dataloader_num_workers": 0,
@@ -106,14 +110,14 @@
         "metric_for_best_model": null,
         "greater_is_better": null,
         "ignore_data_skip": false,
-        "fsdp": "",
+        "fsdp": "&:blob:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         "fsdp_min_num_params": 0,
         "fsdp_config": null,
         "fsdp_transformer_layer_cls_to_wrap": null,
         "accelerator_config": null,
         "deepspeed": null,
         "label_smoothing_factor": 0.0,
-        "optim": "adamw_torch",
+        "optim": "&:blob:c670665af78409281e1767ca2d45cf52431f9983ab6dda13f78097301aa862ba",
         "optim_args": null,
         "adafactor": false,
         "group_by_length": false,
@@ -129,7 +133,7 @@
         "push_to_hub": false,
         "resume_from_checkpoint": null,
         "hub_model_id": null,
-        "hub_strategy": "every_save",
+        "hub_strategy": "&:blob:b1a1eac1c9123818b175b3dd7b05f8a6042ce0a40d34c4b04805f45cbc3123cd",
         "hub_token": null,
         "hub_private_repo": null,
         "hub_always_push": false,
@@ -139,7 +143,7 @@
         "include_for_metrics": [],
         "eval_do_concat_batches": true,
         "fp16_backend": "auto",
-        "evaluation_strategy": "steps",
+        "evaluation_strategy": "&:blob:b7595e2a863957fc6c225ed540d335dd1e859dd3032451c2e11bceb0329defa6",
         "push_to_hub_model_id": null,
         "push_to_hub_organization": null,
         "push_to_hub_token": null,
@@ -168,8 +172,8 @@
         "lora_r": 8,
         "lora_alpha": 16,
         "lora_dropout": 0.05,
-        "lora_target_modules": "all-linear",
-        "lora_bias": "none",
+        "lora_target_modules": "&:blob:fe2d01de4181686ab3446912f6b2a6f37c94ceb41b6da8d772951878450be403",
+        "lora_bias": "&:blob:140bedbf9c3f6d56a9846d2ba7088798683f4da0c248231336e6a05679e4fdfe",
         "bits": null,
         "max_seq_length": 512,
         "setup_chat_format": false,
@@ -178,18 +182,17 @@
           "dataset_text_field": "text"
         },
         "num_gpus": null,
-        "ray_configs": null
+        "ray_configs": null,
+        "_path": "superduper_transformers.training.LLMTrainer",
+        "version": 0
       },
-      "model:llm": {
-        "_path": "superduper_transformers.model.LLM",
+      "LLM:llm": {
         "upstream": null,
-        "plugins": null,
         "cache": true,
+        "status": "initializing",
         "build_variables": null,
         "build_template": null,
-        "signature": "singleton",
         "datatype": null,
-        "output_schema": null,
         "model_update_kwargs": {},
         "predict_kwargs": {},
         "compute_kwargs": {},
@@ -197,32 +200,18 @@
         "metric_values": {},
         "num_workers": 0,
         "serve": false,
-        "trainer": "?trainer:llm-finetune-trainer",
-        "deploy": false,
+        "trainer": "?LLMTrainer:llm-finetune-trainer",
         "prompt": "{input}",
         "prompt_func": null,
         "max_batch_size": 4,
+        "signature": "&:blob:e234ee35f82c5dd3f2f20ef0835225e326805e56b5fe83ee5e56c0f899f4901d",
         "model_name_or_path": "<var:model_name>",
         "adapter_id": null,
-        "model_kwargs": "&:blob:4a8dc14137b3a79a81256a795b266fe82bda52d9",
-        "tokenizer_kwargs": "&:blob:4a8dc14137b3a79a81256a795b266fe82bda52d9",
-        "prompt_template": "{input}"
-      },
-      "llm": {
-        "_path": "superduper.components.application.Application",
-        "upstream": null,
-        "plugins": null,
-        "cache": true,
-        "build_variables": null,
-        "build_template": null,
-        "components": [
-          "?model:llm"
-        ],
-        "namespace": null,
-        "link": null,
-        "_literals": [
-          "template"
-        ]
+        "model_kwargs": {},
+        "tokenizer_kwargs": {},
+        "prompt_template": "{input}",
+        "_path": "superduper_transformers.model.LLM",
+        "version": 0
       }
     }
   },
@@ -255,61 +244,41 @@
     }
   },
   "schema": null,
-  "blobs": null,
-  "files": null,
+  "blobs": "&:blob:4e9157ba3cee600e3214b56a9fcd5fa0dae169cab328b746c640a12672495ae7",
+  "files": {},
   "requirements": null,
   "default_tables": [
-    "?table:sample_llm_finetuning"
+    "?Table:sample_llm_finetuning"
   ],
-  "staged_file": null,
-  "queries": null,
-  "_literals": [
-    "template"
-  ],
+  "_path": "superduper.components.template.Template",
+  "version": null,
   "_builds": {
-    "str": {
-      "_path": "superduper.components.schema.FieldType",
-      "uuid": "f72550a4180342bc"
-    },
-    "int": {
-      "_path": "superduper.components.schema.FieldType",
-      "uuid": "5be8adbcd3004bd6"
-    },
-    "schema:sample_llm_finetuning/schema": {
-      "_path": "superduper.components.schema.Schema",
-      "uuid": "02430df9bc634f06",
+    "RemoteData:llm_finetuning": {
       "upstream": null,
-      "plugins": null,
       "cache": true,
+      "status": null,
+      "build_variables": null,
+      "build_template": null,
+      "getter": "&:blob:5abdaf0dec3ec7012578b4005c7ef1ee5d367eff0b0d8ccf3c6391a7c24281c6",
+      "_path": "superduper.components.dataset.RemoteData",
+      "version": null
+    },
+    "Table:sample_llm_finetuning": {
+      "upstream": null,
+      "cache": true,
+      "status": null,
       "build_variables": null,
       "build_template": null,
       "fields": {
-        "x": "?str",
-        "y": "?int",
-        "_fold": "?str"
-      }
-    },
-    "dataset:llm_finetuning": {
-      "_path": "superduper.components.dataset.RemoteData",
-      "uuid": "f526f2de91aa4626",
-      "upstream": null,
-      "plugins": null,
-      "cache": true,
-      "build_variables": null,
-      "build_template": null,
-      "getter": "&:blob:ece827e1ae054fde4a3fbbd7bbadd73e060c0db1"
-    },
-    "table:sample_llm_finetuning": {
-      "_path": "superduper.components.table.Table",
-      "uuid": "eb4ce83f70274579",
-      "upstream": null,
-      "plugins": null,
-      "cache": true,
-      "build_variables": null,
-      "build_template": null,
-      "schema": "?schema:sample_llm_finetuning/schema",
+        "x": "str",
+        "y": "int"
+      },
       "primary_id": "id",
-      "data": "?dataset:llm_finetuning"
+      "data": "?RemoteData:llm_finetuning",
+      "path": null,
+      "component": false,
+      "_path": "superduper.components.table.Table",
+      "version": null
     }
   },
   "_files": {}

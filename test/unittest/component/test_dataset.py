@@ -24,6 +24,7 @@ def test_dataset_pin(db, pin):
         identifier="test_dataset",
         select=select,
         pin=pin,
+        db=db,
     )
     db.apply(d)
     assert db.show("Dataset") == ["test_dataset"]
@@ -31,7 +32,7 @@ def test_dataset_pin(db, pin):
     new_datas = [{"x": i, "y": [1, 2, 3]} for i in range(10, 20)]
     db["documents"].insert(new_datas)
     dataset: Dataset = db.load("Dataset", "test_dataset")
-    dataset.init()
+    dataset.setup()
     if pin:
         len(dataset.data) == 10
     else:

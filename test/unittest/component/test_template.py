@@ -52,7 +52,7 @@ def test_basic_template(db):
 
     db.apply(listener)
 
-    listener.init()
+    listener.setup()
     assert listener.model.object(3) == 5
 
     # Check listener outputs with key and model_id

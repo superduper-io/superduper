@@ -6,7 +6,7 @@ from functools import reduce
 from logging import WARNING, getLogger
 
 from superduper import logging
-from superduper.components.component import ensure_initialized
+from superduper.components.component import ensure_setup
 from superduper.components.llm.prompter import Prompter
 from superduper.components.model import Model
 
@@ -46,7 +46,6 @@ class BaseLLM(Model):
         """
         return [self._generate(prompt, **self.predict_kwargs) for prompt in prompts]
 
-    @ensure_initialized
     def predict(self, X: t.Union[str, dict[str, str]], context=None, **kwargs):
         """Generate text from a single input.
 
@@ -58,7 +57,6 @@ class BaseLLM(Model):
         x = self.prompter(X, context=context, **kwargs)
         return self._generate(x, **kwargs)
 
-    @ensure_initialized
     def predict_batches(self, dataset: t.List, **kwargs) -> t.Sequence:
         """Generate text from a dataset.
 
@@ -99,7 +97,7 @@ class BaseLLMAPI(BaseLLM):
 
     api_url: str = dc.field(default="")
 
-    def init(self):
+    def setup(self):
         """Initialize the model."""
         pass
 

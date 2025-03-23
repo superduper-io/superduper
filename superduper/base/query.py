@@ -21,6 +21,7 @@ from superduper.base.base import Base
 from superduper.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES, KEY_PATH
 from superduper.base.document import Document, _unpack
 from superduper.base.metadata import NonExistentMetadataError
+from superduper.base.schema import Schema
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
@@ -304,8 +305,8 @@ def insert(self, documents, raw: bool = False):
         raise NonExistentMetadataError(
             f'You tried to insert into a table that does not exist: {self.table}. '
             f'To generate inline use `db.insert` instead.'
-            f'Table {self.table} does not exist'
         ) from e
+
     out = self.db.databackend._do_insert(self.table, documents, raw=raw)
     self.db.post_insert(self.table, ids=out)
     return out

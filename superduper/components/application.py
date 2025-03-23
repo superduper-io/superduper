@@ -17,12 +17,16 @@ class Application(Component):
     :param components: List of components to group together and apply to `superduper`.
     :param link: A reference link to web app serving the application
                  i.e. streamlit, gradio, etc
+    :param build_variables: Variables which were supplied to a template to build.
+    :param build_template: Template which was used to build.
     """
 
     breaks: t.ClassVar[t.Sequence[str]] = ('components',)
 
     components: t.List[Component]
     link: t.Optional[str] = None
+    build_variables: t.Dict | None = None
+    build_template: str | None = None
 
     @classmethod
     def build_from_db(cls, identifier, db: "Datalayer"):
@@ -96,5 +100,5 @@ class Application(Component):
         )
         logging.info(f"Components: \n{components_strings}")
         app = cls(identifier=identifier, components=components)
-        app.init(db)
+        app.setup(db)
         return app

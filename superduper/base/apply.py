@@ -20,11 +20,21 @@ if t.TYPE_CHECKING:
 _WAIT_TIMEOUT = 60
 
 
+class HashingError(Exception):
+    """Raised when hashing is not deterministic.
+
+    # noqa
+    """
+
+    pass
+
+
 def apply(
     db: 'Datalayer',
     object: t.Union['Component', t.Sequence[t.Any], t.Any],
     force: bool | None = None,
     wait: bool = False,
+    jobs: bool = True,
 ) -> 'Component':
     """
     Add functionality in the form of components.
@@ -37,20 +47,20 @@ def apply(
     :param force: List of jobs which should execute before component
                   initialization begins.
     :param wait: Blocks execution till create events finish.
+    :param jobs: Whether to execute jobs or not.
     """
-    if force is None:
-        force = db.cfg.force_apply
-
     if not isinstance(object, Component):
         raise ValueError('Only components can be applied')
 
-    # This populates the component with data fetched
-    # from `db` if necessary
-    # We need pre as well as post-create, since the order
-    # between parents and children are reversed in each
-    # sometimes parents might need to grab things from children
-    # and vice-versa
-    object.pre_create(db)
+    if object.uuid != object.uuid:
+        raise HashingError(
+            'The component you specified did not yield a deterministic hash. '
+            'This is a requirement for the object to be stored in the '
+            'system. Modify your classes and check `object.uuid`.'
+        )
+
+    if force is None:
+        force = db.cfg.force_apply
 
     # This holds a record of the changes
     diff: t.Dict = {}
@@ -63,6 +73,10 @@ def apply(
         global_diff=diff,
         non_breaking_changes={},
     )
+
+    if not jobs:
+        job_events = {}
+
     # this flags that the context is not needed anymore
     if not create_events:
         logging.info('No changes needed, doing nothing!')

@@ -23,8 +23,8 @@ def test_encode_and_decode(component: Component):
     assert json.dumps(_bytes_to_base64(deepcopy(encode_data)))
 
     # Make sure that the data can be decoded to the same component
-    load_component = Document.decode(encode_data).unpack()
-    load_component.init()
+    load_component = Component.decode(encode_data)
+    load_component.setup()
 
     assert type(load_component) is type(component)
     assert load_component.metadata == component.metadata

@@ -29,7 +29,7 @@ class Anthropic(APIBaseModel):
         self.model = self.model or self.identifier
         super().postinit()
 
-    def init(self, db=None):
+    def setup(self, db=None):
         """Initialize the model.
 
         :param db: The database to use.
@@ -37,7 +37,7 @@ class Anthropic(APIBaseModel):
         self.client = anthropic.Anthropic(
             api_key=os.environ[KEY_NAME], **self.client_kwargs
         )
-        super().init(db=db)
+        super().setup(db=db)
 
 
 class AnthropicCompletions(Anthropic):

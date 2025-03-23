@@ -38,6 +38,7 @@ class Job(Base):
     context: str
     component: str
     identifier: str
+    uuid: str
     args: t.List = dc.field(default_factory=list)
     kwargs: t.Dict = dc.field(default_factory=dict)
     time: str = dc.field(default_factory=lambda: str(datetime.datetime.now))

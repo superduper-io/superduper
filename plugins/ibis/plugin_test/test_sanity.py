@@ -7,11 +7,7 @@ class New(Base):
 
 def test(db):
 
-    data = [
-        New(a='a'),
-        New(a='b'),
-        New(a='c').dict(path=False),
-    ]
+    data = [New(a='a'), New(a='b'), New(a='c')]
 
     db.insert(data)
 

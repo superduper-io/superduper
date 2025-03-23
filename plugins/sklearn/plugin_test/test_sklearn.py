@@ -119,5 +119,5 @@ def test_sklearn(db):
     assert db.show('Estimator') == ['test']
 
     reloaded = db.load('Estimator', identifier='test')
-    reloaded.init()
+    reloaded.setup()
     assert isinstance(reloaded.object, SVC)

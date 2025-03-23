@@ -47,7 +47,7 @@ class IndexableDict(OrderedDict):
 
 
 # TODO - incorporate into `Document`
-class MongoStyleDict(t.Dict[str, t.Any]):
+class DeepKeyedDict(t.Dict[str, t.Any]):
     """Dictionary object mirroring how MongoDB handles fields.
 
     :param args: *args for `dict`
@@ -60,7 +60,7 @@ class MongoStyleDict(t.Dict[str, t.Any]):
         :param deep: `bool` whether to iterate over all nested key-value pairs.
         """
         for key, value in super().items():
-            if deep and isinstance(value, MongoStyleDict):
+            if deep and isinstance(value, DeepKeyedDict):
                 for sub_key, sub_value in value.items(deep=True):
                     yield f'{key}.{sub_key}', sub_value
             else:
@@ -72,7 +72,7 @@ class MongoStyleDict(t.Dict[str, t.Any]):
         :param deep: `bool` whether to iterate over all nested keys.
         """
         for key in super().keys():
-            if deep and isinstance(self[key], MongoStyleDict):
+            if deep and isinstance(self[key], DeepKeyedDict):
                 for sub_key in self[key].keys(deep=True):
                     yield f'{key}.{sub_key}'
             else:
@@ -91,7 +91,7 @@ class MongoStyleDict(t.Dict[str, t.Any]):
                 parts = key.split('.')
                 parent = parts[0]
                 child = '.'.join(parts[1:])
-                sub = MongoStyleDict(self.__getitem__(parent))
+                sub = DeepKeyedDict(self.__getitem__(parent))
                 return sub[child]
 
     def __setitem__(self, key: str, value: t.Any) -> None:
@@ -101,9 +101,9 @@ class MongoStyleDict(t.Dict[str, t.Any]):
             parent = key.split('.')[0]
             child = '.'.join(key.split('.')[1:])
             try:
-                parent_item = MongoStyleDict(self[parent])
+                parent_item = DeepKeyedDict(self[parent])
             except KeyError:
-                parent_item = MongoStyleDict({})
+                parent_item = DeepKeyedDict({})
             parent_item[child] = value
             self[parent] = parent_item
 
@@ -142,113 +142,6 @@ def _diff_impl(r1, r2):
             continue
         out.extend([([k, *x[0]], x[1], x[2]) for x in _diff_impl(r1[k], r2[k])])
     return out
-
-
-def _childrens(tree, object, nesting=1):
-    if not object.get('_builds', False) or not nesting:
-        return
-    for name, child in object.builds.items():
-        identifier = child.get('uuid', None)
-        child_text = f"{name}: {child.get('_path', '__main__')}({identifier})"
-        subtree = tree.add(Text(child_text, style="yellow"))
-        for key, value in child.items():
-            key_text = Text(f"{key}", style="magenta")
-            value_text = Text(f": {value}", style="blue")
-            subtree.add(Text.assemble(key_text, value_text))
-        _childrens(subtree, child, nesting=nesting - 1)
-
-
-def _component_metadata(obj):
-    metadata = []
-    variables = obj.variables
-    if variables:
-        variable = "[yellow]Variables[/yellow]"
-        metadata.append(variable)
-        for var in variables:
-            metadata.append(f"[magenta]{var}[/magenta]")
-        metadata.append('\n')
-
-    def _all_leaves(obj):
-        result = []
-        if not obj.leaves:
-            return result
-        for name, leaf in obj.leaves.items():
-            tmp = _all_leaves(leaf)
-            result.extend([f'{name}.{x}' for x in tmp])
-            result.append(name)
-        return result
-
-    metadata.append("[yellow]Leaves[/yellow]")
-    rleaves = _all_leaves(obj)
-    obj_leaves = list(obj.leaves.keys())
-    for leaf in rleaves:
-        if leaf in obj_leaves:
-            metadata.append(f"[green]{leaf}[/green]")
-        else:
-            metadata.append(f"[magenta]{leaf}[/magenta]")
-    metadata = "\n".join(metadata)
-    return metadata
-
-
-def _display_component(obj, verbosity=1):
-    from superduper.base.base import Base
-
-    console = Console()
-
-    MAX_STR_LENGTH = 50
-
-    def _handle_list(lst):
-        handled_list = []
-        for item in lst:
-            if isinstance(item, Base):
-                if len(str(item)) > MAX_STR_LENGTH:
-                    handled_list.append(str(item)[:MAX_STR_LENGTH] + "...")
-                else:
-                    handled_list.append(str(item))
-            elif isinstance(item, (list, tuple)):
-                handled_list.append(_handle_list(item))
-            else:
-                handled_list.append(str(item))
-        return handled_list
-
-    def _component_info(obj):
-        base_component = []
-        for key, value in obj.__dict__.items():
-            if value is None:
-                continue
-            if isinstance(value, Base):
-                if len(str(value)) > MAX_STR_LENGTH:
-                    value = str(value)[:MAX_STR_LENGTH] + "..."
-                else:
-                    value = str(value)
-            elif isinstance(value, (tuple, list)):
-                value = _handle_list(value)
-            base_component.append(f"[magenta]{key}[/magenta]: [blue]{value}[/blue]")
-
-        base_component = "\n".join(base_component)
-        return base_component
-
-    base_component = _component_info(obj)
-    base_component_metadata = _component_metadata(obj)
-
-    properties_panel = Panel(
-        base_component, title=obj.identifier, border_style="bold green"
-    )
-
-    if verbosity > 1:
-        tree = Tree(
-            Text(f'Component Map: {obj.identifier}', style="bold green"),
-            guide_style="bold green",
-        )
-        _childrens(tree, obj.encode(), nesting=verbosity - 1)
-
-    additional_info_panel = Panel(
-        base_component_metadata, title="Component Metadata", border_style="blue"
-    )
-    panels = Columns([properties_panel, additional_info_panel])
-    console.print(panels)
-    if verbosity > 1:
-        console.print(tree)
 
 
 # TODO: Use this function to replace the similar logic in codebase

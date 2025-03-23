@@ -147,7 +147,7 @@ def test_encode_model(db):
 
     print(decoded_r)
 
-    m = decoded_r.init()
+    m = decoded_r.setup()
 
     assert isinstance(m, ObjectModel)
     assert callable(m.object)

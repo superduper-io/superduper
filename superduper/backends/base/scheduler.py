@@ -91,9 +91,7 @@ class Future:
     job_id: str
 
 
-def _consume_event_type(
-    event_type, ids, table, db: 'Datalayer'
-):
+def _consume_event_type(event_type, ids, table, db: 'Datalayer'):
     # contains all components triggered by the table
     # and all components triggered by the output of these components etc.
     # "uuid" -> dict("trigger_method": future)

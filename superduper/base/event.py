@@ -20,7 +20,6 @@ class Event(ABC):
         _base_dict = dc.asdict(self)
         if 'time' in _base_dict:
             _base_dict['time'] = str(_base_dict['time'])
-        _base_dict.pop('dependencies', None)
         return {
             **_base_dict,
             'genus': self.genus,
@@ -246,7 +245,7 @@ class Job(Event):
     job_id: t.Optional[str] = dc.field(default_factory=lambda: str(uuid.uuid4()))
     method: str
     status: str = 'pending'
-    dependencies: t.Sequence[str] = ()
+    dependencies: t.List[str] = dc.field(default_factory=list)
 
     @property
     def huuid(self):

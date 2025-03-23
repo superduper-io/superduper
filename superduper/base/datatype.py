@@ -44,6 +44,10 @@ class FieldType:
     def hash(cls, item):
         return hash_item(item)
 
+    @classmethod
+    def uuid(cls, item):
+        return cls.hash(item)
+
 
 ID = FieldType(identifier='ID')
 
@@ -88,15 +92,19 @@ class BaseDataType:
 
     @classmethod
     def hash(cls, item):
-        """Get the hash of the datatype."""
+        """Get the hash of the item."""
         return hashlib.sha256(str(hash(item)).encode()).hexdigest()
+
+    @classmethod
+    def uuid(cls, item):
+        """Get the uuid of the item."""
+        return cls.hash(item)
 
 
 class ComponentType(BaseDataType):
-    """Datatype for encoding leafs."""
+    """Datatype for encoding `Component` instances."""
 
     dtype: t.ClassVar[str] = 'str'
-    encodable: t.ClassVar[str] = 'leaf'
 
     def encode_data(self, item, context):
         """Encode the given item into a bytes-like object or reference.
@@ -138,15 +146,15 @@ class ComponentType(BaseDataType):
             key = item[1:]
             if isinstance(builds[key], dict):
                 r = {'identifier': key.split(':')[-1], **builds[key]}
-                builds[key] = _decode_leaf(r, builds, db=db)
+                builds[key] = _decode_base(r, builds, db=db)
             return builds[key]
         elif isinstance(item, str) and item.startswith('&'):
             _, component, _, uuid = item[2:].split(':')
             return db.load(component=component, uuid=uuid)
         elif isinstance(item, str):
-            raise ValueError(f'Unknown reference type {item} for a leaf')
+            raise ValueError(f'Unknown reference type {item} for a base instance')
 
-        out = _decode_leaf(item, builds, db=db)
+        out = _decode_base(item, builds, db=db)
         key = f"{out.__class__.__name__}:{out.identifier}"
         builds[key] = out
         return out
@@ -156,12 +164,16 @@ class ComponentType(BaseDataType):
         """Get the hash of the datatype."""
         return item.hash
 
+    @classmethod
+    def uuid(cls, item):
+        """Get the uuid of the datatype."""
+        return item.uuid
 
-class LeafType(BaseDataType):
-    """Datatype for encoding leafs."""
+
+class BaseType(BaseDataType):
+    """Datatype for encoding base instances."""
 
     dtype: t.ClassVar[str] = 'json'
-    encodable: t.ClassVar[str] = 'leaf'
 
     def encode_data(self, item, context):
         """Encode the given item into a bytes-like object or reference.
@@ -190,7 +202,7 @@ class LeafType(BaseDataType):
         :param builds: The build-cache dictionary.
         :param db: The Datalayer.
         """
-        out = _decode_leaf(item, builds, db=db)
+        out = _decode_base(item, builds, db=db)
         return out
 
     @classmethod
@@ -198,7 +210,7 @@ class LeafType(BaseDataType):
         return hash_item(item.dict())
 
 
-def _decode_leaf(r, builds, db: t.Optional['Datalayer'] = None):
+def _decode_base(r, builds, db: t.Optional['Datalayer'] = None):
     assert '_path' in r
     cls = Base.get_cls_from_path(path=r['_path'])
     dict_ = {k: v for k, v in r.items() if k != '_path'}
@@ -226,7 +238,6 @@ class SDict(BaseDataType):
     """Datatype for encoding dictionaries which are supported as dict by databackend."""
 
     dtype: t.ClassVar[str] = 'dict'
-    encodable: t.ClassVar[str] = 'native'
 
     def encode_data(self, item, context):
         """Encode the given item into a bytes-like object or reference.
@@ -258,14 +269,13 @@ class SDict(BaseDataType):
 
     @classmethod
     def hash(cls, item):
-        return hash_item({k: v.hash for k, v in item.items()})
+        return hash_item({k: v.uuid for k, v in item.items()})
 
 
 class SList(BaseDataType):
     """Datatype for encoding lists which are supported as list by databackend."""
 
     dtype: t.ClassVar[str] = 'json'
-    encodable: t.ClassVar[str] = 'native'
 
     def encode_data(self, item, context):
         """Encode the given item into a bytes-like object or reference.
@@ -298,7 +308,7 @@ class SList(BaseDataType):
 
     @classmethod
     def hash(cls, item):
-        return hash_item([x.hash for x in item])
+        return hash_item([x.uuid for x in item])
 
 
 class FDict(BaseDataType):
@@ -376,7 +386,6 @@ class NativeVector(BaseVector):
     :param shape: Shape of array.
     """
 
-    encodable: t.ClassVar[str] = 'native'
     dtype: str = 'float'
 
     def encode_data(self, item, context):
@@ -406,10 +415,6 @@ class Vector(BaseVector):
     :param dtype: Datatype of encoded arrays.
     :param shape: Shape of array.
     """
-
-    @property
-    def encodable(self):
-        return self.datatype_impl.encodable
 
     @cached_property
     def datatype_impl(self):
@@ -445,7 +450,6 @@ class Vector(BaseVector):
 class JSON(BaseDataType):
     """Datatype for encoding json-able items."""
 
-    encodable: t.ClassVar[str] = 'native'
     dtype: t.ClassVar[str] = 'json'
 
     def encode_data(self, item, context):
@@ -498,6 +502,11 @@ def hash_indescript(item):
         return hash_item(item)
     if not isinstance(item, type):
         cls = item.__class__
+        try:
+            if hasattr(cls, '__hash__'):
+                return str(hex(hash(item)))
+        except Exception:
+            pass
         params = set(inspect.signature(cls.__init__).parameters.keys())
         if params.issubset({'self', 'args', 'kwargs'}):
             module = cls.__module__
@@ -515,7 +524,6 @@ def hash_indescript(item):
 
 
 class _Encodable:
-    encodable: t.ClassVar[str] = 'encodable'
 
     def encode_data(self, item, context):
         """Encode the given item into a bytes-like object or reference.
@@ -543,7 +551,6 @@ class _Encodable:
 
 
 class _Artifact:
-    encodable: t.ClassVar[str] = 'artifact'
 
     def encode_data(self, item, context):
         """Encode the given item into a bytes-like object or reference.
@@ -553,7 +560,7 @@ class _Artifact:
         """
         if isinstance(item, Blob):
             b = item
-            b.init()
+            b.setup()
         else:
             h = _Artifact.hash(item)
             b = Blob(
@@ -628,8 +635,6 @@ class DillEncoder(_Encodable, _DillMixin, BaseDataType):
 class File(BaseDataType):
     """Type for encoding files on disk."""
 
-    encodable: t.ClassVar[str] = 'file'
-
     def encode_data(self, item, context):
         """Encode the item as a file path.
 
@@ -682,8 +687,6 @@ class Array(BaseDataType):
     :param shape: Shape of array.
     """
 
-    encodable: t.ClassVar[str] = 'encodable'
-
     dtype: str = 'float64'
     shape: int | t.Tuple[int]
 
@@ -729,7 +732,7 @@ class _DatatypeLookup:
             Dill(),
             Pickle(),
             File(),
-            LeafType(),
+            BaseType(),
             ComponentType(),
             FDict(),
             SDict(),
@@ -747,6 +750,11 @@ class _DatatypeLookup:
         try:
             return self.presets[item.lower()]
         except KeyError:
+
+            if '|' in item:
+                from .schema import Schema
+
+                return Schema.parse(item)
 
             vector_match = re.match(r'^vector\[([a-z0-9]+):([0-9]+)\]', item)
             if vector_match:
@@ -822,7 +830,7 @@ class Saveable:
         pass
 
     @abstractmethod
-    def init(self):
+    def setup(self):
         """Initialize the object."""
         pass
 
@@ -846,7 +854,7 @@ class FileItem(Saveable):
     def __post_init__(self):
         """Post init."""
 
-    def init(self):
+    def setup(self):
         """Initialize the file to local disk."""
         if self.path:
             return
@@ -854,7 +862,7 @@ class FileItem(Saveable):
 
     def unpack(self):
         """Get the path out of the object."""
-        self.init()
+        self.setup()
         return self.path
 
     @property
@@ -881,7 +889,7 @@ class Blob(Saveable):
             assert self.bytes is not None
             self.identifier = get_hash(self.bytes)
 
-    def init(self):
+    def setup(self):
         """Initialize the blob."""
         if self.bytes:
             return
@@ -890,7 +898,7 @@ class Blob(Saveable):
     def unpack(self):
         """Get the bytes out of the blob."""
         if self.bytes is None:
-            self.init()
+            self.setup()
         return self.builder(self.bytes)
 
     @property

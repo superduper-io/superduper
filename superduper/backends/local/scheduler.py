@@ -87,7 +87,10 @@ class LocalScheduler(Bookkeeping, BaseScheduler):
 
         queues = list(self.Q.keys())
         for queue in queues:
-            consume_events(
-                events=self.Q[queue], table=queue, db=self.db,
-            )
+            events = self.Q[queue]
             self.Q[queue] = []
+            consume_events(
+                events=events,
+                table=queue,
+                db=self.db,
+            )

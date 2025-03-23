@@ -5,6 +5,7 @@ from prettytable import PrettyTable
 
 import superduper as s
 from superduper import CFG, logging
+from superduper.backends.base.compute import ComputeBackend
 from superduper.backends.base.data_backend import DataBackendProxy
 from superduper.base.artifacts import (
     FileSystemArtifactStore,
@@ -85,7 +86,9 @@ def _build_databackend(uri):
     return DataBackendProxy(_DataBackendLoader.create(uri))
 
 
-def build_datalayer(cfg=None, **kwargs) -> Datalayer:
+def build_datalayer(
+    cfg=None, compute: ComputeBackend | None = None, **kwargs
+) -> Datalayer:
     """
     Build a Datalayer object as per ``db = superduper(db)`` from configuration.
 
@@ -109,7 +112,7 @@ def build_datalayer(cfg=None, **kwargs) -> Datalayer:
     artifact_store = _build_artifact_store()
 
     backend = getattr(load_plugin(cfg.cluster_engine), 'Cluster')
-    cluster = backend.build(cfg)
+    cluster = backend.build(cfg, compute=compute)
 
     datalayer = Datalayer(
         databackend=databackend_obj,

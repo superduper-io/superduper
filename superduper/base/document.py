@@ -15,7 +15,7 @@ from superduper.base.datatype import Saveable
 from superduper.base.encoding import EncodeContext
 from superduper.base.schema import Schema
 from superduper.base.variables import _replace_variables
-from superduper.misc.special_dicts import MongoStyleDict
+from superduper.misc.special_dicts import DeepKeyedDict
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
@@ -200,8 +200,8 @@ class _TmpDB:
         return Query(table=item, parts=(), db=None)
 
 
-class Document(MongoStyleDict):
-    """A wrapper around an instance of dict or a Encodable.
+class Document(DeepKeyedDict):
+    """A wrapper around a `dict` including a schema and encoding.
 
     The document data is used to dump that resource to
     a mix of json-able content, ids and `bytes`
@@ -394,7 +394,7 @@ class Document(MongoStyleDict):
         return f'Document({repr(dict(self))})'
 
     def unpack(self, leaves_to_keep: t.Sequence = ()) -> t.Any:
-        """Returns the content, but with any encodables replaced by their contents.
+        """Returns the content, but with any `_Saveable` extracted.
 
         :param leaves_to_keep: The types of leaves to keep.
         """

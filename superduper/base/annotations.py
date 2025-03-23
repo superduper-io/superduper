@@ -51,7 +51,7 @@ def trigger(
                     context=context,
                 )
             else:
-                self.init()
+                self.setup()
                 kwargs = {
                     k: v
                     for k, v in kwargs.items()

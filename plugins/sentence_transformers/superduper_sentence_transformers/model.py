@@ -2,8 +2,8 @@ import typing as t
 
 from sentence_transformers import SentenceTransformer as _SentenceTransformer
 from superduper.base.query_dataset import QueryDataset
-from superduper.components.component import ensure_initialized
-from superduper.components.model import Model, Signature, _DeviceManaged
+from superduper.components.component import ensure_setup
+from superduper.components.model import Model, _DeviceManaged
 
 DEFAULT_PREDICT_KWARGS = {
     'show_progress_bar': True,
@@ -37,18 +37,11 @@ class SentenceTransformer(Model, _DeviceManaged):
 
     """
 
-    _fields = {
-        'object': 'default',
-        'postprocess': 'default',
-        'preprocess': 'default',
-    }
-
     object: t.Optional[_SentenceTransformer] = None
     model: t.Optional[str] = None
     device: str = 'cpu'
     preprocess: t.Union[None, t.Callable] = None
     postprocess: t.Union[None, t.Callable] = None
-    signature: Signature = 'singleton'
 
     def postinit(self):
         """Post-initialization method."""
@@ -61,16 +54,9 @@ class SentenceTransformer(Model, _DeviceManaged):
             self._default_model = True
         return super().postinit()
 
-    def dict(self, metadata: bool = True, defaults: bool = True, refs: bool = False):
-        """Serialize as a dictionary."""
-        r = super().dict(metadata=metadata, defaults=defaults, refs=refs)
-        if self._default_model:
-            del r['object']
-        return r
-
-    def init(self):
+    def setup(self):
         """Initialize the model."""
-        super().init()
+        super().setup()
         self.to(self.device)
 
     def to(self, device):
@@ -81,25 +67,23 @@ class SentenceTransformer(Model, _DeviceManaged):
         self.object = self.object.to(device)
         self.object._target_device = device
 
-    @ensure_initialized
-    def predict(self, X, *args, **kwargs):
+    @ensure_setup
+    def predict(self, text):
         """Predict on a single input.
 
-        :param X: The input to predict on.
-        :param args: Additional positional arguments, which are passed to the model.
-        :param kwargs: Additional keyword arguments, which are passed to the model.
+        :param text: The input to predict on.
         """
         if self.preprocess is not None:
-            X = self.preprocess(X)
+            text = self.preprocess(text)
 
         assert self.object is not None
-        result = self.object.encode(X, *args, **{**self.predict_kwargs, **kwargs})
+        result = self.object.encode(text, **self.predict_kwargs)
         if self.postprocess is not None:
             result = self.postprocess(result)
         return result
 
     @t.no_type_check
-    @ensure_initialized
+    @ensure_setup
     def predict_batches(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
         """Predict on a dataset.
 
@@ -113,14 +97,3 @@ class SentenceTransformer(Model, _DeviceManaged):
         if self.postprocess is not None:
             results = self.postprocess(results)
         return results
-
-    def _pre_create(self, db):
-        """Pre creates the model.
-
-        If the datatype is not set and the datalayer is an IbisDataBackend,
-        the datatype is set to ``sqlvector`` or ``vector``.
-
-        :param db: The datalayer instance.
-        """
-        if self.datatype is not None:
-            return

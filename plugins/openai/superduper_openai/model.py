@@ -14,7 +14,6 @@ from openai import (
     RateLimitError,
 )
 from superduper.base import exceptions
-from superduper.base.datalayer import Datalayer
 from superduper.components.model import APIBaseModel
 from superduper.misc.retry import Retry, safe_retry
 
@@ -60,12 +59,12 @@ class _OpenAI(APIBaseModel):
         super().postinit()
 
     @safe_retry(exceptions.MissingSecretsException, verbose=0)
-    def init(self):
+    def setup(self):
         """Initialize the model.
 
         :param db: Database instance.
         """
-        super().init()
+        super().setup()
 
         # dall-e is not currently included in list returned by OpenAI model endpoint
         if 'OPENAI_API_KEY' not in os.environ or (
@@ -167,13 +166,6 @@ class OpenAIChatCompletion(_OpenAI):
         prompt = self.prompt.format(context='\n'.join(context))
         return prompt + X
 
-    def _pre_create(self, db: Datalayer) -> None:
-        """Pre creates the model.
-
-        :param db: The datalayer instance.
-        """
-        self.datatype = self.datatype or 'str'
-
     @retry
     def predict(self, X: str, context: t.Optional[str] = None, **kwargs):
         """Generates text completions from prompts.
@@ -221,13 +213,6 @@ class OpenAIAudioTranscription(_OpenAI):
 
     takes_context: bool = True
     prompt: str = ''
-
-    def _pre_create(self, db: Datalayer):
-        """Pre creates the model.
-
-        :param db: The datalayer instance.
-        """
-        self.datatype = self.datatype or 'str'
 
     @retry
     def predict(self, file: t.BinaryIO, context: t.Optional[t.List[str]] = None):
@@ -277,13 +262,6 @@ class OpenAIAudioTranslation(_OpenAI):
     takes_context: bool = True
     prompt: str = ''
     batch_size: int = 1
-
-    def _pre_create(self, db: Datalayer):
-        """Translates a file-like Audio recording to English.
-
-        :param db: The datalayer to use for the model.
-        """
-        self.datatype = self.datatype or 'str'
 
     @retry
     def predict(

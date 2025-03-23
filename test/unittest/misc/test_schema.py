@@ -9,4 +9,3 @@ def test_get_components():
     assert s['validation'] == 'componenttype'
     assert s['serve'] == 'bool'
     assert s['datatype'] == 'str'
-    assert s['output_schema'] == 'json'

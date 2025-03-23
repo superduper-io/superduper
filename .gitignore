@@ -198,3 +198,4 @@ test/sleep.json
 /superduper/rest/superdupertmp
 /example*
 .cache
+/templates/*/artifact_store

@@ -11,7 +11,7 @@
       "?Plugin:plugin-rag_plugin_py"
     ],
     "cache": true,
-    "status": null,
+    "status": "ready",
     "build_variables": null,
     "build_template": null,
     "components": [
@@ -22,23 +22,23 @@
     ],
     "link": null,
     "_path": "superduper.components.application.Application",
-    "version": null,
+    "version": 0,
     "_builds": {
       "Plugin:plugin-rag_plugin_py": {
         "upstream": null,
         "cache": true,
-        "status": null,
+        "status": "ready",
         "build_variables": null,
         "build_template": null,
         "path": "&:file:a2c558ded9e863b4bbc199b5d9d80b3b824e532bdaee981282c6e7435afa868d",
         "cache_path": "~/.superduper/plugins",
         "_path": "superduper.components.plugin.Plugin",
-        "version": null
+        "version": 0
       },
       "Chunker:chunker": {
         "upstream": null,
         "cache": true,
-        "status": null,
+        "status": "ready",
         "build_variables": null,
         "build_template": null,
         "datatype": "str",
@@ -51,17 +51,16 @@
         "num_workers": 0,
         "serve": false,
         "trainer": null,
-        "deploy": false,
         "chunk_size": 200,
         "_path": "rag_plugin.Chunker",
-        "version": null
+        "version": 0
       },
       "Listener:chunker": {
         "upstream": [
           "?Plugin:plugin-rag_plugin_py"
         ],
         "cache": true,
-        "status": null,
+        "status": "ready",
         "build_variables": null,
         "build_template": null,
         "cdc_table": "<var:table_name>",
@@ -75,12 +74,12 @@
         },
         "flatten": true,
         "_path": "superduper.components.listener.Listener",
-        "version": null
+        "version": 0
       },
       "OpenAIEmbedding:text-embedding": {
         "upstream": null,
         "cache": true,
-        "status": null,
+        "status": "ready",
         "build_variables": null,
         "build_template": null,
         "datatype": "vector[float:1536]",
@@ -93,7 +92,6 @@
         "num_workers": 0,
         "serve": false,
         "trainer": null,
-        "deploy": false,
         "model": "<var:embedding_model>",
         "max_batch_size": 8,
         "postprocess": null,
@@ -103,14 +101,14 @@
         "signature": "singleton",
         "batch_size": 100,
         "_path": "superduper_openai.model.OpenAIEmbedding",
-        "version": null
+        "version": 0
       },
       "Listener:embeddinglistener": {
         "upstream": [
           "?Listener:chunker"
         ],
         "cache": true,
-        "status": null,
+        "status": "ready",
         "build_variables": null,
         "build_template": null,
         "cdc_table": "<var:output_prefix>chunker__?(Listener:chunker.uuid)",
@@ -124,12 +122,12 @@
         },
         "flatten": false,
         "_path": "superduper.components.listener.Listener",
-        "version": null
+        "version": 0
       },
       "VectorIndex:vectorindex": {
         "upstream": null,
         "cache": true,
-        "status": null,
+        "status": "ready",
         "build_variables": null,
         "build_template": null,
         "cdc_table": "<var:output_prefix>embeddinglistener__?(Listener:embeddinglistener.uuid)",
@@ -138,12 +136,12 @@
         "measure": "cosine",
         "metric_values": {},
         "_path": "superduper.components.vector_index.VectorIndex",
-        "version": null
+        "version": 0
       },
       "OpenAIChatCompletion:llm-model": {
         "upstream": null,
         "cache": true,
-        "status": null,
+        "status": "ready",
         "build_variables": null,
         "build_template": null,
         "datatype": "str",
@@ -156,7 +154,6 @@
         "num_workers": 0,
         "serve": false,
         "trainer": null,
-        "deploy": false,
         "model": "<var:llm_model>",
         "max_batch_size": 8,
         "postprocess": null,
@@ -167,12 +164,12 @@
         "batch_size": 1,
         "prompt": "",
         "_path": "superduper_openai.model.OpenAIChatCompletion",
-        "version": null
+        "version": 0
       },
       "RAGModel:simple_rag": {
         "upstream": null,
         "cache": true,
-        "status": null,
+        "status": "ready",
         "build_variables": null,
         "build_template": null,
         "datatype": "str",
@@ -185,7 +182,6 @@
         "num_workers": 0,
         "serve": false,
         "trainer": null,
-        "deploy": false,
         "prompt_template": "Use the following context snippets, these snippets are not ordered!, Answer the question based on this context.\nThese snippets are samples from our internal data-repositories, and should be used exclusively and as a matter of priority to answer the question. Please answer in 20 words or less.\n\n{context}\n\nHere's the question: {query}",
         "select": {
           "_path": "superduper.base.query.parse_query",
@@ -199,12 +195,12 @@
         "key": "<var:output_prefix>chunker__?(Listener:chunker.uuid)",
         "llm": "?OpenAIChatCompletion:llm-model",
         "_path": "rag_plugin.RAGModel",
-        "version": null
+        "version": 0
       },
       "Streamlit:simple-rag-demo": {
         "upstream": null,
         "cache": true,
-        "status": null,
+        "status": "ready",
         "build_variables": null,
         "build_template": null,
         "demo_func": "&:blob:77efbad45890771cc16b980db3d7137f6383d0b0a557a28ac8841ccbd1d59c2c",
@@ -212,7 +208,7 @@
         "default": false,
         "is_standalone": false,
         "_path": "superduper.components.streamlit.Streamlit",
-        "version": null
+        "version": 0
       }
     }
   },
@@ -263,7 +259,6 @@
   "default_tables": [
     "?Table:sample_simple_rag"
   ],
-  "staged_file": null,
   "_path": "superduper.components.template.Template",
   "version": null,
   "_builds": {

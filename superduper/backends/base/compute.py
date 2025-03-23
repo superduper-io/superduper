@@ -42,10 +42,22 @@ class ComputeBackend(BaseBackend):
         """Disconnect the client."""
         pass
 
+    @abstractmethod
+    def remote(self, uuid: str, function: str, *args, **kwargs):
+        """
+        Call a remote function on the server.
+
+        :param uuid: The UUID of the component.
+        :param function: The function to call.
+        :param args: The arguments to pass to the function.
+        :param kwargs: The keyword arguments to pass to the function.
+        """
+        pass
+
     def initialize(self):
         """Connect to address."""
-
         from superduper.components.model import Model
+
         metadata = self.db.load('Table')
         for c in metadata:
             if isreallysubclass(c.cls, Model) and c.serve:

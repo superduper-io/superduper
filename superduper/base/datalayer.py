@@ -11,7 +11,7 @@ from superduper.base import apply, exceptions
 from superduper.base.artifacts import ArtifactStore
 from superduper.base.base import Base
 from superduper.base.config import Config
-from superduper.base.datatype import ComponentType, LeafType
+from superduper.base.datatype import BaseType, ComponentType
 from superduper.base.document import Document
 from superduper.base.metadata import (
     MetaDataStore,
@@ -21,6 +21,7 @@ from superduper.base.metadata import (
 from superduper.base.query import Query
 from superduper.components.component import Component
 from superduper.components.table import Table
+from superduper.misc.importing import isreallyinstance
 
 
 # TODO - deprecate hidden logic (not necessary)
@@ -91,6 +92,7 @@ class Datalayer:
         """CDC property setter."""
         self._cdc = cdc
 
+    # Add option to drop a whole class of components
     def drop(self, force: bool = False, data: bool = False):
         """
         Drop all data, artifacts, and metadata.
@@ -183,7 +185,7 @@ class Datalayer:
             table = self.load('Table', table)
             return table
         except NonExistentMetadataError:
-            assert isinstance(items[0], Base)
+            assert isreallyinstance(items[0], Base)
             return self.metadata.create(type(items[0]))
 
     def post_insert(self, table: str, ids: t.Sequence[str]):
@@ -247,6 +249,7 @@ class Datalayer:
         object: t.Union[Component, t.Sequence[t.Any], t.Any],
         force: bool | None = None,
         wait: bool = False,
+        jobs: bool = True,
     ):
         """
         Add functionality in the form of components.
@@ -257,8 +260,9 @@ class Datalayer:
         :param object: Object to be stored.
         :param force: Force apply.
         :param wait: Wait for apply events.
+        :param jobs: Execute jobs.
         """
-        result = apply.apply(db=self, object=object, force=force, wait=wait)
+        result = apply.apply(db=self, object=object, force=force, wait=wait, jobs=jobs)
         return result
 
     def remove(
@@ -318,6 +322,28 @@ class Datalayer:
         else:
             logging.warn('aborting.')
 
+    def load_all(self, component: str, **kwargs) -> t.List[Component]:
+        """Load all instances of component.
+
+        :param component: Component class
+        :param kwargs: Addition key-value pairs to `self.load`
+        """
+        identifiers = self.metadata.show_components(component=component)
+        out: t.List[Component] = []
+        for identifier in identifiers:
+            try:
+                c = self.load(component, identifier)
+                applies = True
+                for k, v in kwargs.items():
+                    if getattr(c, k) != v:
+                        applies = False
+                        break
+                if applies:
+                    out.append(c)
+            except NonExistentMetadataError:
+                continue
+        return out
+
     def load(
         self,
         component: str,
@@ -326,7 +352,7 @@ class Datalayer:
         uuid: t.Optional[str] = None,
         huuid: t.Optional[str] = None,
         allow_hidden: bool = False,
-        **kwargs,
+        overrides: t.Dict | None = None,
     ) -> Component:
         """
         Load a component using uniquely identifying information.
@@ -343,7 +369,7 @@ class Datalayer:
         :param huuid: [Optional] human-readable UUID of the component to load.
         :param allow_hidden: Toggle to ``True`` to allow loading
                              of deprecated components.
-        :param kwargs: Additional keyword arguments to filter by.
+        :param overrides: [Optional] Dictionary of overrides to apply to the component.
         """
         if version is not None:
             assert component is not None
@@ -355,6 +381,7 @@ class Datalayer:
                 allow_hidden=allow_hidden,
             )
             uuid = info['uuid']
+            info.update(overrides or {})
 
         if huuid is not None:
             uuid = huuid.split(':')[-1]
@@ -364,12 +391,14 @@ class Datalayer:
                 component=component,
                 uuid=uuid,
             )
+            info.update(overrides or {})
+
             # to prevent deserialization propagating back to the cache
             builds = {k: v for k, v in info.get('_builds', {}).items()}
             for k in builds:
                 builds[k]['identifier'] = k.split(':')[-1]
 
-            c = LeafType().decode_data(
+            c = BaseType().decode_data(
                 {k: v for k, v in info.items() if k != '_builds'},
                 builds=builds,
                 db=self,
@@ -382,27 +411,12 @@ class Datalayer:
                 identifier=identifier,
                 allow_hidden=allow_hidden,
             )
+            info.update(overrides or {})
             c = ComponentType().decode_data(
                 info,
                 builds=info.get('_builds', {}),
                 db=self,
             )
-        else:
-            identifiers = self.metadata.show_components(component=component)
-            out = []
-            for identifier in identifiers:
-                try:
-                    c = self.load(component, identifier)
-                    applies = True
-                    for k, v in kwargs.items():
-                        if getattr(c, k) != v:
-                            applies = False
-                            break
-                    if applies:
-                        out.append(c)
-                except NonExistentMetadataError:
-                    continue
-            return out
         return c
 
     def _remove_component_version(
@@ -480,53 +494,6 @@ class Datalayer:
                     )
                 else:
                     raise e
-
-    def replace(self, object: t.Any):
-        """
-        Replace a model in the artifact store with an updated object.
-
-        (Use with caution!)
-
-        :param object: The object to replace.
-        """
-        assert object.version is not None
-
-        old_uuid = None
-        try:
-            info = self.metadata.get_component(
-                object.__class__.__name__, object.identifier, version=object.version
-            )
-            old_uuid = info['uuid']
-        except NonExistentMetadataError:
-            pass
-
-        serialized = object.dict()
-
-        if old_uuid:
-
-            def _replace_fn(component):
-                self.replace(component)
-                return f'&:component:{component.huuid}'
-
-            serialized = serialized.map(_replace_fn, lambda x: isinstance(x, Component))
-            serialized = serialized.encode(keep_schema=False)
-
-            self._delete_artifacts(object.uuid, info)
-            artifact_ids, _ = self._find_artifacts(info)
-            self.metadata.create_artifact_relation(object.uuid, artifact_ids)
-            serialized = self._save_artifact(object.uuid, serialized)
-
-            if old_uuid == object.uuid:
-                self.metadata.replace_object(
-                    object.__class__.__name__, object.uuid, serialized
-                )
-            else:
-                self.metadata.create_component(serialized, path=serialized['_path'])
-                self.metadata.remove_by_uuid(info['_path'].split('.')[-1], old_uuid)
-
-        else:
-            serialized = serialized.encode(keep_schema=False)
-            self.metadata.create_component(serialized)
 
     def _save_artifact(self, uuid, info: t.Dict):
         """

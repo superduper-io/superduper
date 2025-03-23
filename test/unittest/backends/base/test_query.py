@@ -1,4 +1,5 @@
 from superduper.base import Base
+from superduper.base.datalayer import Datalayer
 from superduper.base.query import parse_query
 from superduper.components.table import Table
 
@@ -46,9 +47,11 @@ class UseToSave(Base):
     x: ToSave
 
 
-def test_encode_decode_data(db):
+def test_encode_decode_data(db: Datalayer):
 
-    db.insert([UseToSave(x=ToSave(i)) for i in range(10)])
+    data = [UseToSave(x=ToSave(i)) for i in range(10)]
+
+    db.insert(data)
 
     results = db['UseToSave'].execute()
 

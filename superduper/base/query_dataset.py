@@ -1,7 +1,7 @@
 import typing as t
 
 from superduper.base.query import Query
-from superduper.misc.special_dicts import MongoStyleDict
+from superduper.misc.special_dicts import DeepKeyedDict
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
@@ -117,5 +117,5 @@ class QueryDataset:
             input = self.select_one(
                 self._ids[item], self.db, encoders=self.db.datatypes
             )
-        input = MongoStyleDict(input.unpack())
+        input = DeepKeyedDict(input.unpack())
         return self._get_item(input)

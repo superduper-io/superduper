@@ -1,7 +1,7 @@
 from test.utils.usecase.vector_search import add_data
 
-from superduper import model
 from superduper.components.listener import Listener
+from superduper.components.model import ObjectModel
 from superduper.components.vector_index import VectorIndex
 
 
@@ -51,9 +51,10 @@ def test_initialize_output_datatype_with_dimensions(db):
 
     import numpy
 
-    @model(datatype='vector[float:32]')
     def test(x):
         return numpy.random.randn(32)
+
+    test = ObjectModel('test', object=test, datatype='vector[float:32]')
 
     vector_index = VectorIndex(
         identifier='vector_index',
@@ -61,7 +62,7 @@ def test_initialize_output_datatype_with_dimensions(db):
             'listener', model=test, key='x', select=db['documents'].select()
         ),
     )
-    vector_index.pre_create(db)
+    # vector_index.pre_create(db)
 
     from superduper import Table
 

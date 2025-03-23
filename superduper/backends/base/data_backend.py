@@ -232,14 +232,10 @@ class BaseDataBackend(ABC):
         schema = self.get_schema(query)
 
         if query.decomposition.pre_like:
-            return self._wrap_results(
-                query, self.pre_like(query), schema=schema, raw=raw
-            )
+            return self.pre_like(query, raw=raw)
 
         if query.decomposition.post_like:
-            return self._wrap_results(
-                query, self.post_like(query), schema=schema, raw=raw
-            )
+            return self.post_like(query, raw=raw)
 
         return self._wrap_results(query, self.select(query), schema=schema, raw=raw)
 
@@ -260,12 +256,13 @@ class BaseDataBackend(ABC):
     def _do_insert(self, table, documents, raw: bool = False):
 
         schema = self.get_schema(self.db[table])
+
         if not raw and not schema.trivial:
+            schema = self.get_schema(self.db[table])
             for i, r in enumerate(documents):
-                r = Document(r).encode(
-                    schema=self.get_schema(self.db[table]), db=self.db
-                )
-                self.db.artifact_store.save_artifact(r)
+                r = Document(r).encode(schema=schema, db=self.db)
+                if r.get(KEY_BLOBS) or r.get(KEY_FILES):
+                    self.db.artifact_store.save_artifact(r)
                 r.pop(KEY_BUILDS)
                 r.pop(KEY_BLOBS)
                 r.pop(KEY_FILES)
@@ -290,10 +287,11 @@ class BaseDataBackend(ABC):
         out = self.insert(table, documents)
         return [str(x) for x in out]
 
-    def pre_like(self, query: Query):
+    def pre_like(self, query: Query, **kwargs):
         """Perform a pre-like query.
 
         :param query: The query to perform.
+        :param kwargs: Additional keyword arguments.
         """
         assert query.decomposition.pre_like is not None
 
@@ -314,7 +312,7 @@ class BaseDataBackend(ABC):
         new = copy.to_query()
         new = new.filter(new_filter)
 
-        results = new.execute()
+        results = new.execute(**kwargs)
 
         pid = self.primary_id(query)
         for r in results:
@@ -323,10 +321,11 @@ class BaseDataBackend(ABC):
         results = sorted(results, key=lambda x: x['score'], reverse=True)
         return results
 
-    def post_like(self, query: Query):
+    def post_like(self, query: Query, **kwargs):
         """Perform a post-like query.
 
         :param query: The query to perform.
+        :param kwargs: Additional keyword arguments.
         """
         like_part = query[-1]
         prepare_query = query[:-1]
@@ -343,7 +342,7 @@ class BaseDataBackend(ABC):
 
         t = self.db[query.table]
 
-        results = prepare_query.filter(t.primary_id.isin(ids)).execute()
+        results = prepare_query.filter(t.primary_id.isin(ids)).execute(**kwargs)
 
         pid = self.primary_id(query)
 

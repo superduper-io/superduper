@@ -31,7 +31,6 @@ from .components.model import (
     QueryModel,
     Trainer,
     Validation,
-    model,
 )
 from .components.plugin import Plugin
 from .components.streamlit import Streamlit

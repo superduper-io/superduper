@@ -5,7 +5,8 @@ import re
 import typing as t
 
 from superduper import CFG, logging
-from superduper.base.datatype import BaseDataType
+from superduper.base.constant import KEY_PATH
+from superduper.base.datatype import INBUILT_DATATYPES, BaseDataType
 from superduper.base.encoding import EncodeContext
 from superduper.misc.importing import isreallyinstance
 from superduper.misc.special_dicts import dict_to_ascii_table
@@ -24,6 +25,16 @@ class Schema(BaseDataType):
     fields: t.Dict[str, BaseDataType]
 
     @staticmethod
+    def parse(spec):
+        """Parse a schema from a string.
+
+        :param spec: The string to parse.
+        """
+        parts = dict([tuple(x.strip().split('=')) for x in spec.split('|')])
+        fields = {k: INBUILT_DATATYPES[v] for k, v in parts.items()}
+        return Schema(fields)
+
+    @staticmethod
     def build(**fields: t.Dict[str, str]) -> 'Schema':
         """Build a schema from a dictionary of fields.
 
@@ -40,6 +51,9 @@ class Schema(BaseDataType):
         new_fields = self.fields.copy()
         new_fields.update(other.fields)
         return Schema(fields=new_fields)
+
+    def __getitem__(self, item):
+        return self.fields[item]
 
     @property
     def trivial(self):
@@ -162,7 +176,7 @@ class Schema(BaseDataType):
         for k in out:
             field = self.fields.get(k)
 
-            if not isinstance(field, BaseDataType):
+            if not isreallyinstance(field, BaseDataType):
                 continue
 
             if isinstance(out[k], str) and (
@@ -172,6 +186,8 @@ class Schema(BaseDataType):
 
             if out[k] is None:
                 continue
+
+            assert field is not None
 
             encoded = field.encode_data(
                 out[k],
@@ -184,9 +200,6 @@ class Schema(BaseDataType):
             result[k] = encoded
 
         return result
-
-    def __getitem__(self, item: str):
-        return self.fields[item]
 
 
 def get_schema(db, schema: t.Union[Schema, str]) -> t.Optional[Schema]:

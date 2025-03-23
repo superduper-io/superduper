@@ -82,6 +82,10 @@ class LocalComputeBackend(ComputeBackend):
     def initialize(self):
         """Initialize the compute."""
 
+    def remote(self, uuid: str, component: str, method: str, *args, **kwargs):
+        """Run a remote method on the compute."""
+        raise NotImplementedError
+
     def drop(self):
         """Drop the compute.
 

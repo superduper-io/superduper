@@ -12,7 +12,7 @@ from superduper.components.component import Component, _build_info_from_path
 from superduper.components.table import Table
 from superduper.misc import typing as st
 
-from .component import ensure_initialized
+from .component import ensure_setup
 
 
 class Template(Component):
@@ -69,7 +69,8 @@ class Template(Component):
 
         super().postinit()
 
-    def download(self, name: str = '*', path='./templates'):
+    @staticmethod
+    def download(name: str = '*', path='./templates'):
         """Download the templates to the given path.
 
         :param name: Name of the template to download.
@@ -101,23 +102,26 @@ class Template(Component):
 
         if name == '*':
             for a_name in templates:
-                self.download(a_name, path + '/' + a_name)
+                Template.download(a_name, path + '/' + a_name)
             return
 
         assert name in templates, '{} not in supported templates {}'.format(
             name, list(templates.keys())
         )
 
-        file = name + '.zip'
+        file = name + '-' + versions[name] + '.zip'
         url = templates[name]
 
         if not os.path.exists(f'/tmp/{file}'):
             subprocess.run(['curl', '-O', '-k', url])
-            subprocess.run(['mv', file, f'/tmp/{file}'])
-            subprocess.run(['unzip', f'/tmp/{file}', '-d', path])
+
+        subprocess.run(['rm', '-rf', f'{path}/{name}'])
+        subprocess.run(['mv', file, f'/tmp/{file}'])
+        subprocess.run(['mkdir', '-p', path])
+        subprocess.run(['unzip', f'/tmp/{file}', '-d', path + '/' + name])
 
     @property
-    @ensure_initialized
+    @ensure_setup
     def form_template(self):
         """Form to be diplayed to user."""
         return {
@@ -155,7 +159,7 @@ class Template(Component):
 
         return substitute(dict(r))
 
-    @ensure_initialized
+    @ensure_setup
     def __call__(self, **kwargs):
         """Method to create component from the given template and `kwargs`.
 

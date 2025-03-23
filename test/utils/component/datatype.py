@@ -113,7 +113,7 @@ def check_component(data, datatype: BaseDataType):
     print_sep()
 
     decoded = Component.decode(encoded)
-    decoded.init()
+    decoded.setup()
     pprint(decoded)
 
     assert_equal(c.x, decoded.x)
@@ -139,7 +139,7 @@ def check_component_with_db(data, datatype, db):
     print_sep()
 
     decoded = Component.decode(encoded, db=db)
-    decoded.init()
+    decoded.setup()
     pprint(decoded)
     assert_equal(c.x, decoded.x)
 

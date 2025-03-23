@@ -4,7 +4,7 @@ import typing as t
 
 import requests
 from llama_cpp import Llama
-from superduper.ext.llm.model import BaseLLM
+from superduper.components.llm.model import BaseLLM
 
 
 # TODO use core downloader already implemented
@@ -46,7 +46,7 @@ class LlamaCpp(BaseLLM):
     download_dir: str = '.llama_cpp'
     signature: str = 'singleton'
 
-    def init(self, db=None):
+    def setup(self):
         """Initialize the model.
 
         If the model_name_or_path is a uri, download it to the download_dir.

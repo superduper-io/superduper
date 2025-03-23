@@ -106,26 +106,6 @@ class Listener(CDC):
             }
         raise Exception(f'Invalid key type: {type(key)}')
 
-    def _auto_fill_data(self, db: Datalayer):
-        listener_keys = [k for k in db.startup_cache if k.startswith(CFG.output_prefix)]
-        listener_predict_ids = [k[len(CFG.output_prefix) :] for k in listener_keys]
-        lookup: t.Dict = dict(tuple(x.split('__')) for x in listener_predict_ids)
-        assert self.select is not None
-        self.select = self.select.complete_uuids(db, listener_uuids=lookup)
-        if CFG.output_prefix in str(self.key):
-            self.key = self._complete_key(self.key, db, listener_uuids=lookup)
-
-        if self.cdc_table.startswith(CFG.output_prefix):
-            self.cdc_table = self.select.table
-
-    def _pre_create(self, db: Datalayer, startup_cache: t.Dict = {}):
-        """Pre-create hook."""
-        if self.select is None:
-            return
-
-        # TODO deprecate this
-        self._auto_fill_data(db)
-
     @property
     def outputs(self):
         """Get reference to outputs of listener model."""
@@ -190,6 +170,7 @@ class Listener(CDC):
         if not documents:
             return
         primary_id = self.select.primary_id.execute()
+        output_primary_id = self.db[self.outputs].primary_id.execute()
         ids = [r[primary_id] for r in documents]
 
         inputs = self.model._map_inputs(self.model.signature, documents, self.key)
@@ -209,10 +190,12 @@ class Listener(CDC):
                 {
                     self.db.databackend.id_field: self.db.databackend.random_id(),
                     '_source': self.db.databackend.to_id(id),
+                    output_primary_id: id,
                     self.outputs: output,
                 }
                 for id, output in zip(ids, outputs)
             ]
+
         return self.db[self.outputs].insert(output_documents)
 
     def cleanup(self):

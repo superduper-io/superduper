@@ -3,7 +3,8 @@ from test.utils.setup.fake_data import add_listeners, add_models, add_random_dat
 import numpy as np
 import pytest
 from superduper.base.base import Base
-from superduper.base.document import Document
+from superduper.base.query import Query, parse_query
+from superduper.components.component import Component
 from superduper.components.listener import Listener
 from superduper.components.table import Table
 
@@ -19,7 +20,7 @@ def test_serialize_table():
 
     s = t.encode()
 
-    ds = Document.decode(s).unpack()
+    ds = Component.decode(s)
     assert isinstance(ds, Table)
 
 
@@ -53,8 +54,10 @@ def test_renamings(db):
 def test_serialize_query(db):
     t = db['documents']
     q = t.filter(t['id'] == 1).select('id', 'x')
-
-    print(Document.decode(q.encode(), db=db).unpack())
+    r = q.encode()
+    assert isinstance(
+        parse_query(query=r['query'], documents=r['documents'], db=db), Query
+    )
 
 
 def test_get_data(db):
@@ -102,11 +105,12 @@ def test_select_using_ids(db):
 
 
 def test_select_using_ids_of_outputs(db):
-    from superduper import model
+    from superduper import ObjectModel
 
-    @model
-    def my_func(x):
-        return x + ' ' + x
+    def my_func(this: str):
+        return this
+
+    my_func = ObjectModel('my_func', object=my_func)
 
     db.create(documents)
 

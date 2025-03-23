@@ -65,7 +65,7 @@ def test_save_and_load_directory(
     test_component = TestComponent(path=random_directory, identifier="test")
     db.apply(test_component)
     test_component_loaded = db.load("TestComponent", "test")
-    test_component_loaded.init()
+    test_component_loaded.setup()
     # assert that the paths are different
     assert test_component.path != test_component_loaded.path
     # assert that the directory names are the same
@@ -86,7 +86,7 @@ def test_save_and_load_file(db, artifact_store: FileSystemArtifactStore):
     test_component = TestComponent(path=file, identifier="test")
     db.apply(test_component)
     test_component_loaded = db.load("TestComponent", "test")
-    test_component_loaded.init()
+    test_component_loaded.setup()
 
     # assert that the paths are different
     assert test_component.path != test_component_loaded.path
@@ -108,7 +108,7 @@ def test_duplicate_artifact(capfd, db, artifact_store: FileSystemArtifactStore):
     test_component = TestComponentBytes(function=my_func, identifier="test")
     db.apply(test_component)
     test_component_loaded = db.load("TestComponentBytes", "test")
-    test_component_loaded.init()
+    test_component_loaded.setup()
 
     # This should use skip the artifact since it exists
     test_component = TestComponentBytes(function=my_func, identifier="another")

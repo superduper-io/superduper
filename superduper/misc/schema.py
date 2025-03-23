@@ -1,4 +1,3 @@
-import inspect
 import sys
 import types
 import typing as t
@@ -122,7 +121,7 @@ class _DataTypeFactory:
             if issubclass(cls, Component):
                 return 'componenttype'
             if issubclass(cls, Base):
-                return 'leaftype'
+                return 'basetype'
         except TypeError:
             pass
         return 'dill'

@@ -1,7 +1,7 @@
 import typing as t
 
 from superduper import Component, logging
-from superduper.components.component import ensure_initialized
+from superduper.components.component import ensure_setup
 
 
 class CronJob(Component):
@@ -14,11 +14,11 @@ class CronJob(Component):
 
     schedule: str = '0 0 * * *'
 
-    def declare_component(self):
+    def on_create(self):
         """Declare component."""
         self.db.cluster.crontab.put_component(self)
 
-    @ensure_initialized
+    @ensure_setup
     def run(self):
         """Run the job."""
         raise NotImplementedError
@@ -49,7 +49,7 @@ class FunctionCronJob(CronJob):
             self.identifier = self.function.__name__
         return super().postinit()
 
-    @ensure_initialized
+    @ensure_setup
     def run(self):
         """Run the function."""
         logging.info(f"Running cron job {self.identifier} with {self.function}")

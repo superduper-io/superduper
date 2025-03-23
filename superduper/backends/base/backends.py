@@ -2,6 +2,8 @@ import typing as t
 from abc import ABC, abstractmethod
 from collections import defaultdict
 
+from superduper.misc.importing import isreallyinstance
+
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
     from superduper.components.component import Component
@@ -16,6 +18,18 @@ class Bookkeeping(ABC):
         self.tool_uuid_mapping = defaultdict(set)
         self.uuid_tool_mapping = {}
         self.tools = {}
+
+    def initialize_with_components(self):
+        """Initialize the backend with components.
+
+        This method is executed when a cluster is initialized.
+        """
+        components = self.db.load_all('Table')
+        for component in components:
+            if isreallyinstance(component, self.cls):
+                for identifier in self.db.show(component):
+                    component = self.db.load(component, identifier=identifier)
+                    self.put_component(component)
 
     def build_tool(self, component: 'Component'):
         """Build a tool from a component.
@@ -48,6 +62,8 @@ class Bookkeeping(ABC):
             component.identifier,
         )
         self.uuid_tool_mapping[component.uuid] = tool.identifier
+        if tool.identifier in self.tools:
+            return
         self.tool_uuid_mapping[tool.identifier].add(component.uuid)
         self.tools[tool.identifier] = tool
         tool.initialize(**kwargs)
@@ -120,7 +136,6 @@ class BaseBackend(ABC):
     @abstractmethod
     def initialize(self):
         """To be called on program start."""
-        pass
 
     @abstractmethod
     def put_component(self, component: 'Component'):

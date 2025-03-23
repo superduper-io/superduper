@@ -5,7 +5,6 @@ import json
 import os
 import shutil
 import typing as t
-import uuid
 from collections import OrderedDict, defaultdict, namedtuple
 from enum import Enum
 from functools import wraps
@@ -18,7 +17,7 @@ from superduper.base.base import Base, BaseMeta
 from superduper.base.constant import KEY_BLOBS, KEY_FILES
 from superduper.base.event import Job
 from superduper.misc.annotations import lazy_classproperty
-from superduper.misc.importing import import_object
+from superduper.misc.importing import isreallyinstance
 from superduper.misc.utils import hash_item
 
 if t.TYPE_CHECKING:
@@ -110,11 +109,6 @@ class ComponentMeta(BaseMeta):
         return new_cls
 
 
-def build_uuid():
-    """Build UUID."""
-    return str(uuid.uuid4()).replace('-', '')[:16]
-
-
 class Component(Base, metaclass=ComponentMeta):
     """Base class for all components in superduper.io.
 
@@ -124,31 +118,24 @@ class Component(Base, metaclass=ComponentMeta):
 
     :param identifier: Identifier of the instance.
     :param upstream: A list of upstream components.
-    :param cache: (Optional) If set `true` the component will not be cached
-                  during primary job of the component i.e on a distributed
-                  cluster this component will be reloaded on every component
-                  task e.g model prediction.
-    :param status: What part of the lifecycle the component is in.
-    :param build_variables: Variables which were supplied to a template to build.
-    :param build_template: Template which was used to build.
+
     :param db: Datalayer instance.
     """
 
+    verbosity: t.ClassVar[int] = 0
     breaks: t.ClassVar[t.Sequence] = ()
     triggers: t.ClassVar[t.List] = []
-    set_post_init: t.ClassVar[t.Sequence] = ('version',)
+    set_post_init: t.ClassVar[t.Sequence] = ('version', 'status')
 
     identifier: str
     upstream: t.Optional[t.List['Component']] = None
-    cache: t.Optional[bool] = True
-    status: t.Optional[str] = None
-    build_variables: t.Dict | None = None
-    build_template: str | None = None
 
     db: dc.InitVar[t.Optional['Datalayer']] = None
 
     def __post_init__(self, db: t.Optional['Datalayer'] = None):
         self.db = db
+        self.version: t.Optional[int] = None
+        self.status: t.Optional[str] = None
         self.postinit()
 
     @property
@@ -156,7 +143,8 @@ class Component(Base, metaclass=ComponentMeta):
         """Get UUID."""
         t = self.get_merkle_tree(breaks=True)
         breaking = hash_item(
-            [self.component, self.identifier] + [t[k] for k in self.breaks if k in t]
+            [self.component, self.identifier]
+            + [t[k][:32] for k in self.breaks if k in t]
         )
         return breaking[:32]
 
@@ -173,7 +161,7 @@ class Component(Base, metaclass=ComponentMeta):
 
         def get_hash(x):
             if breaks:
-                return s.fields[x].hash(r[x])[:32]
+                return s.fields[x].uuid(r[x])[:32]
             else:
                 return s.fields[x].hash(r[x])
 
@@ -187,7 +175,7 @@ class Component(Base, metaclass=ComponentMeta):
 
         :param other: The other component to compare.
         """
-        if not isinstance(other, type(self)):
+        if not isreallyinstance(other, type(self)):
             raise ValueError('Cannot compare different types of components')
 
         if other.hash == self.hash:
@@ -210,8 +198,9 @@ class Component(Base, metaclass=ComponentMeta):
         """Get the schema of the class."""
         from superduper.misc.schema import get_schema
 
-        s, a = get_schema(cls)
+        s = get_schema(cls)[0]
         s['version'] = 'int'
+        s['status'] = 'str'
         return s
 
     @staticmethod
@@ -463,7 +452,6 @@ class Component(Base, metaclass=ComponentMeta):
 
     def postinit(self):
         """Post initialization method."""
-        self.version: t.Optional[int] = None
         if not self.identifier:
             raise ValueError('identifier cannot be empty or None')
 
@@ -484,64 +472,43 @@ class Component(Base, metaclass=ComponentMeta):
         """Get dependencies on the component."""
         return ()
 
-    def init(self):
+    def setup(self):
         """Method to help initiate component field dependencies."""
 
         def mro(item):
             objects = item.__class__.__mro__
             return [f'{o.__module__}.{o.__name__}' for o in objects]
 
-        def _init(item):
+        def _setup(item):
 
             if 'superduper.components.component.Component' in mro(item):
-                item.init()
+                item.setup()
                 return item
 
             if isinstance(item, dict):
-                return {k: _init(i) for k, i in item.items()}
+                return {k: _setup(i) for k, i in item.items()}
 
             if isinstance(item, list):
-                return [_init(i) for i in item]
+                return [_setup(i) for i in item]
 
             from superduper.base.datatype import Saveable
 
             if isinstance(item, Saveable):
-                item.init()
+                item.setup()
                 return item.unpack()
 
             return item
 
         for f in dc.fields(self):
             item = getattr(self, f.name)
-            item = _init(item)
+            item = _setup(item)
             setattr(self, f.name, item)
 
         return self
 
-    def _pre_create(self, db: 'Datalayer', startup_cache: t.Dict = {}):
-        self.status = Status.initializing
-
-    def pre_create(self, db: 'Datalayer'):
-        """Called the first time this component is created.
-
-        :param db: the db that creates the component.
-        """
-        assert db
-        for child in self.get_children():
-            child.pre_create(db)
-        self._pre_create(db)
-
     def on_create(self):
-        """Called after the first time this component is created.
-
-        Generally used if ``self.version`` is important in this logic.
-        """
-        assert self.db is not None
-        self.declare_component()
-
-    def declare_component(self):
         """Declare the component to the cluster."""
-        pass
+        assert self.db is not None
 
     @staticmethod
     def read(path: str):
@@ -648,6 +615,7 @@ class Component(Base, metaclass=ComponentMeta):
         """Get the dictionary representation of the component."""
         r = self._dict()
         r['version'] = self.version
+        r['status'] = str(self.status).split('.')[-1] if self.status else None
         r['uuid'] = self.uuid
         r['_path'] = self.__module__ + '.' + self.__class__.__name__
         return r
@@ -655,20 +623,11 @@ class Component(Base, metaclass=ComponentMeta):
     @property
     def hash(self):
         t = self.get_merkle_tree(breaks=False)
-        breaking = hash_item(
-            [self.component, self.identifier] + [t[k] for k in self.breaks if k in t]
-        )
-        non_breaking = hash_item([t[k] for k in t if k not in self.breaks])
+        breaking_hashes = [t[k] for k in self.breaks if k in t]
+        non_breaking_hashes = [t[k] for k in t if k not in self.breaks]
+        breaking = hash_item(breaking_hashes)
+        non_breaking = hash_item(non_breaking_hashes)
         return breaking[:32] + non_breaking[:32]
-
-    def info(self, verbosity: int = 1):
-        """Method to display the component information.
-
-        :param verbosity: Verbosity level.
-        """
-        from superduper.misc.special_dicts import _display_component
-
-        _display_component(self, verbosity=verbosity)
 
     @property
     def cdc_table(self):
@@ -676,7 +635,7 @@ class Component(Base, metaclass=ComponentMeta):
         return False
 
 
-def ensure_initialized(func):
+def ensure_setup(func):
     """Decorator to ensure that the model is initialized before calling the function.
 
     :param func: Decorator function.
@@ -684,11 +643,11 @@ def ensure_initialized(func):
 
     @wraps(func)
     def wrapper(self, *args, **kwargs):
-        if not getattr(self, "_is_initialized", False):
+        if not getattr(self, "_is_setup", False):
             model_message = f"{self.__class__.__name__} : {self.identifier}"
             logging.debug(f"Initializing {model_message}")
-            self.init()
-            self._is_initialized = True
+            self.setup()
+            self._is_setup = True
             logging.debug(f"Initialized  {model_message} successfully")
         return func(self, *args, **kwargs)
 

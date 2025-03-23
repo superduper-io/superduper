@@ -178,7 +178,7 @@ class MongoDBDataBackend(BaseDataBackend):
 
         collection = self._database[query.table]
 
-        logging.info(str(query))
+        logging.debug(str(query))
 
         limit = self._get_limit(query)
         if limit:
@@ -248,7 +248,7 @@ class MongoDBDataBackend(BaseDataBackend):
 
             value = op.args[0]
 
-            if f.decomposition.col == 'primary_id':
+            if key == '_id':
                 if isinstance(value, str):
                     value = ObjectId(value)
                 elif isinstance(value, list):

@@ -91,7 +91,7 @@ class SklearnTrainer(Trainer):
                 metrics.update(dataset_metrics)
 
         model.metric_values = metrics
-        db.replace(model)
+        db.apply(model, jobs=False, force=True)
 
 
 class Estimator(Model):

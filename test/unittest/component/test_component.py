@@ -46,7 +46,7 @@ def test_reload(db):
     db.apply(m)
 
     reloaded = db.load('ObjectModel', 'test')
-    reloaded.init()
+    reloaded.setup()
 
     assert reloaded.object(1) == 2
 
@@ -74,7 +74,7 @@ def test_init(db, monkeypatch):
 
     c = MyComponent("test", my_dict=my_dict, a=a, nested_list=list_)
 
-    c.init()
+    c.setup()
 
     assert callable(c.my_dict["a"])
     assert c.my_dict["a"](1) == 2
@@ -96,7 +96,7 @@ def test_load_lazily(db):
     assert isinstance(reloaded.object, Blob)
     assert reloaded.object.bytes is None
 
-    reloaded.init()
+    reloaded.setup()
 
     assert callable(reloaded.object)
 

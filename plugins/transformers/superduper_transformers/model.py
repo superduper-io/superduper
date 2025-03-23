@@ -7,7 +7,7 @@ from datasets import Dataset as NativeDataset
 from superduper import logging
 from superduper.base.datalayer import Datalayer
 from superduper.base.query_dataset import QueryDataset
-from superduper.components.component import ensure_initialized
+from superduper.components.component import ensure_setup
 from superduper.components.llm.model import BaseLLM
 from superduper.components.model import (
     Model,
@@ -280,12 +280,10 @@ class LLM(BaseLLM):
         'tokenizer_kwargs': 'default',
     }
 
-    def __post_init__(self, db, example):
+    def postinit(self):
+        """Postprocessor hook."""
         if not self.identifier:
             self.identifier = self.adapter_id or self.model_name_or_path
-
-        #  TODO: Compatible with the bug of artifact sha1 equality and will be deleted
-        super().__post_init__(db, example)
 
     @classmethod
     def from_pretrained(
@@ -394,12 +392,12 @@ class LLM(BaseLLM):
 
         return pipeline("text-generation", model=model, tokenizer=tokenizer)
 
-    def init(self, db=None):
+    def setup(self, db=None):
         """Initialize the model.
 
         If adapter_id is provided, will load the adapter to the model.
         """
-        super().init()
+        super().setup()
         real_adapter_id = None
         if self.adapter_id is not None:
             if isinstance(self.adapter_id, Checkpoint):
@@ -410,7 +408,7 @@ class LLM(BaseLLM):
 
         self.pipeline = self.init_pipeline(real_adapter_id)
 
-    @ensure_initialized
+    @ensure_setup
     def predict(self, X, **kwargs):
         """Generate text from a single prompt.
 
@@ -422,7 +420,7 @@ class LLM(BaseLLM):
         results = self._batch_generate([X], **kwargs)
         return results[0]
 
-    @ensure_initialized
+    @ensure_setup
     def predict_batches(
         self, dataset: t.Union[t.List, QueryDataset], **kwargs
     ) -> t.List:
@@ -475,7 +473,7 @@ class LLM(BaseLLM):
         logging.info(f"Loading adapter {adapter_name} from {model_id}")
 
         if not hasattr(self, "model"):
-            self.init()
+            self.setup()
 
         if not isinstance(self.model, PeftModel):
             self.model = PeftModel.from_pretrained(

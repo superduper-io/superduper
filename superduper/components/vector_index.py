@@ -13,7 +13,7 @@ from superduper.base.schema import Schema
 from superduper.components.cdc import CDC
 from superduper.components.listener import Listener
 from superduper.components.table import Table
-from superduper.misc.special_dicts import MongoStyleDict
+from superduper.misc.special_dicts import DeepKeyedDict
 
 if t.TYPE_CHECKING:
     pass
@@ -35,62 +35,6 @@ def ibatch(iterable: t.Iterable[T], batch_size: int) -> t.Iterator[t.List[T]]:
         if not batch:
             break
         yield batch
-
-
-def backfill_vector_search(db, vi, searcher):
-    """
-    Backfill vector search from model outputs of a given vector index.
-
-    :param db: Datalayer instance.
-    :param vi: Identifier of vector index.
-    :param searcher: FastVectorSearch instance to load model outputs as vectors.
-    """
-    from superduper.base.datatype import _BaseEncodable
-
-    logging.info(f"Loading vectors of vector-index: '{vi.identifier}'")
-
-    if vi.indexing_listener.select is None:
-        raise ValueError('.select must be set')
-
-    outputs_key = vi.indexing_listener.outputs
-    query = db[outputs_key].select()
-
-    logging.info(str(query))
-    id_field = '_source'
-
-    progress = tqdm.tqdm(desc='Loading vectors into vector-table...')
-    notfound = 0
-    found = 0
-    for record_batch in ibatch(
-        db.execute(query),
-        CFG.cluster.vector_search.backfill_batch_size,
-    ):
-        items = []
-        for record in record_batch:
-            id = record[id_field]
-            assert not isinstance(vi.indexing_listener.model, str)
-            try:
-                h = record[outputs_key]
-            except KeyError:
-                notfound += 1
-                continue
-            else:
-                found += 1
-            if isinstance(h, _BaseEncodable):
-                h = h.unpack()
-            items.append(VectorItem.create(id=str(id), vector=h))
-        if items:
-            searcher.add(items)
-        progress.update(len(items))
-
-    if notfound:
-        logging.warn(
-            f'{notfound} document/rows were missing outputs ',
-            'key hence skipping vector loading for those.',
-        )
-
-    searcher.post_create()
-    logging.info(f'Loaded {found} vectors into vector index succesfully')
 
 
 class VectorIndex(CDC):
@@ -115,14 +59,7 @@ class VectorIndex(CDC):
     def postinit(self):
         """Post-initialization method."""
         self.cdc_table = self.cdc_table or self.indexing_listener.outputs
-        super().postinit()
 
-    def declare_component(self):
-        """Declare the component to the cluster."""
-        super().declare_component()
-        self.db.cluster.vector_search.put_component(self)
-
-    def _pre_create(self, db: Datalayer, startup_cache: t.Dict = {}):
         assert isinstance(self.indexing_listener, Listener)
         assert hasattr(self.indexing_listener, 'output_table')
         assert hasattr(self.indexing_listener.output_table, 'schema')
@@ -139,6 +76,13 @@ class VectorIndex(CDC):
                 f'Couldn\'t get a vector shape for\n'
                 f'{self.indexing_listener.output_table.schema}'
             )
+
+        super().postinit()
+
+    def on_create(self):
+        """Declare the component to the cluster."""
+        super().on_create()
+        self.db.cluster.vector_search.put_component(self)
 
     def get_vectors(self, ids: t.Sequence[str] | None = None):
         """Get vectors from the vector index.
@@ -164,7 +108,7 @@ class VectorIndex(CDC):
         nokeys = 0
         for doc in docs:
             try:
-                vector = MongoStyleDict(doc)[
+                vector = DeepKeyedDict(doc)[
                     f'{CFG.output_prefix}{self.indexing_listener.predict_id}'
                 ]
             except KeyError:
@@ -228,7 +172,7 @@ class VectorIndex(CDC):
         :param outputs: (optional) update `like` with outputs
 
         """
-        document = MongoStyleDict(like.unpack())
+        document = DeepKeyedDict(like.unpack())
         if outputs is not None:
             document.update(outputs)
             assert not isinstance(self.indexing_listener, str)

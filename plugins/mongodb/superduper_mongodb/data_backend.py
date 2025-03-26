@@ -1,5 +1,4 @@
 import json
-import os
 import typing as t
 
 import click
@@ -9,7 +8,6 @@ from superduper.backends.base.data_backend import BaseDataBackend
 from superduper.base.query import Query
 from superduper.base.schema import Schema
 
-from superduper_mongodb.artifacts import MongoDBArtifactStore
 from superduper_mongodb.utils import connection_callback
 
 OPS_MAP = {
@@ -54,19 +52,6 @@ class MongoDBDataBackend(BaseDataBackend):
         conn, _ = self.connection_callback()
         self.conn = conn
         self._database = self.conn[self.name]
-
-    def build_artifact_store(self):
-        """Build the artifact store for the data backend."""
-        from mongomock import MongoClient as MockClient
-
-        if isinstance(self.conn, MockClient):
-            from superduper.base.artifacts import (
-                FileSystemArtifactStore,
-            )
-
-            os.makedirs(f"/tmp/{self.name}", exist_ok=True)
-            return FileSystemArtifactStore(f"/tmp/{self.name}")
-        return MongoDBArtifactStore(self.conn, f"_filesystem:{self.name}")
 
     def drop_table(self, name: str):
         """Drop the table or collection.

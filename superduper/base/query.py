@@ -94,6 +94,9 @@ class Decomposition:
 
     def to_query(self):
         """Convert decomposition back to a ``Query``."""
+        if self.db is None:
+            self.db = db
+
         q = self.db[self.table]
 
         if self.pre_like:
@@ -360,7 +363,7 @@ def outputs(self, *predict_ids):
 
     :param predict_ids: The predict_ids to add. # noqa
     """
-    d = self.decomposition
+    d: Decomposition = self.decomposition
 
     assert not d.outputs
 

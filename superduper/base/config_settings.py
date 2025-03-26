@@ -66,11 +66,14 @@ class ConfigSettings:
             try:
                 with open(USER_CONFIG) as f:
                     kwargs = yaml.safe_load(f)
-            except FileNotFoundError as e:
+            except FileNotFoundError:
                 if USER_CONFIG != f'{HOME}/.superduper/config.yaml':
-                    raise ConfigError(
-                        f'Could not find config file: {USER_CONFIG}'
-                    ) from e
+                    from warnings import warn
+
+                    warn(
+                        f'Could not find config file: {USER_CONFIG}, '
+                        'falling back to defaults...'
+                    )
             if self.base:
                 kwargs = kwargs.get(self.base, {})
 

@@ -1,13 +1,13 @@
 # superduper.io Changelog
 
-All notable changes to this project will be documented in this file. 
+All notable changes to this project will be documented in this file.
 
 The format is inspired by (but not strictly follows) [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 **Before you create a Pull Request, remember to update the Changelog with your changes.**
 
-## Changes Since Last Release 
+## [0.6.0](https://github.com/superduper-io/superduper/compare/0.6.0...0.5.0])    (2025-Mar-26)
 
 #### Changed defaults / behaviours
 
@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No need to define `_fields`
 - Use databackend to perform metadata duties
 - Add `db.create` and `db.insert` instead of `auto_schema`
-- Merkel-tree implementation replacing random `.uuid` with deterministic implementation
+- Merkle-tree implementation replacing random `.uuid` with deterministic implementation
 - Simplify the `Template` class
 - Simplify `Component` lifecycle by removing `Component.pre_create`
 - Renamed `Component.init` to `Component.setup`

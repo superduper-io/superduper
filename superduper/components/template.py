@@ -121,14 +121,14 @@ class Template(Component):
         """
         base_url = 'https://superduper-public-templates.s3.us-east-2.amazonaws.com'
         versions = {
-            'llm_finetuning': '0.5.0',
-            'multimodal_image_search': '0.5.0',
-            'multimodal_video_search': '0.5.0',
-            'pdf_rag': '0.5.0',
-            'rag': '0.5.0',
-            'simple_rag': '0.5.0',
-            'text_vector_search': '0.5.0',
-            'transfer_learning': '0.5.0',
+            'llm_finetuning': '0.6.0',
+            'multimodal_image_search': '0.6.0',
+            'multimodal_video_search': '0.6.0',
+            'pdf_rag': '0.6.0',
+            'rag': '0.6.0',
+            'simple_rag': '0.6.0',
+            'text_vector_search': '0.6.0',
+            'transfer_learning': '0.6.0',
         }
         templates = {k: base_url + f'/{k}-{versions[k]}.zip' for k in versions}
 

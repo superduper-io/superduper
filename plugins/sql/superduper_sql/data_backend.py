@@ -16,8 +16,8 @@ from superduper.base.artifacts import FileSystemArtifactStore
 from superduper.base.query import Query, QueryPart
 from superduper.base.schema import Schema
 
-from superduper_ibis.db_helper import get_db_helper
-from superduper_ibis.utils import convert_schema_to_fields
+from superduper_sql.db_helper import get_db_helper
+from superduper_sql.utils import convert_schema_to_fields
 
 BASE64_PREFIX = "base64:"
 # TODO make this a global variable in main project

@@ -63,7 +63,7 @@ jobs:
         # Once the local file database is complete, we may need to update this section.
         python -m pip install plugins/mongodb
         python -m pip install plugins/openai
-        python -m pip install plugins/ibis
+        python -m pip install plugins/sql
 
 
     - name: Lint and type-check

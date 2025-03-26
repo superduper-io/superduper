@@ -1,7 +1,8 @@
 import dataclasses as dc
 import os
-import subprocess
+import pathlib
 import typing as t
+from contextlib import contextmanager
 
 from superduper import CFG
 from superduper.base.base import Base
@@ -34,7 +35,7 @@ class Template(Component):
     types: t.Optional[t.Dict] = None
     schema: t.Optional[t.Dict] = None
     blobs: t.Any = dc.field(default_factory=dict)
-    files: st.FDict = dc.field(default_factory=dict)
+    files: st.FileDict = dc.field(default_factory=dict)
     substitutions: dc.InitVar[t.Optional[t.Dict]] = None
     requirements: t.List[str] | None = None
     default_tables: t.List[Table] | None = None
@@ -42,6 +43,37 @@ class Template(Component):
     def __post_init__(self, db, substitutions):
         self.substitutions = substitutions
         super().__post_init__(db=db)
+
+    @staticmethod
+    def read(path):
+        """Read the template from the given path.
+
+        :param path: Path to the template.
+
+        If the template has yet to be built, it will be built using
+        the `build.ipynb` notebook.
+        """
+        path = pathlib.Path(path)
+
+        @contextmanager
+        def change_dir(destination):
+            prev_dir = os.getcwd()
+            os.chdir(destination)
+            try:
+                yield
+            finally:
+                os.chdir(prev_dir)
+
+        if not os.path.exists(str(path / 'component.json')) and os.path.exists(
+            str(path / 'build.ipynb')
+        ):
+            with change_dir(path):
+                import papermill
+
+                papermill.execute_notebook(
+                    './build.ipynb', '/tmp/build.ipynb', parameters={'APPLY': False}
+                )
+        return Component.read(path)
 
     def postinit(self):
         """Post initialization method."""
@@ -111,6 +143,8 @@ class Template(Component):
 
         file = name + '-' + versions[name] + '.zip'
         url = templates[name]
+
+        import subprocess
 
         if not os.path.exists(f'/tmp/{file}'):
             subprocess.run(['curl', '-O', '-k', url])

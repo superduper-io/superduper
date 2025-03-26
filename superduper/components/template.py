@@ -152,7 +152,7 @@ class Template(Component):
         subprocess.run(['rm', '-rf', f'{path}/{name}'])
         subprocess.run(['mv', file, f'/tmp/{file}'])
         subprocess.run(['mkdir', '-p', path])
-        subprocess.run(['unzip', f'/tmp/{file}', '-d', path + '/' + name])
+        subprocess.run(['unzip', f'/tmp/{file}', '-d', path])
 
     @property
     @ensure_setup

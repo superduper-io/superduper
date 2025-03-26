@@ -55,26 +55,12 @@ class _DataBackendLoader(_Loader):
         r'^mongodb:\/\/': ('mongodb', 'mongodb'),
         r'^mongodb\+srv:\/\/': ('mongodb', 'atlas'),
         r'^mongomock:\/\/': ('mongodb', 'mongomock'),
-        r'^sqlite://': ('ibis', 'base'),
-        r'^postgresql://': ('ibis', 'base'),
+        r'^sqlite://': ('sql', 'base'),
+        r'^postgresql://': ('sq;', 'base'),
         r'^snowflake:\/\/': ('snowflake', 'base'),
-        r'^duckdb://': ('ibis', 'base'),
-        r'^mssql://': ('ibis', 'base'),
-        r'^mysql://': ('ibis', 'base'),
-        r'.*\*.csv$': ('ibis', 'pandas'),
-    }
-
-
-class _ArtifactStoreLoader(_Loader):
-    impl = 'ArtifactStore'
-    patterns = {
-        r'^filesystem:\/\/': ('local', 'base'),
-        r'^mongomock:\/\/': ('local', 'base'),
-        r'^mongodb\+srv:\/\/': ('mongodb', 'atlas'),
-        r'^mongodb:\/\/': ('mongodb', 'base'),
-        r'^sqlite:\/\/': ('local', 'base'),
-        r'^postgresql:\/\/': ('local', 'base'),
-        r'^snowflake:\/\/': ('local', 'base'),
+        r'^duckdb://': ('sql', 'base'),
+        r'^mssql://': ('sql', 'base'),
+        r'^mysql://': ('sql', 'base'),
     }
 
 

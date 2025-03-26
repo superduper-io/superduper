@@ -2,6 +2,7 @@ import typing as t
 from abc import ABC, abstractmethod
 from collections import defaultdict
 
+from superduper import logging
 from superduper.misc.importing import isreallyinstance
 
 if t.TYPE_CHECKING:
@@ -52,6 +53,9 @@ class Bookkeeping(ABC):
         :param component: Component to put.
         :param kwargs: kwargs dictionary.
         """
+        logging.info(
+            f'Putting component: {component.huuid} on to {self.__class__.__name__}'
+        )
         tool = self.build_tool(component)
         tool.db = self.db
         self.component_uuid_mapping[(component.component, component.identifier)].add(

@@ -26,6 +26,7 @@ from .components.dataset import Dataset
 from .components.listener import Listener
 from .components.metric import Metric
 from .components.model import (
+    APIBaseModel,
     Model,
     ObjectModel,
     QueryModel,
@@ -53,11 +54,11 @@ __all__ = (
     'ObjectModel',
     'QueryModel',
     'Validation',
+    'APIBaseModel',
     'Model',
     'CronJob',
     'FunctionCronJob',
     'Trainer',
-    'model',
     'Listener',
     'VectorIndex',
     'Dataset',

@@ -189,10 +189,21 @@ class Schema(BaseDataType):
 
             assert field is not None
 
-            encoded = field.encode_data(
-                out[k],
-                context=context,
-            )
+            # TODO
+            # field.validate(out[k])
+
+            try:
+                encoded = field.encode_data(
+                    out[k],
+                    context=context(name=context.name + f'.{k}'),
+                )
+            except Exception as e:
+                logging.error(
+                    f'Error encoding field {context.name + "." + k} with '
+                    f'value {out[k]} and field {field}. '
+                    'Have you chosen an appropriate encoder?'
+                )
+                raise e
 
             if field.dtype == 'json' and not CFG.json_native:
                 encoded = json.dumps(encoded)

@@ -58,6 +58,7 @@ dependencies = [
     "python-multipart>=0.0.9",
     "httpx",
     "toml",
+    "papermill>=2.6.0"
 ]
 
 [project.optional-dependencies]

@@ -231,7 +231,7 @@ class Base(metaclass=BaseMeta):
         :param kwargs: Additional encoding parameters.
         """
         if context is None:
-            context = EncodeContext()
+            context = EncodeContext(name=self.__class__.__name__)
 
         for k, v in kwargs.items():
             setattr(context, k, v)

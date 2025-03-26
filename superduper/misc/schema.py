@@ -132,9 +132,9 @@ def _map_type_to_superduper(source, name, cls, iterable):
         return _DataTypeFactory(source, name)[cls]
     if cls and issubclass(cls, Base):
         if iterable is list:
-            return 'slist'
+            return 'componentlist'
         if iterable is dict:
-            return 'sdict'
+            return 'componentdict'
         raise ValueError(f"Unsupported iterable type {iterable} for {cls}")
     if cls is None and iterable in {list, dict}:
         return 'json'

@@ -299,9 +299,7 @@ class Model(Component, metaclass=ModelMeta):
     def on_create(self):
         """Declare model on cluster."""
         super().on_create()
-        if self.serve:
-            logging.info(f'Serving model {self.identifier}...')
-            self.db.cluster.compute.put_component(self)
+        self.db.cluster.compute.put_component(self)
 
     @abstractmethod
     def predict(self, *args, **kwargs) -> t.Any:

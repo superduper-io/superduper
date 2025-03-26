@@ -234,7 +234,7 @@ def _decode_base(r, builds, db: t.Optional['Datalayer'] = None):
     return out
 
 
-class SDict(BaseDataType):
+class ComponentDict(BaseDataType):
     """Datatype for encoding dictionaries which are supported as dict by databackend."""
 
     dtype: t.ClassVar[str] = 'dict'
@@ -250,7 +250,7 @@ class SDict(BaseDataType):
             k: (
                 ComponentType().encode_data(
                     v,
-                    context=context,
+                    context=context(name=f'{context.name}[{k}]'),
                 )
                 if isinstance(v, Base)
                 else v
@@ -272,7 +272,7 @@ class SDict(BaseDataType):
         return hash_item({k: v.uuid for k, v in item.items()})
 
 
-class SList(BaseDataType):
+class ComponentList(BaseDataType):
     """Datatype for encoding lists which are supported as list by databackend."""
 
     dtype: t.ClassVar[str] = 'json'
@@ -288,12 +288,12 @@ class SList(BaseDataType):
             (
                 ComponentType().encode_data(
                     r,
-                    context,
+                    context(name=f'{context.name}[{i}]'),
                 )
                 if isinstance(r, Base)
                 else r
             )
-            for r in item
+            for i, r in enumerate(item)
         ]
         return out
 
@@ -311,7 +311,7 @@ class SList(BaseDataType):
         return hash_item([x.uuid for x in item])
 
 
-class FDict(BaseDataType):
+class FileDict(BaseDataType):
     """Datatype for encoding dictionaries of files."""
 
     dtype: t.ClassVar[str] = 'json'
@@ -734,9 +734,9 @@ class _DatatypeLookup:
             File(),
             BaseType(),
             ComponentType(),
-            FDict(),
-            SDict(),
-            SList(),
+            FileDict(),
+            ComponentDict(),
+            ComponentList(),
             FieldType('str'),
             FieldType('int'),
             FieldType('bytes'),

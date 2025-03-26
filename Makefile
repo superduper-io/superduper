@@ -18,9 +18,9 @@ help: ## Display this help
 
 TEMPLATES ?= '*'
 
-build_templates:  # build the templates with APPLY=False TEMPLATES='*'
+build_templates:
 	if [ "$(TEMPLATES)" = "*" ]; then \
-		templates_to_build=$$(ls -d templates/*/); \
+		templates_to_build=$$(ls templates/); \
 	else \
 		templates_to_build=$$(echo $(TEMPLATES) | tr ',' ' '); \
 	fi; \
@@ -28,8 +28,9 @@ build_templates:  # build the templates with APPLY=False TEMPLATES='*'
 		echo $$template; \
 		rm -rf templates/$$template/blobs; \
 		rm -rf templates/$$template/files; \
+		rm -rf templates/$$template/component.json; \
+		rm -rf templates/$$template/artifact_store; \
 		rm -rf templates/$$template/.ipynb_checkpoints; \
-		(cd templates/$$template && papermill build.ipynb /tmp/papermill_output.ipynb -p APPLY False); \
 		jupyter nbconvert templates/$$template/build.ipynb --clear-output; \
 	done;
 

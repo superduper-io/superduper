@@ -3,14 +3,12 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "superduper_ibis"
+name = "superduper_sql"
 readme = "README.md"
 description = """
-Superduper ibis is a plugin for ibis-framework that allows you to use Superduper as a backend for your ibis queries.
+`superduper_sql` is a plugin for SQL databases that allows you to use these databases as databackends for Superduper.
 
-This plugin cannot be used independently; it must be used together with `superduper_ibis`.
-
-Superduper supports SQL databases via the ibis project. With superduper, queries may be built which conform to the ibis API, with additional support for complex data-types and vector-searches.
+Superduper supports SQL databases via the ibis-project and SQLAlchemy. With superduper, queries may be built in a similar way to the ibis API, with additional support for complex data-types and vector-searches.
 """
 license = {file = "LICENSE"}
 maintainers = [{name = "superduper.io, Inc.", email = "opensource@superduper.io"}]
@@ -43,10 +41,10 @@ documentation = "https://docs.superduper.io/docs/intro"
 source = "https://github.com/superduper-io/superduper"
 
 [tool.setuptools.packages.find]
-include = ["superduper_ibis*"]
+include = ["superduper_sql*"]
 
 [tool.setuptools.dynamic]
-version = {attr = "superduper_ibis.__version__"}
+version = {attr = "superduper_sql.__version__"}
 
 [tool.black]
 skip-string-normalization = true

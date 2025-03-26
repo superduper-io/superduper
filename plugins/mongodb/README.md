@@ -25,10 +25,6 @@ pip install superduper_mongodb
 | Class | Description |
 |---|---|
 | `superduper_mongodb.data_backend.MongoDataBackend` | Data backend for MongoDB. |
-| `superduper_mongodb.metadata.MongoMetaDataStore` | Metadata store for MongoDB. |
-| `superduper_mongodb.query.MongoQuery` | A query class for MongoDB. |
-| `superduper_mongodb.query.BulkOp` | A bulk operation for MongoDB. |
-| `superduper_mongodb.artifacts.MongoArtifactStore` | Artifact store for MongoDB. |
 
 
 
@@ -55,45 +51,3 @@ db = superduper('mongodb://localhost:27017/documents')
 from superduper import superduper
 db = superduper('mongodb+srv://<username>:<password>@<cluster-url>/<database>')
 ```
-
-## Query examples
-
-### Inserts
-
-```python
-db['my-collection'].insert_many([{'my-field': ..., ...}
-    for _ in range(20)
-]).execute()
-```
-
-### Updates
-
-```python
-db['my-collection'].update_many(
-    {'<my>': '<filter>'},
-    {'$set': ...},
-).execute()
-```
-
-### Selects
-
-```python
-db['my-collection'].find({}, {'_id': 1}).limit(10).execute()
-```
-
-### Vector-search
-
-Vector-searches may be integrated with `.find`.
-
-```python
-db['my-collection'].like({'img': <my_image>}, vector_index='my-index-name').find({}, {'img': 1}).execute()
-```
-
-Read more about vector-search [here](../fundamentals/vector_search_algorithm.md).
-
-### Deletes
-
-```python
-db['my-collection'].delete_many({}).execute()
-```
-

@@ -145,7 +145,8 @@ def load_secrets():
 
         with open(secret_file_path, 'r') as file:
             content = file.read().strip()
-        os.environ[key_dir] = content
+        env_name = key_dir.replace('-', '_').upper()
+        os.environ[env_name] = content
         logging.info(f'Successfully loaded secret {key_dir} into environment.')
 
 

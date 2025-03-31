@@ -147,8 +147,8 @@ class Config(BaseConfig):
     """The data class containing all configurable superduper values.
 
     :param envs: The envs datas
-    :param data_backend: The URI for the data backend
     :param secrets_volume: The secrets volume mount for secrets env vars.
+    :param data_backend: The URI for the data backend
     :param lance_home: The home directory for the Lance vector indices,
                        Default: .superduper/vector_indices
     :param artifact_store: The URI for the artifact store
@@ -174,8 +174,8 @@ class Config(BaseConfig):
 
     envs: dc.InitVar[t.Optional[t.Dict[str, str]]] = None
 
-    data_backend: str = "mongodb://localhost:27017/test_db"
     secrets_volume: str = os.path.join(".superduper", "/session/secrets")
+    data_backend: str = "mongodb://localhost:27017/test_db"
 
     lance_home: str = os.path.join(".superduper", "vector_indices")
 
@@ -208,6 +208,7 @@ class Config(BaseConfig):
         if envs is not None:
             for k, v in envs.items():
                 os.environ[k.upper()] = v
+        self.secrets_volume = os.path.expanduser(self.secrets_volume)
 
     @property
     def hybrid_storage(self):

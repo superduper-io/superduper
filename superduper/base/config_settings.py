@@ -3,6 +3,7 @@ import typing as t
 from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
+from warnings import warn
 
 import yaml
 
@@ -33,6 +34,37 @@ class ConfigError(Exception):
     """
 
 
+def load_secrets(secrets_dir: str | None = None):
+    """Load secrets directory into env vars.
+    
+    :param secrets_dir: The directory containing the secrets.
+    """
+    if secrets_dir is None:
+        from superduper import CFG
+
+        secrets_dir = CFG.secrets_volume
+
+    if not os.path.isdir(secrets_dir):
+        warn(f"Warning: The path '{secrets_dir}' is not a valid directory.")
+
+    for key_dir in os.listdir(secrets_dir):
+        key_path = os.path.join(secrets_dir, key_dir)
+
+        if not os.path.isdir(key_path):
+            continue
+
+        secret_file_path = os.path.join(key_path, 'secret_string')
+
+        if not os.path.isfile(secret_file_path):
+            warn(f"Warning: No 'secret_string' file found in {key_path}.")
+            continue
+
+        with open(secret_file_path, 'r') as file:
+            content = file.read().strip()
+        env_name = key_dir.replace('-', '_').upper()
+        os.environ[env_name] = content
+
+
 @dataclass(frozen=True)
 class ConfigSettings:
     """Helper class to read a configuration from a dataclass.
@@ -59,6 +91,16 @@ class ConfigSettings:
             prefix = PREFIX + self.base.upper() + '_'
 
         env = config_dicts.environ_to_config_dict(prefix, parent, env)
+
+        secrets_volume = env.get('secrets_volume') or parent.get('secrets_volume')
+
+        if secrets_volume and os.path.isdir(secrets_volume):
+            load_secrets(secrets_volume)
+            env = config_dicts.environ_to_config_dict(
+                prefix, parent, dict(os.environ if os.environ else {})
+            )
+        elif secrets_volume:
+            warn(f"Warning: The path '{secrets_volume}' is not a valid directory.")
 
         kwargs = {}
         if USER_CONFIG is not None:

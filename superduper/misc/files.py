@@ -4,6 +4,7 @@ import os
 import traceback
 
 from superduper import CFG, logging
+from superduper.base.config_settings import load_secrets  # noqa: F401
 from superduper.base.exceptions import IncorrectSecretException, MissingSecretsException
 
 
@@ -122,32 +123,6 @@ def check_secrets():
             'Some secrets are incorrect. Please check the secrets and try again.\n'
             '\n'.join([str(e) for e in errors])
         )
-
-
-def load_secrets():
-    """Load secrets directory into env vars."""
-    secrets_dir = CFG.secrets_volume
-
-    if not os.path.isdir(secrets_dir):
-        raise ValueError(f"The path '{secrets_dir}' is not a valid secrets directory.")
-
-    for key_dir in os.listdir(secrets_dir):
-        key_path = os.path.join(secrets_dir, key_dir)
-
-        if not os.path.isdir(key_path):
-            continue
-
-        secret_file_path = os.path.join(key_path, 'secret_string')
-
-        if not os.path.isfile(secret_file_path):
-            logging.warn(f"Warning: No 'secret_string' file found in {key_path}.")
-            continue
-
-        with open(secret_file_path, 'r') as file:
-            content = file.read().strip()
-        env_name = key_dir.replace('-', '_').upper()
-        os.environ[env_name] = content
-        logging.info(f'Successfully loaded secret {key_dir} into environment.')
 
 
 def get_file_from_uri(uri):

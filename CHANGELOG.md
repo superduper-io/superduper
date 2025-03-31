@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 **Before you create a Pull Request, remember to update the Changelog with your changes.**
 
+## [0.6.4](https://github.com/superduper-io/superduper/compare/0.6.4...0.6.3])    (2025-Mar-31)
+
+#### Bug Fixes
+
+- Load environment variables *and* secrets on building config
+
 ## [0.6.0](https://github.com/superduper-io/superduper/compare/0.6.0...0.5.0])    (2025-Mar-26)
 
 #### Changed defaults / behaviours

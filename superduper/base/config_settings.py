@@ -93,6 +93,7 @@ class ConfigSettings:
         env = config_dicts.environ_to_config_dict(prefix, parent, env)
 
         secrets_volume = env.get('secrets_volume') or parent.get('secrets_volume')
+        secrets_volume = os.path.expanduser(secrets_volume) if secrets_volume else None
 
         if secrets_volume and os.path.isdir(secrets_volume):
             load_secrets(secrets_volume)

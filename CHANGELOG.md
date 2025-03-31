@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 **Before you create a Pull Request, remember to update the Changelog with your changes.**
 
+## [0.5.37](https://github.com/superduper-io/superduper/compare/0.5.37...0.5.36])    (2024-Nov-02)
+
+- Load secrets from secrets directory
+
 ## [0.5.2](https://github.com/superduper-io/superduper/compare/0.5.2...0.5.0])    (2024-Nov-02)
 
 #### Bug Fixes

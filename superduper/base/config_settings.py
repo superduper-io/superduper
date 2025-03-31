@@ -36,7 +36,7 @@ class ConfigError(Exception):
 
 def load_secrets(secrets_dir: str | None = None):
     """Load secrets directory into env vars.
-    
+
     :param secrets_dir: The directory containing the secrets.
     """
     if secrets_dir is None:

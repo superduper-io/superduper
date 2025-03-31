@@ -157,8 +157,8 @@ class Config(BaseConfig):
 
     envs: dc.InitVar[t.Optional[t.Dict[str, str]]] = None
 
-    data_backend: str = "mongodb://localhost:27017/test_db"
     secrets_volume: str = os.path.join(".superduper", "/session/secrets")
+    data_backend: str = "mongodb://localhost:27017/test_db"
 
     # TODO drop the "filesystem://" prefix
     artifact_store: str = 'filesystem://./artifact_store'
@@ -187,6 +187,7 @@ class Config(BaseConfig):
         if envs is not None:
             for k, v in envs.items():
                 os.environ[k.upper()] = v
+        self.secrets_volume = os.path.expanduser(self.secrets_volume)
 
     @property
     def comparables(self):

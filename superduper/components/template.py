@@ -55,6 +55,14 @@ class Template(Component):
         """
         path = pathlib.Path(path)
 
+        if 'SUPERDUPER_CONFIG' in os.environ:
+            os.environ['SUPERDUPER_CONFIG'] = os.path.abspath(
+                os.environ['SUPERDUPER_CONFIG']
+            )
+            os.environ['SUPERDUPER_CONFIG'] = os.path.expanduser(
+                os.environ['SUPERDUPER_CONFIG']
+            )
+
         @contextmanager
         def change_dir(destination):
             prev_dir = os.getcwd()

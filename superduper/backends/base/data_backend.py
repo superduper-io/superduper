@@ -1,4 +1,5 @@
 import functools
+import hashlib
 import typing as t
 from abc import ABC, abstractmethod
 
@@ -46,6 +47,15 @@ class BaseDataBackend(ABC):
     def type(self):
         """Return databackend."""
         raise NotImplementedError
+
+    def create_id(self, item: str):
+        """Create a unique id for an item.
+
+        The id is determistic and based on the item itself.
+
+        :param item: The item to create an id for.
+        """
+        return hashlib.sha256(item.encode()).hexdigest()[:16]
 
     @abstractmethod
     def drop_table(self, table: str):

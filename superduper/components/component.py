@@ -629,11 +629,6 @@ class Component(Base, metaclass=ComponentMeta):
         non_breaking = hash_item(non_breaking_hashes)
         return breaking[:32] + non_breaking[:32]
 
-    @property
-    def cdc_table(self):
-        """Get table for cdc."""
-        return False
-
 
 def ensure_setup(func):
     """Decorator to ensure that the model is initialized before calling the function.

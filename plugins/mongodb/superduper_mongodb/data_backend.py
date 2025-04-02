@@ -1,3 +1,4 @@
+import hashlib
 import json
 import typing as t
 
@@ -42,6 +43,14 @@ class MongoDBDataBackend(BaseDataBackend):
         self.datatype_presets = {
             'vector': 'superduper.components.datatype.NativeVector'
         }
+
+    def create_id(self, item: str):
+        """Create a unique ID for the item.
+
+        :param item: The item to create an ID for.
+        """
+        hash_object = hashlib.sha256(item.encode())
+        return hash_object.hexdigest()[:24]
 
     def random_id(self):
         """Generate a random ID."""

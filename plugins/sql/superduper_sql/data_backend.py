@@ -5,7 +5,7 @@ import uuid
 import click
 import ibis
 import pandas
-# from ibis.common.exceptions import TableNotFound
+from ibis.common.exceptions import TableNotFound
 from sqlalchemy import MetaData, Table, create_engine
 from sqlalchemy.exc import NoSuchTableError
 from sqlalchemy.orm import sessionmaker

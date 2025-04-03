@@ -1,8 +1,8 @@
 """Configuration variables for superduper.io.
 
 The classes in this file define the configuration variables for superduper.io,
-hich means that this file gets imported before alost anything else, and
-canot contain any other imports from this project.
+which means that this file gets imported before almost anything else, and
+cannot contain any other imports from this project.
 """
 
 import dataclasses as dc
@@ -10,16 +10,27 @@ import json
 import os
 import typing as t
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 
-def _dataclass_from_dict(data_class: t.Any, data: dict):
+def _dataclass_from_dict(data_class: Type[Any], data: Dict[str, Any]) -> Any:
+    """Convert a dictionary to a dataclass instance.
+
+    Args:
+        data_class: The dataclass type to instantiate
+        data: Dictionary containing the data to populate the dataclass
+
+    Returns:
+        An instance of the dataclass populated with values from the dictionary
+    """
     field_types = {f.name: f.type for f in data_class.__dataclass_fields__.values()}
     params = {}
     for f in data:
         if (
-            f in field_types
-            and hasattr(field_types[f], "__dataclass_fields__")
-            and not isinstance(data[f], field_types[f])
+                f in field_types
+                and hasattr(field_types[f], "__dataclass_fields__")
+                and not isinstance(data[f], field_types[f])
         ):
             params[f] = _dataclass_from_dict(field_types[f], data[f])
         else:
@@ -36,8 +47,15 @@ class BaseConfig:
     with a dictionary of parameters.
     """
 
-    def __call__(self, **kwargs):
-        """Update the configuration with the given parameters."""
+    def __call__(self, **kwargs: Any) -> 'BaseConfig':
+        """Update the configuration with the given parameters.
+
+        Args:
+            **kwargs: The parameters to update
+
+        Returns:
+            A new instance of the configuration with updated parameters
+        """
         parameters = dc.asdict(self)
         for k, v in kwargs.items():
             if "__" in k:
@@ -52,8 +70,12 @@ class BaseConfig:
             out.cluster = self.cluster
         return out
 
-    def dict(self):
-        """Return the configuration as a dictionary."""
+    def dict(self) -> Dict[str, Any]:
+        """Return the configuration as a dictionary.
+
+        Returns:
+            A dictionary representation of the configuration
+        """
         return dc.asdict(self)
 
 
@@ -61,10 +83,11 @@ class BaseConfig:
 class Retry(BaseConfig):
     """Describes how to retry using the `tenacity` library.
 
-    :param stop_after_attempt: The number of attempts to make
-    :param wait_max: The maximum time to wait between attempts
-    :param wait_min: The minimum time to wait between attempts
-    :param wait_multiplier: The multiplier for the wait time between attempts
+    Args:
+        stop_after_attempt: The number of attempts to make
+        wait_max: The maximum time to wait between attempts (seconds)
+        wait_min: The minimum time to wait between attempts (seconds)
+        wait_multiplier: The multiplier for the wait time between attempts
     """
 
     stop_after_attempt: int = 2
@@ -74,7 +97,7 @@ class Retry(BaseConfig):
 
 
 class LogLevel(str, Enum):
-    """Enumerate log severity level # noqa."""
+    """Enumerate log severity levels."""
 
     DEBUG = "DEBUG"
     INFO = "INFO"
@@ -84,38 +107,39 @@ class LogLevel(str, Enum):
 
 
 class LogType(str, Enum):
-    """Enumerate the standard logs # noqa."""
+    """Enumerate the standard log output types."""
 
     # SYSTEM uses the systems STDOUT and STDERR for printing the logs.
     # DEBUG, INFO, and WARN go to STDOUT.
     # ERROR goes to STDERR.
     SYSTEM = "SYSTEM"
 
-    # LOKI a format that is compatible with the Loki Log aggregation system.
+    # LOKI uses a format that is compatible with the Loki Log aggregation system.
     LOKI = "LOKI"
 
 
 class BytesEncoding(str, Enum):
-    """Enumerate the encoding of bytes in the data backend # noqa."""
+    """Enumerate the encoding of bytes in the data backend."""
 
-    BYTES = "bytes"
-    BASE64 = "str"
+    BYTES = "bytes"  # Raw bytes encoding
+    BASE64 = "str"   # Base64 string encoding
 
 
 @dc.dataclass
 class Downloads(BaseConfig):
     """Describes the configuration for downloading files.
 
-    :param folder: The folder to download files to
-    :param n_workers: The number of workers to use for downloading
-    :param headers: The headers to use for downloading
-    :param timeout: The timeout for downloading
+    Args:
+        folder: The folder to download files to
+        n_workers: The number of workers to use for downloading
+        headers: The HTTP headers to use for downloading
+        timeout: The timeout for downloads in seconds
     """
 
-    folder: t.Optional[str] = None
+    folder: Optional[str] = None
     n_workers: int = 0
-    headers: t.Dict = dc.field(default_factory=lambda: {"User-Agent": "me"})
-    timeout: t.Optional[int] = None
+    headers: Dict[str, str] = dc.field(default_factory=lambda: {"User-Agent": "me"})
+    timeout: Optional[int] = None
 
 
 @dc.dataclass
@@ -124,45 +148,47 @@ class DataTypePresets(BaseConfig):
 
     Overrides DataBackend.datatype_presets.
 
-    :param vector: BaseDataType to encode vectors.
+    Args:
+        vector: BaseDataType to encode vectors.
     """
 
-    vector: str | None = None
+    vector: Optional[str] = None
 
 
 @dc.dataclass
 class Config(BaseConfig):
     """The data class containing all configurable superduper values.
 
-    :param envs: The envs datas
-    :param data_backend: The URI for the data backend
-    :param secrets_volume: The secrets volume mount for secrets env vars.
-    :param artifact_store: The URI for the artifact store
-    :param metadata_store: The URI for the metadata store
-    :param cache: A URI for an in-memory cache
-    :param vector_search_engine: The engine to use for vector search
-    :param cluster_engine: The engine to use for operating a distributed cluster
-    :param retries: Settings for retrying failed operations
-    :param downloads: Settings for downloading files
-    :param log_level: The severity level of the logs
-    :param logging_type: The type of logging to use
-    :param force_apply: Whether to force apply the configuration
-    :param datatype_presets: Presets to be applied for default types of data
-    :param json_native: Whether the databackend supports json natively or not.
-    :param log_colorize: Whether to colorize the logs
-    :param bytes_encoding: (Deprecated)
-    :param output_prefix: The prefix for the output table and output field key
-    :param vector_search_kwargs: The keyword arguments to pass to the vector search
+    Args:
+        envs: Environment variables to set
+        secrets_volume: The secrets volume mount for secrets env vars
+        data_backend: The URI for the data backend
+        artifact_store: The URI for the artifact store
+        metadata_store: The URI for the metadata store
+        cache: A URI for an in-memory cache
+        vector_search_engine: The engine to use for vector search
+        cluster_engine: The engine to use for operating a distributed cluster
+        retries: Settings for retrying failed operations
+        downloads: Settings for downloading files
+        log_level: The severity level of the logs
+        logging_type: The type of logging to use
+        log_colorize: Whether to colorize the logs
+        bytes_encoding: Encoding for bytes data (deprecated)
+        force_apply: Whether to force apply the configuration
+        datatype_presets: Presets to be applied for default types of data
+        json_native: Whether the databackend supports JSON natively
+        output_prefix: The prefix for the output table and output field key
+        vector_search_kwargs: The keyword arguments to pass to the vector search
     """
 
-    envs: dc.InitVar[t.Optional[t.Dict[str, str]]] = None
+    envs: dc.InitVar[Optional[Dict[str, str]]] = None
 
-    secrets_volume: str = os.path.join(".superduper", "/session/secrets")
+    secrets_volume: str = os.path.join(".superduper", "session/secrets")
     data_backend: str = "mongodb://localhost:27017/test_db"
 
     # TODO drop the "filesystem://" prefix
     artifact_store: str = 'filesystem://./artifact_store'
-    metadata_store: t.Optional[str] = None
+    metadata_store: Optional[str] = None
     cache: str = 'in-process'
     vector_search_engine: str = 'local'
     cluster_engine: str = 'local'
@@ -181,45 +207,70 @@ class Config(BaseConfig):
 
     json_native: bool = True
     output_prefix: str = "_outputs__"
-    vector_search_kwargs: t.Dict = dc.field(default_factory=dict)
+    vector_search_kwargs: Dict[str, Any] = dc.field(default_factory=dict)
 
-    def __post_init__(self, envs):
+    def __post_init__(self, envs: Optional[Dict[str, str]]) -> None:
+        """Initialize the configuration after __init__.
+
+        Sets environment variables if provided and expands the secrets volume path.
+
+        Args:
+            envs: Dictionary of environment variables to set
+        """
         if envs is not None:
             for k, v in envs.items():
                 os.environ[k.upper()] = v
         self.secrets_volume = os.path.expanduser(self.secrets_volume)
 
     @property
-    def comparables(self):
-        """A dict of `self` excluding some defined attributes."""
+    def comparables(self) -> Dict[str, Any]:
+        """A dict of `self` excluding some defined attributes.
+
+        Returns:
+            Dictionary of configuration values excluding cluster, retries, and downloads
+        """
         _dict = dc.asdict(self)
         if hasattr(self, 'cluster'):
             _dict.update({'cluster': dc.asdict(self.cluster)})
-        list(map(_dict.pop, ("cluster", "retries", "downloads")))
+        for key in ("cluster", "retries", "downloads"):
+            _dict.pop(key, None)
         return _dict
 
-    def match(self, cfg: t.Dict):
+    def match(self, cfg: Dict[str, Any]) -> bool:
         """Match the target cfg dict with `self` comparables dict.
 
-        :param cfg: The target configuration dictionary.
+        Args:
+            cfg: The target configuration dictionary
+
+        Returns:
+            True if configurations match, False otherwise
         """
         self_cfg = self.comparables
         self_hash = hash(json.dumps(self_cfg, sort_keys=True))
         cfg_hash = hash(json.dumps(cfg, sort_keys=True))
         return self_hash == cfg_hash
 
-    def diff(self, cfg: t.Dict):
+    def diff(self, cfg: Dict[str, Any]) -> Dict[str, Tuple[Any, Any]]:
         """Return the difference between `self` and the target cfg dict.
 
-        :param cfg: The target configuration dictionary.
+        Args:
+            cfg: The target configuration dictionary
+
+        Returns:
+            Dictionary of differences with keys as paths and values as tuples of (self_value, cfg_value)
         """
         return _diff(self.dict(), cfg)
 
-    def to_yaml(self):
-        """Return the configuration as a YAML string."""
+    def to_yaml(self) -> str:
+        """Return the configuration as a YAML string.
+
+        Returns:
+            YAML representation of the configuration
+        """
         import yaml
 
-        def enum_representer(dumper, data):
+        def enum_representer(dumper: yaml.SafeDumper, data: Enum) -> yaml.ScalarNode:
+            """Custom representer for Enum values in YAML."""
             return dumper.represent_scalar("tag:yaml.org,2002:str", str(data.value))
 
         yaml.SafeDumper.add_representer(BytesEncoding, enum_representer)
@@ -229,28 +280,46 @@ class Config(BaseConfig):
         return yaml.dump(self.dict(), Dumper=yaml.SafeDumper)
 
 
-def _diff(r1, r2):
+def _diff(r1: Dict[str, Any], r2: Dict[str, Any]) -> Dict[str, Tuple[Any, Any]]:
     """Return the difference between two dictionaries.
 
-    >>> _diff({'a': 1, 'b': 2}, {'a': 2, 'b': 2})
-    {'a': (1, 2)}
-    >>> _diff({'a': {'c': 3}, 'b': 2}, {'a': 2, 'b': 2})
-    {'a': ({'c': 3}, 2)}
+    Args:
+        r1: First dictionary
+        r2: Second dictionary
+
+    Returns:
+        Dictionary with keys as dot-notated paths and values as tuples of (r1_value, r2_value)
+
+    Examples:
+        >>> _diff({'a': 1, 'b': 2}, {'a': 2, 'b': 2})
+        {'a': (1, 2)}
+        >>> _diff({'a': {'c': 3}, 'b': 2}, {'a': 2, 'b': 2})
+        {'a': ({'c': 3}, 2)}
     """
     d = _diff_impl(r1, r2)
-    out = {}
+    out: Dict[str, Tuple[Any, Any]] = {}
     for path, left, right in d:
         out[".".join(path)] = (left, right)
     return out
 
 
-def _diff_impl(r1, r2):
+def _diff_impl(r1: Any, r2: Any) -> List[Tuple[List[str], Any, Any]]:
+    """Implementation for _diff that returns path parts instead of dot notation.
+
+    Args:
+        r1: First value (dictionary or primitive)
+        r2: Second value (dictionary or primitive)
+
+    Returns:
+        List of tuples containing (path_parts, r1_value, r2_value)
+    """
     if not isinstance(r1, dict) or not isinstance(r2, dict):
         if r1 == r2:
             return []
         return [([], r1, r2)]
-    out = []
-    for k in list(r1.keys()) + list(r2.keys()):
+
+    out: List[Tuple[List[str], Any, Any]] = []
+    for k in set(list(r1.keys()) + list(r2.keys())):
         if k not in r1:
             out.append(([k], None, r2[k]))
             continue

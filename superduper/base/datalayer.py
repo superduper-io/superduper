@@ -1,5 +1,13 @@
+"""
+Datalayer module for superduper.io.
+
+This module provides the main interface for interacting with data storage,
+artifacts, and cluster management in the superduper system.
+"""
+
 import typing as t
 from collections import namedtuple
+from pathlib import Path
 
 import click
 
@@ -22,34 +30,37 @@ from superduper.base.query import Query
 from superduper.components.component import Component
 from superduper.components.table import Table
 from superduper.misc.importing import isreallyinstance
+from superduper.misc.special_dicts import recursive_find
 
 
-# TODO - deprecate hidden logic (not necessary)
 class Datalayer:
     """
-    Base connector.
+    Main data connector for superduper.io.
 
-    :param databackend: Object containing connection to Datastore.
-    :param artifact_store: Object containing connection to Artifactstore.
-    :param cluster: Cluster object containing connections to infrastructure.
+    The Datalayer connects the various storage and processing components:
+    - Data backend for storing structured data
+    - Artifact store for binary/file data
+    - Cluster for distributed computing
+    - Metadata store for component registration and discovery
     """
 
     def __init__(
-        self,
-        databackend: BaseDataBackend,
-        artifact_store: ArtifactStore,
-        cluster: Cluster,
+            self,
+            databackend: BaseDataBackend,
+            artifact_store: ArtifactStore,
+            cluster: Cluster,
     ):
         """
-        Initialize Datalayer.
+        Initialize Datalayer with storage backends and cluster.
 
-        :param databackend: Object containing connection to Databackend.
-        :param metadata: Object containing connection to Metadatastore.
-        :param artifact_store: Object containing connection to Artifactstore.
-        :param compute: Object containing connection to ComputeBackend.
+        Args:
+            databackend: Connection to the data storage system
+            artifact_store: Connection to the artifact storage system
+            cluster: Connection to cluster infrastructure
         """
         logging.info("Building Data Layer")
 
+        # Initialize storage components
         self.artifact_store = artifact_store
         self.artifact_store.db = self
 
@@ -59,532 +70,685 @@ class Datalayer:
         self.cluster = cluster
         self.cluster.db = self
 
+        # Initialize configuration
         self._cfg = s.CFG
-        self.startup_cache: t.Dict[str, t.Any] = {}
+        self.startup_cache = {}
 
+        # Initialize metadata store
         self.metadata = MetaDataStore(self, cache=self.cluster.cache)
         self.metadata.init()
 
         logging.info("Data Layer built")
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: str) -> Query:
+        """
+        Access a table by name using dictionary-style access.
+
+        Args:
+            item: Table name to access
+
+        Returns:
+            Query object for the specified table
+        """
         return Query(table=item, parts=(), db=self)
 
-    def insert(self, items: t.List[Base]):
+    def insert(self, items: t.List[Base]) -> t.List[str]:
         """
-        Insert data into a table.
+        Insert data objects into their appropriate table.
 
-        :param items: The instances (`superduper.base.Base`) to insert.
+        Args:
+            items: List of Base instances to insert
+
+        Returns:
+            List of inserted object IDs
         """
-        table = self.pre_insert(items)
-        data = [x.dict() for x in items]
-        for r in data:
-            del r['_path']
-        return self[table.identifier].insert(data)
+        # Validate input
+        if len(items) == 0:
+            raise ValueError("Cannot insert empty list of items")
 
-    @property
-    def cdc(self):
-        """CDC property."""
-        return self._cdc
+        # Get table from first item's class name
+        table_name = items[0].__class__.__name__
 
-    @cdc.setter
-    def cdc(self, cdc):
-        """CDC property setter."""
-        self._cdc = cdc
+        # Ensure all items are Base instances
+        if not isreallyinstance(items[0], Base):
+            raise AssertionError("Items must be Base instances")
 
-    # Add option to drop a whole class of components
-    def drop(self, force: bool = False, data: bool = False):
+        # Try to load existing table
+        table = None
+        try:
+            table = self.load('Table', table_name)
+        except NonExistentMetadataError:
+            # Create table if it doesn't exist
+            table = self.metadata.create(type(items[0]))
+
+        # Prepare data for insertion
+        data = []
+        for item in items:
+            item_dict = item.dict()
+            del item_dict['_path']
+            data.append(item_dict)
+
+        # Insert data
+        ids = self[table.identifier].insert(data)
+
+        # Handle CDC if enabled
+        if table.identifier in self.metadata.show_cdc_tables():
+            if not table.identifier.startswith(CFG.output_prefix):
+                logging.info(f'CDC for {table.identifier} is enabled')
+                self.cluster.cdc.handle_event(
+                    event_type='insert',
+                    table=table.identifier,
+                    ids=ids
+                )
+
+        return ids
+
+    def drop(self, force: bool = False, data: bool = False) -> None:
         """
-        Drop all data, artifacts, and metadata.
+        Drop database components (metadata, artifacts, etc).
 
-        :param force: Force drop.
-        :param data: Drop data.
+        Args:
+            force: Skip confirmation prompt when True
+            data: Also drop data in addition to schema when True
         """
-        if not force and not click.confirm(
-            "!!!WARNING USE WITH CAUTION AS YOU WILL"
-            "LOSE ALL DATA!!!]\n"
-            "Are you sure you want to drop the database? ",
-            default=False,
-        ):
-            logging.warn("Aborting...")
+        if not force:
+            confirmed = click.confirm(
+                "!!! WARNING: USE WITH CAUTION - YOU WILL LOSE ALL DATA !!!\n"
+                "Are you sure you want to drop the database?",
+                default=False,
+            )
+            if not confirmed:
+                logging.warn("Aborting...")
+                return
 
-        # drop the cache, vector-indexes, triggers, queues
+        # Drop cluster components (cache, vector-indexes, triggers, queues)
         self.cluster.drop(force=True)
 
         if data:
+            # Drop all data and artifacts
             self.databackend.drop(force=True)
             self.artifact_store.drop(force=True)
         else:
+            # Only drop table structure
             self.databackend.drop_table()
 
     def show(
-        self,
-        component: t.Optional[str] = None,
-        identifier: t.Optional[str] = None,
-        version: t.Optional[int] = None,
-        uuid: t.Optional[str] = None,
-    ):
+            self,
+            component: t.Optional[str] = None,
+            identifier: t.Optional[str] = None,
+            version: t.Optional[int] = None,
+            uuid: t.Optional[str] = None,
+    ) -> t.Union[t.List[t.Dict], t.Dict, t.List[str]]:
         """
-        Show available functionality which has been added using ``self.add``.
+        Show available components registered in the system.
 
-        If the version is specified, then print full metadata.
+        Args:
+            component: Component type to filter by ('Model', 'Listener', etc.)
+            identifier: Specific component identifier to show
+            version: Specific version number to show detailed metadata
+            uuid: Specific component UUID to retrieve
 
-        :param component: Component to show ['Model', 'Listener', etc.]
-        :param identifier: Identifying string to component.
-        :param version: (Optional) Numerical version - specify for full metadata.
-        :param uuid: (Optional) UUID of the component.
+        Returns:
+            List of components or detailed component information
         """
+        # Case 1: Query by UUID
         if uuid is not None:
-            assert component is not None
+            if component is None:
+                raise ValueError("Must specify component when using uuid")
             return self.metadata.get_component_by_uuid(component, uuid)
 
+        # Case 2: Validate parameters
         if identifier is None and version is not None:
-            raise ValueError(f"Must specify {identifier} to go with {version}")
+            raise ValueError(f"Must specify identifier to go with version {version}")
 
+        # Case 3: Show all components
         if component is None:
             nt = namedtuple('nt', ('component', 'identifier'))
             out = self.metadata.show_components()
-            out = sorted(list(set([nt(**x) for x in out])))
-            out = [x._asdict() for x in out]
-            return out
+            result = []
+            for item in out:
+                component_obj = nt(**item)
+                result.append(component_obj)
+            result = sorted(list(set(result)))
 
+            final_result = []
+            for item in result:
+                final_result.append(item._asdict())
+            return final_result
+
+        # Case 4: Show components of a specific type
         if identifier is None:
             try:
                 out = self.metadata.show_components(component=component)
+                return sorted(out)
             except NonExistentMetadataError:
                 return []
-            return sorted(out)
 
+        # Case 5: Show versions or specific version
         if version is None:
-            out = sorted(
-                self.metadata.show_component_versions(
-                    component=component, identifier=identifier
-                )
+            # Show all versions
+            versions = self.metadata.show_component_versions(
+                component=component, identifier=identifier
             )
-            return out
-
-        if version == -1:
+            return sorted(versions)
+        elif version == -1:
+            # Show latest version
             return self.metadata.get_component(
                 component=component, identifier=identifier, version=None
             )
+        else:
+            # Show specific version
+            return self.metadata.get_component(
+                component=component, identifier=identifier, version=version
+            )
 
-        return self.metadata.get_component(
-            component=component, identifier=identifier, version=version
-        )
-
-    def pre_insert(
-        self,
-        items: t.List[Base],
-    ):
-        """Pre-insert hook for data insertion.
-
-        :param items: The items to insert.
+    def on_event(self, table: str, ids: t.List[str], event_type: str) -> t.Any:
         """
-        table = items[0].__class__.__name__
-        try:
-            table = self.load('Table', table)
-            return table
-        except NonExistentMetadataError:
-            assert isreallyinstance(items[0], Base)
-            return self.metadata.create(type(items[0]))
+        Trigger computation jobs after data changes.
 
-    def post_insert(self, table: str, ids: t.Sequence[str]):
-        """Post-insert hook for data insertion.
+        Args:
+            table: Table where data changed
+            ids: IDs of affected records
+            event_type: Type of event ('insert', 'update', 'delete')
 
-        :param table: The table to insert data into.
-        :param ids: The IDs of the inserted data.
-        """
-        if table in self.metadata.show_cdc_tables() and not table.startswith(
-            CFG.output_prefix
-        ):
-            logging.info(f'CDC for {table} is enabled')
-            self.cluster.cdc.handle_event(event_type='insert', table=table, ids=ids)
-
-    def _auto_create_table(self, table_name, documents):
-
-        # Should we need to check all the documents?
-        document = documents[0]
-        table = Table(identifier=table_name, fields=self.infer_schema(document))
-        logging.info(f"Creating table {table_name} with schema {table.schema}")
-        self.apply(table, force=True)
-        return table
-
-    def on_event(self, table: str, ids: t.List[str], event_type: 'str'):
-        """
-        Trigger computation jobs after data insertion.
-
-        :param table: The table to trigger computation jobs on.
-        :param ids: IDs that further reduce the scope of computations.
-        :param event_type: The type of event to trigger.
+        Returns:
+            Result from publishing events to scheduler
         """
         from superduper.base.event import Change
 
-        if not self.metadata.show_cdcs(table):
+        # Check if table has CDC consumers
+        has_cdcs = self.metadata.show_cdcs(table)
+        if not has_cdcs:
             logging.info(
-                f'Skipping cdc for inserted documents in ({table})',
-                'because no component to consume the table.',
+                f'Skipping CDC for {event_type} events in {table} '
+                'because no component is listening to this table.'
             )
-            return
+            return None
 
+        # Create events for each affected ID
         events = []
         for id in ids:
             event = Change(ids=[str(id)], queue=table, type=event_type)
             events.append(event)
+
         logging.info(f'Created {len(events)} events for {event_type} on [{table}]')
         logging.info(f'Publishing {len(events)} events')
-        return self.cluster.scheduler.publish(events)  # type: ignore[arg-type]
+        return self.cluster.scheduler.publish(events)
 
-    def create(self, object: t.Type[Base]):
-        """Create a new type of component/ leaf.
+    def create(self, obj_type: t.Type[Base]) -> None:
+        """
+        Register a new component type in the system.
 
-        :param object: The object to create.
+        Args:
+            obj_type: The type to register
         """
         try:
-            self.metadata.create(object)
+            self.metadata.create(obj_type)
         except UniqueConstraintError:
-            logging.debug(f'{object} already exists, skipping...')
+            logging.debug(f'{obj_type.__name__} already exists, skipping...')
 
     def apply(
-        self,
-        object: t.Union[Component, t.Sequence[t.Any], t.Any],
-        force: bool | None = None,
-        wait: bool = False,
-        jobs: bool = True,
-    ):
+            self,
+            object: t.Union[Component, t.Sequence[t.Any], t.Any],
+            force: t.Optional[bool] = None,
+            wait: bool = False,
+            jobs: bool = True,
+    ) -> t.Any:
         """
-        Add functionality in the form of components.
+        Register and store a component in the system.
 
-        Components are stored in the configured artifact store
-        and linked to the primary database through metadata.
+        Args:
+            object: Component(s) to register
+            force: Force apply if True, even if component exists
+            wait: Wait for apply events to complete if True
+            jobs: Execute related jobs if True
 
-        :param object: Object to be stored.
-        :param force: Force apply.
-        :param wait: Wait for apply events.
-        :param jobs: Execute jobs.
+        Returns:
+            Result of the apply operation
         """
-        result = apply.apply(db=self, object=object, force=force, wait=wait, jobs=jobs)
-        return result
+        return apply.apply(db=self, object=object, force=force, wait=wait, jobs=jobs)
 
     def remove(
-        self,
-        component: str,
-        identifier: str,
-        version: t.Optional[int] = None,
-        recursive: bool = False,
-        force: bool = False,
-    ):
+            self,
+            component: str,
+            identifier: str,
+            version: t.Optional[int] = None,
+            recursive: bool = False,
+            force: bool = False,
+    ) -> None:
         """
-        Remove a component (version optional).
+        Remove a component from the system.
 
-        :param component: Cmponent to remove ('Model', 'Listener', etc.)
-        :param identifier: Identifier of the component (refer to
-                            `container.base.Component`).
-        :param version: [Optional] Numerical version to remove.
-        :param recursive: Toggle to remove all descendants of the component.
-        :param force: Force skip confirmation (use with caution).
+        Args:
+            component: Component type to remove
+            identifier: Component identifier
+            version: Specific version to remove (all versions if None)
+            recursive: Also remove child components if True
+            force: Skip confirmation and dependency checks if True
         """
+        # Remove a specific version if provided
         if version is not None:
-            return self._remove_component_version(
-                component, identifier, version=version, force=force, recursive=recursive
+            self._remove_single_version(
+                component, identifier, version, recursive, force
             )
+            return
 
+        # Get all versions of the component
         versions = self.metadata.show_component_versions(component, identifier)
+
+        # Find versions that are in use by other components
         versions_in_use = []
         for v in versions:
             if self.metadata.component_version_has_parents(component, identifier, v):
                 versions_in_use.append(v)
 
-        if versions_in_use:
+        # Check if any version is in use
+        if len(versions_in_use) > 0 and not force:
             component_versions_in_use = []
             for v in versions_in_use:
                 uuid = self.metadata.get_uuid(component, identifier, v)
-                component_versions_in_use.append(
-                    f"{uuid} -> "
-                    f"{self.metadata.get_component_version_parents(uuid)}",
-                )
-            if not force:
-                raise exceptions.ComponentInUseError(
-                    f'Component versions: {component_versions_in_use} are in use'
-                )
+                parents = self.metadata.get_component_version_parents(uuid)
+                component_versions_in_use.append(f"{uuid} -> {parents}")
 
-        if force or click.confirm(
-            f'You are about to delete {component}/{identifier}, are you sure?',
-            default=False,
-        ):
-            for v in sorted(list(set(versions) - set(versions_in_use))):
-                self._remove_component_version(
-                    component, identifier, v, recursive=recursive, force=True
-                )
+            raise exceptions.ComponentInUseError(
+                f'Component versions: {component_versions_in_use} are in use'
+            )
 
-            for v in sorted(versions_in_use):
-                self.metadata.hide_component_version(component, identifier, v)
-
+        # Confirm deletion
+        should_proceed = False
+        if force:
+            should_proceed = True
         else:
-            logging.warn('aborting.')
-
-    def load_all(self, component: str, **kwargs) -> t.List[Component]:
-        """Load all instances of component.
-
-        :param component: Component class
-        :param kwargs: Addition key-value pairs to `self.load`
-        """
-        identifiers = self.metadata.show_components(component=component)
-        out: t.List[Component] = []
-        for identifier in identifiers:
-            try:
-                c = self.load(component, identifier)
-                applies = True
-                for k, v in kwargs.items():
-                    if getattr(c, k) != v:
-                        applies = False
-                        break
-                if applies:
-                    out.append(c)
-            except NonExistentMetadataError:
-                continue
-        return out
-
-    def load(
-        self,
-        component: str,
-        identifier: t.Optional[str] = None,
-        version: t.Optional[int] = None,
-        uuid: t.Optional[str] = None,
-        huuid: t.Optional[str] = None,
-        allow_hidden: bool = False,
-        overrides: t.Dict | None = None,
-    ) -> Component:
-        """
-        Load a component using uniquely identifying information.
-
-        If `uuid` is provided, `component` and `identifier` are ignored.
-        If `uuid` is not provided, `component` and `identifier` must be provided.
-
-        :param component: Type ID of the component to load
-                         ('datatype', 'model', 'listener', ...).
-        :param identifier: Identifier of the component
-                           (see `container.base.Component`).
-        :param version: [Optional] Numerical version.
-        :param uuid: [Optional] UUID of the component to load.
-        :param huuid: [Optional] human-readable UUID of the component to load.
-        :param allow_hidden: Toggle to ``True`` to allow loading
-                             of deprecated components.
-        :param overrides: [Optional] Dictionary of overrides to apply to the component.
-        """
-        if version is not None:
-            assert component is not None
-            assert identifier is not None
-            info = self.metadata.get_component(
-                component=component,
-                identifier=identifier,
-                version=version,
-                allow_hidden=allow_hidden,
+            should_proceed = click.confirm(
+                f'You are about to delete {component}/{identifier}, are you sure?',
+                default=False,
             )
-            uuid = info['uuid']
-            info.update(overrides or {})
 
-        if huuid is not None:
-            uuid = huuid.split(':')[-1]
-
-        if uuid is not None:
-            info = self.metadata.get_component_by_uuid(
-                component=component,
-                uuid=uuid,
-            )
-            info.update(overrides or {})
-
-            # to prevent deserialization propagating back to the cache
-            builds = {k: v for k, v in info.get('_builds', {}).items()}
-            for k in builds:
-                builds[k]['identifier'] = k.split(':')[-1]
-
-            c = BaseType().decode_data(
-                {k: v for k, v in info.items() if k != '_builds'},
-                builds=builds,
-                db=self,
-            )
-        elif identifier is not None:
-            assert component is not None
-            logging.info(f'Load ({component, identifier}) from metadata...')
-            info = self.metadata.get_component(
-                component=component,
-                identifier=identifier,
-                allow_hidden=allow_hidden,
-            )
-            info.update(overrides or {})
-            c = ComponentType().decode_data(
-                info,
-                builds=info.get('_builds', {}),
-                db=self,
-            )
-        return c
-
-    def _remove_component_version(
-        self,
-        component: str,
-        identifier: str,
-        version: int,
-        force: bool = False,
-        recursive: bool = False,
-    ):
-        # TODO - change this logic for a not version-by-version deletion
-        if version is None:
+        if not should_proceed:
+            logging.warn('Aborting.')
             return
 
+        # Remove unused versions
+        unused_versions = []
+        for v in versions:
+            if v not in versions_in_use:
+                unused_versions.append(v)
+
+        for v in sorted(unused_versions):
+            self._remove_single_version(
+                component, identifier, v, recursive=recursive, force=True
+            )
+
+        # Hide versions that are in use if force is True
+        for v in sorted(versions_in_use):
+            self.metadata.hide_component_version(component, identifier, v)
+
+    def _remove_single_version(
+            self,
+            component: str,
+            identifier: str,
+            version: int,
+            recursive: bool = False,
+            force: bool = False,
+    ) -> None:
+        """
+        Remove a specific component version.
+
+        Args:
+            component: Component type
+            identifier: Component identifier
+            version: Version to remove
+            recursive: Remove child components if True
+            force: Skip confirmation if True
+        """
+        # Check if component exists
+        component_info = None
         try:
-            r = self.metadata.get_component(component, identifier, version=version)
+            component_info = self.metadata.get_component(
+                component, identifier, version=version
+            )
         except NonExistentMetadataError:
             logging.warn(
                 f'Component {component}:{identifier}:{version} has already been removed'
             )
             return
 
-        if self.metadata.component_version_has_parents(component, identifier, version):
-            parents = self.metadata.get_component_version_parents(r['uuid'])
-            raise exceptions.ComponentInUseError(
-                f'{r["uuid"]} is involved in other components: {parents}'
-            )
+        component_uuid = component_info['uuid']
 
-        if not (
-            force
-            or click.confirm(
-                f'You are about to delete {component}/{identifier}{version}, '
+        # Check if component is used by others
+        has_parents = self.metadata.component_version_has_parents(
+            component, identifier, version
+        )
+        if has_parents:
+            parents = self.metadata.get_component_version_parents(component_uuid)
+            if not force:
+                raise exceptions.ComponentInUseError(
+                    f'{component_uuid} is involved in other components: {parents}'
+                )
+            logging.warn(f'Component {component_uuid} is in use: {parents}, but force=True')
+
+        # Confirm deletion
+        should_proceed = False
+        if force:
+            should_proceed = True
+        else:
+            should_proceed = click.confirm(
+                f'You are about to delete {component}/{identifier}/{version}, '
                 'are you sure?',
                 default=False,
             )
-        ):
+
+        if not should_proceed:
             return
 
-        object = self.load(
-            component,
-            identifier,
-            version=version,
-        )
-        info = self.metadata.get_component(
-            component, identifier, version=version, allow_hidden=force
-        )
-        object.cleanup()
-        self._delete_artifacts(r['uuid'], info)
+        # Load component
+        component_obj = self.load(component, identifier, version=version)
+
+        # Run component cleanup
+        component_obj.cleanup()
+
+        # Find and delete artifacts
+        self._manage_artifacts(component_uuid, component_info, operation="delete")
+
+        # Remove from metadata
         self.metadata.delete_component_version(component, identifier, version=version)
-        self.metadata.delete_parent_child_relationships(r['uuid'])
+        self.metadata.delete_parent_child_relationships(component_uuid)
 
-        if not recursive:
-            return
+        # Handle recursive deletion
+        if recursive:
+            children = component_obj.get_children(deep=True)
+            children = component_obj.sort_components(children)
+            children.reverse()  # Reverse to handle deepest dependencies first
 
-        children = object.get_children(deep=True)
-
-        children = object.sort_components(children)[::-1]
-        for c in children:
-            if c.version is None:
-                logging.warn(f'Found uninitialized component {c.huuid}, skipping...')
-                continue
-            try:
-                self._remove_component_version(
-                    c.component,
-                    c.identifier,
-                    version=c.version,
-                    recursive=False,
-                    force=force,
-                )
-            except exceptions.ComponentInUseError as e:
-                if force:
+            for child in children:
+                if child.version is None:
                     logging.warn(
-                        f'Component {c.huuid} is in use: {e}\n'
-                        'Skipping since force=True...'
+                        f'Found uninitialized component {child.huuid}, skipping...'
                     )
-                else:
-                    raise e
+                    continue
 
-    def _save_artifact(self, uuid, info: t.Dict):
+                try:
+                    self._remove_single_version(
+                        child.component,
+                        child.identifier,
+                        child.version,
+                        recursive=False,
+                        force=force,
+                    )
+                except exceptions.ComponentInUseError as e:
+                    if force:
+                        logging.warn(
+                            f'Component {child.huuid} is in use: {e}\n'
+                            'Skipping since force=True...'
+                        )
+                    else:
+                        raise e
+
+    def load_all(self, component: str, **kwargs) -> t.List[Component]:
         """
-        Save an artifact to the artifact store.
+        Load all instances of a component type with optional filtering.
 
-        :param artifact: The artifact to save.
+        Args:
+            component: Component type to load
+            **kwargs: Attribute filters to apply
+
+        Returns:
+            List of matching components
         """
-        return self.artifact_store.save_artifact(info)
+        identifiers = self.metadata.show_components(component=component)
+        result = []
 
-    def _delete_artifacts(self, uuid, info: t.Dict):
-        artifact_ids, artifacts = self._find_artifacts(info)
-        for artifact_id in artifact_ids:
-            relation_uuids = self.metadata.get_artifact_relations(
-                artifact_id=artifact_id
+        for identifier in identifiers:
+            try:
+                comp = self.load(component, identifier)
+
+                # Filter by attributes if specified
+                matches_all_filters = True
+                for key, value in kwargs.items():
+                    if not hasattr(comp, key) or getattr(comp, key) != value:
+                        matches_all_filters = False
+                        break
+
+                if matches_all_filters:
+                    result.append(comp)
+
+            except NonExistentMetadataError:
+                continue
+
+        return result
+
+    def load(
+            self,
+            component: str,
+            identifier: t.Optional[str] = None,
+            version: t.Optional[int] = None,
+            uuid: t.Optional[str] = None,
+            huuid: t.Optional[str] = None,
+            allow_hidden: bool = False,
+            overrides: t.Optional[t.Dict] = None,
+    ) -> Component:
+        """
+        Load a component using various ways to identify it.
+
+        Args:
+            component: Component type to load
+            identifier: Component identifier
+            version: Specific version to load
+            uuid: Component UUID
+            huuid: Human-readable UUID
+            allow_hidden: Include hidden components if True
+            overrides: Dictionary of attribute overrides
+
+        Returns:
+            Loaded component instance
+        """
+        if overrides is None:
+            overrides = {}
+
+        info = None
+        component_uuid = None
+
+        # Load component info based on provided parameters
+        if version is not None and identifier is not None:
+            # Case 1: Load by version and identifier
+            info = self.metadata.get_component(
+                component=component,
+                identifier=identifier,
+                version=version,
+                allow_hidden=allow_hidden,
             )
-            if len(relation_uuids) == 1 and relation_uuids[0] == uuid:
-                self.artifact_store.delete_artifact([artifact_id])
-                self.metadata.delete_artifact_relation(
-                    uuid=uuid, artifact_ids=artifact_id
-                )
+            component_uuid = info['uuid']
 
-    def _find_artifacts(self, info: t.Dict):
-        from superduper.misc.special_dicts import recursive_find
+        elif huuid is not None:
+            # Case 2: Load by human-readable UUID
+            component_uuid = huuid.split(':')[-1]
 
-        # find all blobs with `&:blob:` prefix,
+        elif uuid is not None:
+            # Case 3: Load by UUID
+            component_uuid = uuid
+
+        elif identifier is not None:
+            # Case 4: Load by identifier (latest version)
+            logging.info(f'Loading ({component}, {identifier}) from metadata...')
+            info = self.metadata.get_component(
+                component=component,
+                identifier=identifier,
+                allow_hidden=allow_hidden,
+            )
+
+        else:
+            # Case 5: Missing required parameters
+            raise ValueError("Must specify identifier, uuid, or huuid")
+
+        # If we have UUID but not info, get the info
+        if component_uuid is not None and info is None:
+            info = self.metadata.get_component_by_uuid(
+                component=component,
+                uuid=component_uuid,
+            )
+
+        # Apply overrides
+        for key, value in overrides.items():
+            info[key] = value
+
+        # Handle component loading based on info type
+        if component_uuid is not None and identifier is None:
+            # Clone builds to prevent cache modification
+            builds = {}
+            if '_builds' in info:
+                for k, v in info['_builds'].items():
+                    builds[k] = v.copy()
+                    builds[k]['identifier'] = k.split(':')[-1]
+
+            # Filter out _builds from info
+            info_without_builds = {}
+            for k, v in info.items():
+                if k != '_builds':
+                    info_without_builds[k] = v
+
+            return BaseType().decode_data(
+                info_without_builds,
+                builds=builds,
+                db=self,
+            )
+        else:
+            builds = {}
+            if '_builds' in info:
+                builds = info['_builds']
+
+            return ComponentType().decode_data(
+                info,
+                builds=builds,
+                db=self,
+            )
+
+    def _manage_artifacts(
+            self,
+            uuid: str,
+            info: t.Dict,
+            operation: str
+    ) -> t.Optional[t.Any]:
+        """
+        Manage artifacts associated with a component.
+
+        Args:
+            uuid: Component UUID
+            info: Component information
+            operation: Operation to perform ("save", "delete", "find")
+
+        Returns:
+            Operation result or None
+        """
+        # Find artifacts in the component info
         blobs = recursive_find(
             info, lambda v: isinstance(v, str) and v.startswith('&:blob:')
         )
-
-        # find all files with `&:file:` prefix
         files = recursive_find(
             info, lambda v: isinstance(v, str) and v.startswith('&:file:')
         )
-        artifact_ids: list[str] = []
-        artifact_ids.extend(a.split(":")[-1] for a in blobs)
-        artifact_ids.extend(a.split(":")[-1] for a in files)
-        return artifact_ids, {'blobs': blobs, 'files': files}
+
+        # Extract artifact IDs
+        artifact_ids = []
+        for blob in blobs:
+            artifact_ids.append(blob.split(":")[-1])
+        for file in files:
+            artifact_ids.append(file.split(":")[-1])
+
+        artifacts = {'blobs': blobs, 'files': files}
+
+        # Perform requested operation
+        if operation == "save":
+            return self.artifact_store.save_artifact(info)
+
+        elif operation == "delete":
+            for artifact_id in artifact_ids:
+                relation_uuids = self.metadata.get_artifact_relations(
+                    artifact_id=artifact_id
+                )
+
+                # Only delete if this is the only component using the artifact
+                if len(relation_uuids) == 1 and relation_uuids[0] == uuid:
+                    self.artifact_store.delete_artifact([artifact_id])
+                    self.metadata.delete_artifact_relation(
+                        uuid=uuid, artifact_ids=artifact_id
+                    )
+            return None
+
+        elif operation == "find":
+            return artifact_ids, artifacts
+
+        else:
+            raise ValueError(f"Unknown artifact operation: {operation}")
 
     def select_nearest(
-        self,
-        like: t.Union[t.Dict, Document],
-        vector_index: str,
-        ids: t.Optional[t.Sequence[str]] = None,
-        outputs: t.Optional[Document] = None,
-        n: int = 100,
+            self,
+            like: t.Union[t.Dict, Document],
+            vector_index: str,
+            ids: t.Optional[t.Sequence[str]] = None,
+            outputs: t.Optional[Document] = None,
+            n: int = 100,
     ) -> t.Tuple[t.List[str], t.List[float]]:
         """
-        Performs a vector search query on the given vector index.
+        Perform a vector similarity search.
 
-        :param like: Vector search document to search.
-        :param vector_index: Vector index to search.
-        :param ids: (Optional) IDs to search within.
-        :param outputs: (Optional) Seed outputs dictionary.
-        :param n: Get top k results from vector search.
+        Args:
+            like: Query document or dictionary
+            vector_index: Name of the vector index to search
+            ids: Optional list of IDs to limit search scope
+            outputs: Optional seed outputs document
+            n: Number of results to return
+
+        Returns:
+            Tuple of (matching_ids, similarity_scores)
         """
-        # TODO - make this un-ambiguous
+        # Convert dictionary to Document if needed
         if not isinstance(like, Document):
-            assert isinstance(like, dict)
+            if not isinstance(like, dict):
+                raise TypeError(f"Expected Document or dict, got {type(like)}")
             like = Document(like)
-        # TODO deprecate
-        # like = self._get_content_for_filter(like)
-        logging.info('Getting vector-index')
+
+        # Load vector index
+        logging.info('Getting vector index')
         vector_index = self.load('VectorIndex', vector_index)
-        if outputs is None:
-            outs: t.Dict = {}
-        else:
+
+        # Prepare outputs
+        outs = {}
+        if outputs is not None:
             outs = outputs.encode()
             if not isinstance(outs, dict):
                 raise TypeError(f'Expected dict, got {type(outputs)}')
+
         logging.info(str(outs))
         return vector_index.get_nearest(like, ids=ids, n=n, outputs=outs)
 
-    def disconnect(self):
+    def disconnect(self) -> None:
         """Gracefully shutdown the Datalayer."""
-        logging.info("Disconnect from Cluster")
+        logging.info("Disconnecting from Cluster")
         self.cluster.disconnect()
 
-    @property
-    def cfg(self) -> Config:
+    def get_cfg(self) -> Config:
         """Get the configuration object for the datalayer."""
-        return self._cfg or s.CFG
+        if self._cfg is None:
+            return s.CFG
+        return self._cfg
 
-    @cfg.setter
-    def cfg(self, cfg: Config):
+    def set_cfg(self, cfg: Config) -> None:
         """Set the configuration object for the datalayer."""
-        assert isinstance(cfg, Config)
+        if not isinstance(cfg, Config):
+            raise AssertionError("cfg must be a Config instance")
         self._cfg = cfg
 
-    def execute(self, query: str):
-        """Execute a native DB query.
+    # Property for config access
+    cfg = property(get_cfg, set_cfg)
 
-        :param query: The query to execute.
+    def execute(self, query: str) -> t.Any:
+        """
+        Execute a native database query.
+
+        Args:
+            query: Raw query string in the native database language
+
+        Returns:
+            Query results
         """
         return self.databackend.execute_native(query)

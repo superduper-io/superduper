@@ -56,7 +56,7 @@ class _DataBackendLoader(_Loader):
         r'^mongodb\+srv:\/\/': ('mongodb', 'atlas'),
         r'^mongomock:\/\/': ('mongodb', 'mongomock'),
         r'^sqlite://': ('sql', 'base'),
-        r'^postgresql://': ('sq;', 'base'),
+        r'^postgresql://': ('sql', 'base'),
         r'^snowflake:\/\/': ('snowflake', 'base'),
         r'^duckdb://': ('sql', 'base'),
         r'^mssql://': ('sql', 'base'),

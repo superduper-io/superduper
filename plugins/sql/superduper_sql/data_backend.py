@@ -181,6 +181,10 @@ class IbisDataBackend(BaseDataBackend):
         for r in documents:
             if primary_id not in r:
                 r[primary_id] = str(uuid.uuid4())
+
+        documents = pandas.DataFrame(documents)
+        documents = documents.dropna(axis=1, how='all')
+        documents = documents.to_dict(orient='records')
         ids = [r[primary_id] for r in documents]
         self.conn.insert(table, documents)
         return ids

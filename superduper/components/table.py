@@ -44,8 +44,7 @@ class Table(Component):
 
     def cleanup(self):
         """Cleanup the table, on removal of the component."""
-        if self.identifier.startswith(CFG.output_prefix):
-            self.db.databackend.drop_table(self.identifier)
+        self.db.databackend.drop_table(self.identifier)
 
     def on_create(self):
         """Create the table, on creation of the component."""

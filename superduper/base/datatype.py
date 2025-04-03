@@ -742,6 +742,7 @@ class _DatatypeLookup:
             FieldType('bytes'),
             FieldType('float'),
             FieldType('bool'),
+            FieldType('date'),
             FieldType('ID'),
         ]
     }

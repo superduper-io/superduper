@@ -20,7 +20,7 @@ from .base.datatype import BaseDataType, dill_serializer, pickle_serializer
 from .base.document import Document
 from .base.schema import Schema
 from .components.application import Application
-from .components.component import Component
+from .components.component import Component, trigger
 from .components.cron_job import CronJob, FunctionCronJob
 from .components.dataset import Dataset
 from .components.listener import Listener
@@ -70,6 +70,7 @@ __all__ = (
     'Template',
     'Application',
     'Component',
+    'trigger',
     'pickle_serializer',
     'dill_serializer',
     'Streamlit',

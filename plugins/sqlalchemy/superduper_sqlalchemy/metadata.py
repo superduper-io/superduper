@@ -26,6 +26,9 @@ from superduper.misc.colors import Colors
 from superduper_sqlalchemy.db_helper import get_db_config
 
 
+TABLE_PREFIX = 'SUPERDUPER_'
+
+
 def wrap_underscore_path(data):
     if 'superduper_path' in data:
         data['_path'] = data.pop('superduper_path')
@@ -254,7 +257,7 @@ class SQLAlchemyMetadata(MetaDataStore):
         metadata = MetaData()
 
         self.job_table = Table(
-            'JOB',
+            f'{TABLE_PREFIX}JOB',
             metadata,
             Column('context', type_string),
             Column('type_id', type_string),
@@ -273,7 +276,7 @@ class SQLAlchemyMetadata(MetaDataStore):
         )
 
         self.parent_child_association_table = Table(
-            'PARENT_CHILD_ASSOCIATION',
+            f'{TABLE_PREFIX}PARENT_CHILD_ASSOCIATION',
             metadata,
             Column('parent_id', type_string, primary_key=True),
             Column('child_id', type_string, primary_key=True),
@@ -281,7 +284,7 @@ class SQLAlchemyMetadata(MetaDataStore):
         )
 
         self.component_table = Table(
-            "COMPONENT",
+            f"{TABLE_PREFIX}COMPONENT",
             metadata,
             # TODO rename with id -> uuid
             Column('id', type_string, primary_key=True),
@@ -298,7 +301,7 @@ class SQLAlchemyMetadata(MetaDataStore):
         )
 
         self.artifact_table = Table(
-            'ARTIFACT_RELATIONS',
+            f'{TABLE_PREFIX}ARTIFACT_RELATIONS',
             metadata,
             Column('uuid', type_string),
             Column('artifact_id', type_string),

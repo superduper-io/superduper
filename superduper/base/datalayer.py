@@ -576,7 +576,7 @@ class Datalayer:
     @cfg.setter
     def cfg(self, cfg: Config):
         """Set the configuration object for the datalayer."""
-        assert isinstance(cfg, Config)
+        assert isreallyinstance(cfg, Config)
         self._cfg = cfg
 
     def execute(self, query: str):

@@ -61,6 +61,7 @@ class _DataBackendLoader(_Loader):
         r'^duckdb://': ('sql', 'base'),
         r'^mssql://': ('sql', 'base'),
         r'^mysql://': ('sql', 'base'),
+        r'^redis://': ('redis', 'base'),
     }
 
 

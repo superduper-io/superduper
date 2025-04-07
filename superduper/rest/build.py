@@ -15,6 +15,9 @@ from superduper.misc.files import check_secrets, load_secrets
 from superduper.misc.importing import import_object
 from superduper.misc.plugins import load_plugin
 
+
+TABLE_PREFIX = 'SUPERDUPER_'
+
 try:
     import magic
 except ImportError:
@@ -274,13 +277,7 @@ def build_rest_app(app: SuperDuperApp):
             for t in out
             if (
                 not t.startswith(CFG.output_prefix)
-                and t.lower()
-                not in {
-                    'component',
-                    'job',
-                    'parent_child_association',
-                    'artifact_relations',
-                }
+                and not t.lower().startswith(TABLE_PREFIX)
             )
         ]
 

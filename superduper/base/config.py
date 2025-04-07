@@ -163,7 +163,7 @@ class Config(BaseConfig):
     # TODO drop the "filesystem://" prefix
     artifact_store: str = 'filesystem://./artifact_store'
     metadata_store: t.Optional[str] = None
-    cache: str = 'in-process'
+    cache: str | None = None
     vector_search_engine: str = 'local'
     cluster_engine: str = 'local'
 

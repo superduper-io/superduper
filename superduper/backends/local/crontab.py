@@ -1,6 +1,7 @@
 import typing as t
 
 from apscheduler.executors.pool import ThreadPoolExecutor
+from apscheduler.jobstores.base import JobLookupError
 from apscheduler.jobstores.memory import MemoryJobStore
 from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -68,26 +69,32 @@ class LocalCrontabBackend(CrontabBackend):
 
         :param uuid: Component uuid to remove.
         """
-        self.scheduler.remove_job(uuid)
+        self._drop_job(uuid)
 
-    def drop(self, component: t.Optional['Component'] = None):
+    def drop(self, component: t.Optional["Component"] = None):
         """Drop the crontab.
 
         :param component: Component to remove.
         """
         if component:
-            self.scheduler.remove_job(component.uuid)
+            self._drop_job(component.uuid)
         else:
             for job_id in self._job_uuids:
-                self.scheduler.remove_job(job_id)
+                self._drop_job(job_id)
+
+    def _drop_job(self, job_id):
+        try:
+            self.scheduler.remove_job(job_id)
+        except JobLookupError:
+            logging.warn(f"Job {job_id} not found in scheduler")
 
     def initialize(self):
         """Initialize the crontab."""
         for component_data in self.db.show():
-            type_id = component_data['type_id']
-            identifier = component_data['identifier']
+            type_id = component_data["type_id"]
+            identifier = component_data["identifier"]
             r = self.db.show(type_id=type_id, identifier=identifier, version=-1)
-            if r.get('schedule'):
+            if r.get("schedule"):
                 obj = self.db.load(type_id=type_id, identifier=identifier)
                 from superduper.components.cron_job import CronJob
 

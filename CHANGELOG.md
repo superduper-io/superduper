@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add application_identifier as a default variable during template execution
 - Fix: Remove the secrets check from /health
 - Fix the hyphen symbol in the environment variables.
+- Fix the bug related to crontab deleting tasks.
 
 ## [0.5.0](https://github.com/superduper-io/superduper/compare/0.5.0...0.4.0])    (2024-Nov-02)
 

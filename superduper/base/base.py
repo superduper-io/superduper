@@ -106,6 +106,20 @@ class Base(metaclass=BaseMeta):
         out = Schema(fields=fields)
         return out
 
+    @lazy_classproperty
+    def table(cls):
+        from superduper.components.table import Table
+        from superduper import Component
+        from superduper.misc.importing import isreallyinstance
+
+        return Table(
+            identifier=cls.__name__,
+            fields=cls.class_schema.fields,
+            path=cls.__module__ + '.' + cls.__name__,
+            primary_id='uuid',
+            component=isreallyinstance(cls, Component),
+        )
+
     @staticmethod
     def get_cls_from_path(path):
         """Get class from a path.

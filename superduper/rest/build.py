@@ -15,7 +15,6 @@ from superduper.misc.files import check_secrets, load_secrets
 from superduper.misc.importing import import_object
 from superduper.misc.plugins import load_plugin
 
-
 TABLE_PREFIX = 'SUPERDUPER_'
 
 try:

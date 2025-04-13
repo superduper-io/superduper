@@ -82,7 +82,7 @@ class DBHelper:
                     raise Exception(
                         f"{conn.name} database has limit of {n} for column name."
                     )
-        datas = datas[columns]
+        datas = datas[list(columns)]
         if conn.name in self.truncates:
             if len(table_name) > self.truncates[conn.name]["table"]:
                 raise Exception(

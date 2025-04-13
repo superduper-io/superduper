@@ -5,8 +5,9 @@ import typing as t
 
 import click
 import ibis
-import pandas
-from pandas.core.frame import DataFrame
+
+import ibis.common
+import ibis.common.exceptions
 from sqlalchemy.exc import NoSuchTableError
 from superduper import CFG, logging
 from superduper.backends.base.data_backend import BaseDataBackend
@@ -220,7 +221,7 @@ class IbisDataBackend(BaseDataBackend):
         try:
             self.conn.table(f"{CFG.output_prefix}{predict_id}")
             return True
-        except (NoSuchTableError, ibis.IbisError):
+        except (NoSuchTableError, ibis.IbisError, ibis.common.exceptions.TableNotFound):
             return False
 
     def create_table_and_schema(self, identifier: str, schema: Schema):

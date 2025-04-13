@@ -173,8 +173,6 @@ class IbisQuery(Query):
                 continue
             if part[0] == "rename":
                 r[self.table] = part[1][0]
-            if part[0] == "relabel":
-                r[self.table] = part[1][0]
             else:
                 queries = list(part[1]) + list(part[2].values())
                 for query in queries:
@@ -325,9 +323,9 @@ class IbisQuery(Query):
             )
             symbol_table = self.db[identifier]
 
-            symbol_table = symbol_table.relabel(
+            symbol_table = symbol_table.rename(
                 # TODO: Check for folds
-                {"_fold": f"fold.{identifier}", "id": f"id.{identifier}"}
+                {f"fold.{identifier}": "_fold", f"id.{identifier}": "id"}
             )
             query = query.join(symbol_table, symbol_table._source == attr)
         return query

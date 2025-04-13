@@ -1,6 +1,8 @@
 from functools import wraps
 import os
 import re
+import threading
+import time
 
 import ibis
 import pandas
@@ -14,13 +16,62 @@ from superduper import logging
 from superduper_ibis.data_backend import IbisDataBackend
 from snowflake.snowpark import Session
 
+from watchdog.events import PatternMatchingEventHandler
+from watchdog.observers import Observer
+
+
+db_lock = threading.Lock()
+SESSION_DIR = '/snowflake/session'
+
+
+# Create token watcher with watchdog on /session/token
+class SnowflakeTokenWatcher(PatternMatchingEventHandler):
+    timeout = 60
+    def __init__(self, databackend):
+        # Only match the exact file
+        super().__init__(patterns=['token'], ignore_directories=True)
+        self.databackend = databackend
+
+    def on_deleted(self, event):
+        logging.warn(f'{event.src_path} has been deleted')
+    
+    def on_modified(self, event):
+        logging.info(f"{event.src_path} has been modified")
+        with db_lock:
+            self.databackend.reconnect()
+
+    def on_created(self, event):
+        logging.info(f"{event.src_path} has been created")
+        with db_lock:
+            self.databackend.reconnect()
+            self.databackend.datalayer.metadata.reconnect()
+
+
+def watch_token_file(databackend):
+    observer = Observer()
+    handler = SnowflakeTokenWatcher(databackend)
+
+    observer.schedule(handler, SESSION_DIR, recursive=False)
+    observer.start()
+    logging.info('Started Snowflake token watcher')
+    return observer
+
 
 class SnowflakeDataBackend(IbisDataBackend):
     @wraps(IbisDataBackend.__init__)
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
         self.snowpark = self._get_snowpark_session(self.uri)
+        self.observer = None
+    # if self.uri == 'snowflake://':
+        self.observer = watch_token_file(self)
+
+    def disconnect(self):
+        if self.observer is not None:
+            self.observer.stop()
+            self.observer.join()
+        super().disconnect()
+        self.snowpark.close()
 
     @staticmethod
     def _get_snowpark_session(uri):
@@ -33,7 +84,7 @@ class SnowflakeDataBackend(IbisDataBackend):
                 port=int(os.environ['SNOWFLAKE_PORT']),
                 account=os.environ['SNOWFLAKE_ACCOUNT'],
                 authenticator='oauth',
-                token=open('/snowflake/session/token').read(),
+                token=open(SESSION_DIR + '/token').read(),
                 warehouse=os.environ['SNOWFLAKE_WAREHOUSE'],
                 database=os.environ['SNOWFLAKE_DATABASE'],
                 schema=os.environ['SUPERDUPER_DATA_SCHEMA'],
@@ -68,7 +119,7 @@ class SnowflakeDataBackend(IbisDataBackend):
             port=int(os.environ['SNOWFLAKE_PORT']),
             account=os.environ['SNOWFLAKE_ACCOUNT'],
             authenticator='oauth',
-            token=open('/snowflake/session/token').read(),
+            token=open(SESSION_DIR + '/token').read(),
             warehouse=os.environ['SNOWFLAKE_WAREHOUSE'],
             database=os.environ['SNOWFLAKE_DATABASE'],
             schema=os.environ['SUPERDUPER_DATA_SCHEMA'],
@@ -86,8 +137,10 @@ class SnowflakeDataBackend(IbisDataBackend):
         )
 
     def reconnect(self):
+        logging.info('Reconnecting to Snowflake')
         super().reconnect()
         self.snowpark = self._get_snowpark_session(self.uri)
+        logging.info('Reconnecting to Snowflake... DONE')
 
     def insert(self, table_name, raw_documents):
         ibis_schema = self.conn.table(table_name).schema()

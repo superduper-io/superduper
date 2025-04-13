@@ -311,7 +311,7 @@ def insert(self, documents, raw: bool = False):
         ) from e
 
     out = self.db.databackend._do_insert(self.table, documents, raw=raw)
-    self.db.post_insert(self.table, ids=out)
+    self.db._post_query(self.table, ids=out, type_='insert')
     return out
 
 
@@ -320,7 +320,9 @@ def update(self, condition: t.Dict, key: str, value: t.Any):
 
     # noqa
     """
-    return self.db.databackend.update(self.table, condition, key=key, value=value)
+    out = self.db.databackend.update(self.table, condition, key=key, value=value)
+    self.db._post_query(self.table, ids=out, type_='update')
+    return out
 
 
 def delete(self, condition: t.Dict):
@@ -328,7 +330,9 @@ def delete(self, condition: t.Dict):
 
     # noqa
     """
-    return self.db.databackend.delete(self.table, condition)
+    out = self.db.databackend.delete(self.table, condition)
+    self.db._post_delete(self.table, ids=out, type_='delete')
+    return out
 
 
 def replace(self, condition: t.Dict, r: t.Dict):
@@ -352,7 +356,9 @@ def replace(self, condition: t.Dict, r: t.Dict):
         r.pop(KEY_PATH)
     except KeyError:
         pass
-    return self.db.databackend.replace(self.table, condition, r)
+    out = self.db.databackend.replace(self.table, condition, r)
+    self.db._post_query(self.table, ids=out, type_='update')
+    return out
 
 
 @bind

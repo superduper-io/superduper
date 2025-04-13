@@ -39,9 +39,19 @@ class Status(str, Enum):
 
 
 def _build_info_from_path(path: str):
-    config = os.path.join(path, "component.json")
-    with open(config) as f:
-        config_object = json.load(f)
+    if os.path.exists(os.path.join(path, "component.json")):
+        config = os.path.join(path, "component.json")
+        with open(config) as f:
+            config_object = json.load(f)
+    elif os.path.exists(os.path.join(path, "component.yaml")):
+        import yaml
+        config = os.path.join(path, "component.yaml")
+        with open(config) as f:
+            config_object = yaml.safe_load(f.read())
+    else:
+        raise FileNotFoundError(
+            f'`component.json` and `component.yaml` does not exist in the path {path}'
+        )
 
     config_object[KEY_BLOBS] = {}
     if os.path.exists(os.path.join(path, "blobs")):
@@ -532,6 +542,7 @@ class Component(Base, metaclass=ComponentMeta):
         path: t.Optional[str] = None,
         defaults: bool = True,
         metadata: bool = False,
+        format: str = "json",
     ):
         """
         Save `self` to a directory using super-duper protocol.
@@ -577,8 +588,17 @@ class Component(Base, metaclass=ComponentMeta):
             self._save_files_for_export(r[KEY_FILES], path)
             r.pop(KEY_FILES)
 
-        with open(os.path.join(path, "component.json"), "w") as f:
-            json.dump(r, f, indent=2)
+        if format == 'json':
+            with open(os.path.join(path, "component.json"), "w") as f:
+                json.dump(r, f, indent=2)
+        elif format == 'yaml':
+            import yaml
+            with open(os.path.join(path, "component.yaml"), "w") as f:
+                yaml.dump(r, f)
+        else:
+            raise ValueError(
+                f"Format '{format}' not supported. Supported formats are:\n  - json\n  - yaml"
+            )
 
     @staticmethod
     def _save_blobs_for_export(blobs, path):

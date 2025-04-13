@@ -10,6 +10,7 @@ from superduper.backends.base.scheduler import (
 )
 from superduper.base.event import Event
 from superduper.components.cdc import CDC
+from superduper.misc.importing import isreallyinstance
 
 
 class QueueWrapper:
@@ -64,16 +65,15 @@ class LocalScheduler(Bookkeeping, BaseScheduler):
 
     def initialize(self):
         """Initialize the scheduler."""
-        # TODO
-        # self.Q['_apply'] = []
-        # for component_data in self.db.show():
-        #     component = component_data['component']
-        #     identifier = component_data['identifier']
-        #     r = self.db.show(component=component, identifier=identifier, version=-1)
-        #     if r.get('cdc_table'):
-        #         self.put_component(component)
-        #         with self.lock:
-        #             self.Q[component, identifier] = []
+        self.Q['_apply'] = []
+        for component_data in self.db.show():
+            component = component_data['component']
+            identifier = component_data['identifier']
+            c = self.db.load(component=component, identifier=identifier)
+            if isreallyinstance(c, CDC):
+                self.put_component(c)
+                with self.lock:
+                    self.Q[component, identifier] = []
 
     def publish(self, events: t.List[Event]):
         """

@@ -185,17 +185,12 @@ class Datalayer:
             assert isreallyinstance(items[0], Base)
             return self.metadata.create(type(items[0]))
 
-    def post_insert(self, table: str, ids: t.Sequence[str]):
-        """Post-insert hook for data insertion.
-
-        :param table: The table to insert data into.
-        :param ids: The IDs of the inserted data.
-        """
+    def _post_query(self, table: str, ids: t.Sequence[str], type_: str):
         if table in self.metadata.show_cdc_tables() and not table.startswith(
             CFG.output_prefix
         ):
             logging.info(f'CDC for {table} is enabled')
-            self.cluster.cdc.handle_event(event_type='insert', table=table, ids=ids)
+            self.cluster.cdc.handle_event(event_type=type_, table=table, ids=ids)
 
     def _auto_create_table(self, table_name, documents):
 

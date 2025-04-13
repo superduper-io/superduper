@@ -70,12 +70,23 @@ class RedisDataBackend(BaseDataBackend):
 
     def replace(self, table: str, condition: t.Dict, r: t.Dict) -> t.List[str]:
         df = self._get_table_df(table)
+
         query = []
         for k in condition:
             query.append(df[k] == condition[k])
-        ids = df[numpy.logical_and(query)][self.id_field].tolist()
+
+        if len(query) > 1:
+            query_combined = numpy.logical_and(*query)
+        else:
+            query_combined = query[0]
+
+        ids = df[query_combined][self.id_field].tolist()
+
         for id in ids:
-            self.json_client.jsonset(f'{table}:{id}', '$', r)
+            s = self.json_client.jsonget(f'{table}:{id}')
+            s.update(r)
+            self.json_client.jsonset(f'{table}:{id}', '$', s)
+
         return ids
 
     def update(self, table: str, condition: t.Dict, key: str, value: t.Any):
@@ -83,7 +94,13 @@ class RedisDataBackend(BaseDataBackend):
         query = []
         for k in condition:
             query.append(df[k] == condition[k])
-        ids = df[numpy.logical_and(query)][self.id_field].tolist()
+
+        if len(query) > 1:
+            query_combined = numpy.logical_and(*query)
+        else:
+            query_combined = query[0]
+
+        ids = df[query_combined][self.id_field].tolist()
         for id in ids:
             r = self.json_client.jsonget(f'{table}:{id}')
             r[key] = value
@@ -93,10 +110,20 @@ class RedisDataBackend(BaseDataBackend):
     def delete(self, table: str, condition: t.Dict):
 
         df = self._get_table_df(table)
+
+        if df.empty:
+            return
+
         query = []
         for k in condition:
             query.append(df[k] == condition[k])
-        ids = df[numpy.logical_and(query)][self.id_field].tolist()
+
+        if len(query) > 1:
+            query_combined = numpy.logical_and(*query)
+        else:
+            query_combined = query[0]
+
+        ids = df[query_combined][self.id_field].tolist()
 
         for id in ids:
             self.conn.delete(f'{table}:{id}')
@@ -168,12 +195,11 @@ class RedisDataBackend(BaseDataBackend):
                 if pid is None:
                     pid = self.id_field
 
-                original_q = q
                 for predict_id in part.args:
                     output_t = self._get_table_df(
                         f"{CFG.output_prefix}{predict_id}"
-                    )[f"{CFG.output_prefix}{predict_id}", "_source"]
-                    q = q.join(output_t, output_t['_source'] == original_q[pid])
+                    )[[f"{CFG.output_prefix}{predict_id}", "_source"]]
+                    q = q.merge(output_t, left_on=pid, right_on='_source')
 
             elif isinstance(part, str):
                 if part == 'primary_id':
@@ -205,11 +231,14 @@ class RedisDataBackend(BaseDataBackend):
         output_df = self._get_table_df(f'{CFG.output_prefix + predict_id}')
         columns = output_df.columns
         columns = [c for c in columns if c != '"id"']
-        output_df = output_df.select(*columns)
+        output_df = output_df[columns]
+
+        if output_df.empty:
+            return df[pid].tolist()
 
         # TODO - map to pandas query
         joined_df = df.join(
-            output_df, df[f'"{pid}"'] == output_df['"_source"'], join_type="left"
+            output_df, df[pid] == output_df['_source'], join_type="left"
         )
         return joined_df[joined_df['_source'].isnan()][self.id_field].tolist()
 

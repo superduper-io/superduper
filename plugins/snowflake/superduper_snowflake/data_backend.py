@@ -21,7 +21,7 @@ from watchdog.observers import Observer
 
 
 db_lock = threading.Lock()
-SESSION_DIR = '/snowflake/session'
+SESSION_DIR = os.environ.get('SNOWFLAKE_SESSION_DIR') or '/snowflake/session'
 
 
 # Create token watcher with watchdog on /session/token
@@ -32,9 +32,18 @@ class SnowflakeTokenWatcher(PatternMatchingEventHandler):
         super().__init__(patterns=['token'], ignore_directories=True)
         self.databackend = databackend
 
+    def on_closed_no_write(self, event):
+        logging.warn(f"{event.src_path} has been closed with no write")
+        with db_lock:
+            self.databackend.reconnect()
+            self.databackend.datalayer.metadata.reconnect()
+
+    def on_opened(self, event):
+        logging.warn(f'{event.src_path} has been opened')
+
     def on_deleted(self, event):
         logging.warn(f'{event.src_path} has been deleted')
-    
+
     def on_modified(self, event):
         logging.info(f"{event.src_path} has been modified")
         with db_lock:
@@ -50,6 +59,8 @@ class SnowflakeTokenWatcher(PatternMatchingEventHandler):
 def watch_token_file(databackend):
     observer = Observer()
     handler = SnowflakeTokenWatcher(databackend)
+
+    logging.info(f'Starting Snowflake token watcher on {SESSION_DIR}/token')
 
     observer.schedule(handler, SESSION_DIR, recursive=False)
     observer.start()

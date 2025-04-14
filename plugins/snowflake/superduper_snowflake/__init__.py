@@ -4,6 +4,7 @@ from .secrets import check_secret_updates
 
 __version__ = "0.6.3"
 
+
 __all__ = [
     "VectorSearcher",
     "DataBackend",

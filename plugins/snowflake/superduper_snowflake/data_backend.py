@@ -74,8 +74,8 @@ class SnowflakeDataBackend(IbisDataBackend):
         super().__init__(*args, **kwargs)
         self.snowpark = self._get_snowpark_session(self.uri)
         self.observer = None
-    # if self.uri == 'snowflake://':
-        self.observer = watch_token_file(self)
+        if self.uri == 'snowflake://':
+            self.observer = watch_token_file(self)
 
     def disconnect(self):
         if self.observer is not None:

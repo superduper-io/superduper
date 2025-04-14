@@ -29,6 +29,7 @@ dependencies = [
   "snowflake-snowpark-python[localtest]",
   "snowflake-connector-python",
   "snowflake-sqlalchemy",
+  "watchdog>=6.0.0",
   "ibis-framework[snowflake]",
 ]
 

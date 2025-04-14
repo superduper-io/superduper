@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Merkle-tree implementation replacing random `.uuid` with deterministic implementation
 - Simplify the `Template` class
 - Simplify `Component` lifecycle by removing `Component.pre_create`
-- Renamed `Component.init` to `Component.setup`
+- Renamed `Component.init` to `Component.setup` 
 
 #### New Features & Functionality
 

@@ -1,4 +1,5 @@
 import json
+import os
 import time
 import typing as t
 import uuid
@@ -6,8 +7,13 @@ import uuid
 import click
 import numpy as np
 import pandas
+import threading
+
+from watchdog.events import FileSystemEventHandler
+from watchdog.observers import Observer
 from snowflake.snowpark.functions import col
 from snowflake.snowpark.types import BooleanType, StringType, VariantType
+
 from superduper import CFG, logging
 from superduper.backends.base.data_backend import BaseDataBackend
 from superduper.base.query import Query
@@ -32,12 +38,45 @@ INSERT INTO "{table}" ({columns})
 """
 
 
+db_lock = threading.Lock()
+SESSION_DIR = os.environ.get('SNOWFLAKE_SESSION_DIR') or '/snowflake/session'
+
+
+class SnowflakeTokenWatcher(FileSystemEventHandler):
+    timeout = 60
+    def __init__(self, databackend):
+        super().__init__()
+        self.databackend = databackend
+
+    def on_any_event(self, event):
+        logging.warn(str(event))
+
+        if event.src_path.endswith('data_tmp') and event.event_type == 'moved':
+            with db_lock:
+                self.databackend.reconnect()
+
+
+def watch_token_file(databackend):
+    observer = Observer()
+    handler = SnowflakeTokenWatcher(databackend)
+
+    logging.info(f'Starting Snowflake token watcher on {SESSION_DIR}/token')
+
+    observer.schedule(handler, SESSION_DIR, recursive=False)
+    observer.start()
+    logging.info('Started Snowflake token watcher')
+    return observer
+
+
 class SnowflakeDataBackend(BaseDataBackend):
     """Snowflake data backend."""
 
     def __init__(self, uri, plugin, flavour):
         self.uri = uri
         self.session, self.schema = connect(uri)
+        self.observer = None
+        if self.uri == 'snowflake://':
+            self.observer = watch_token_file(self)
 
     def reconnect(self):
         """Reconnect to the data backend."""

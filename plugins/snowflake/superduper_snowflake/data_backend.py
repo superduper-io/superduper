@@ -16,7 +16,7 @@ from superduper import logging
 from superduper_ibis.data_backend import IbisDataBackend
 from snowflake.snowpark import Session
 
-from watchdog.events import PatternMatchingEventHandler
+from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
 
@@ -25,35 +25,19 @@ SESSION_DIR = os.environ.get('SNOWFLAKE_SESSION_DIR') or '/snowflake/session'
 
 
 # Create token watcher with watchdog on /session/token
-class SnowflakeTokenWatcher(PatternMatchingEventHandler):
+class SnowflakeTokenWatcher(FileSystemEventHandler):
     timeout = 60
     def __init__(self, databackend):
-        # Only match the exact file
-        super().__init__(patterns=['token'], ignore_directories=True)
+        super().__init__()
         self.databackend = databackend
 
-    def on_closed_no_write(self, event):
-        logging.warn(f"{event.src_path} has been closed with no write")
-        with db_lock:
-            self.databackend.reconnect()
-            self.databackend.datalayer.metadata.reconnect()
+    def on_any_event(self, event):
+        logging.warn(str(event))
 
-    def on_opened(self, event):
-        logging.warn(f'{event.src_path} has been opened')
-
-    def on_deleted(self, event):
-        logging.warn(f'{event.src_path} has been deleted')
-
-    def on_modified(self, event):
-        logging.info(f"{event.src_path} has been modified")
-        with db_lock:
-            self.databackend.reconnect()
-
-    def on_created(self, event):
-        logging.info(f"{event.src_path} has been created")
-        with db_lock:
-            self.databackend.reconnect()
-            self.databackend.datalayer.metadata.reconnect()
+        if event.src_path.endswith('data_tmp') and event.event_type == 'moved':
+            with db_lock:
+                self.databackend.reconnect()
+                self.databackend.datalayer.metadata.reconnect()
 
 
 def watch_token_file(databackend):

@@ -186,7 +186,11 @@ class IbisDataBackend(BaseDataBackend):
         documents = documents.dropna(axis=1, how='all')
         documents = documents.to_dict(orient='records')
         ids = [r[primary_id] for r in documents]
-        self.conn.insert(table, documents)
+
+        # Convert the documents to a memtable with the correct schema
+        schema = self.conn.table(table).schema()
+        memtable = ibis.memtable(documents, schema=schema)
+        self.conn.insert(table, memtable)
         return ids
 
     def missing_outputs(self, query, predict_id: str) -> t.List[str]:

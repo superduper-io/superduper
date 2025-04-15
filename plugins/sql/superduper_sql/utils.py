@@ -2,11 +2,11 @@ from ibis.expr.datatypes import dtype
 from superduper import CFG
 from superduper.base.datatype import (
     ID,
+    Array,
     BaseDataType,
     FieldType,
     FileItem,
     Vector,
-    Array,
 )
 from superduper.base.schema import Schema
 

@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Merkle-tree implementation replacing random `.uuid` with deterministic implementation
 - Simplify the `Template` class
 - Simplify `Component` lifecycle by removing `Component.pre_create`
-- Renamed `Component.init` to `Component.setup` 
+- Renamed `Component.init` to `Component.setup`
 
 #### New Features & Functionality
 
@@ -33,7 +33,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Bug Fixes
 
 - Fix the random silent failure bug when ibis creates tables.
-- Remove a bunch of dead code with vulture 
+- Remove a bunch of dead code with vulture
+- Fixed a bug where Ibis fails to insert data containing None values when using PostgreSQL as the backend
+- Fixed a bug where Ibis and SQLAlchemy cannot share the same connection
+- Fixed issues with Ibis regarding data types for arrays and vectors stored in the database
 
 ## [0.5.0](https://github.com/superduper-io/superduper/compare/0.5.0...0.4.0])    (2024-Nov-02)
 

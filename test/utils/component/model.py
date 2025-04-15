@@ -60,7 +60,8 @@ def test_model_as_a_listener(
         model=model,
         key="data",
         select=db["datas"].select(),
-        identifier=f'test-{random_id()}',
+        # TODO: Fix the issue caused by excessively long table names in PostgreSQL
+        identifier=f'test-{random_id()[:4]}',
     )
 
     db.apply(listener)

@@ -5,6 +5,8 @@ from superduper.base.datatype import (
     BaseDataType,
     FieldType,
     FileItem,
+    Vector,
+    Array,
 )
 from superduper.base.schema import Schema
 
@@ -38,6 +40,10 @@ def convert_schema_to_fields(schema: Schema):
             assert isinstance(schema.fields[k], BaseDataType)
 
             if not CFG.json_native and schema.fields[k].dtype == "json":
+                fields[k] = dtype("str")
+            elif isinstance(v, Array):
+                fields[k] = dtype("str")
+            elif isinstance(v, Vector) and isinstance(v.datatype_impl, Array):
                 fields[k] = dtype("str")
             else:
                 fields[k] = dtype(schema.fields[k].dtype)

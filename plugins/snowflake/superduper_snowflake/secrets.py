@@ -16,6 +16,7 @@ def check_secret_updates(db):
 
     updating = []
     for k in lookup:
+        k = k.replace('-', '_').upper()
         if k not in os.environ:
             raise MissingSecretsException(f'Secret {k} is missing')
 

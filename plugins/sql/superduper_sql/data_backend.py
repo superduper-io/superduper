@@ -294,7 +294,7 @@ class SQLDatabackend(IbisDataBackend):
 
     def __init__(self, uri, plugin, flavour=None):
         super().__init__(uri, plugin, flavour)
-        self.alchemy_engine = create_engine(uri, creator=lambda: self.conn.con)
+        self._create_sqlalchemy_engine()
         self.sm = sessionmaker(bind=self.alchemy_engine)
 
     def update(self, table, condition, key, value):
@@ -349,3 +349,25 @@ class SQLDatabackend(IbisDataBackend):
             session.execute(stmt)
             session.commit()
             session.commit()
+
+    def _create_sqlalchemy_engine(self):
+        self.alchemy_engine = create_engine(self.uri, creator=lambda: self.conn.con)
+        if not self._test_engine():
+            logging.warn(
+                "Unable to reuse the ibis connection to create the SQLAlchemy engine. "
+                "Creating a new connection with the URI."
+            )
+            self.alchemy_engine = create_engine(self.uri)
+
+    def _test_engine(self):
+        """Test the engine."""
+        try:
+            with self.alchemy_engine.connect() as conn:
+                if not conn.closed:
+                    return True
+
+            return False
+
+        except Exception as e:
+            logging.debug(f"Error testing engine: {e}")
+            return False

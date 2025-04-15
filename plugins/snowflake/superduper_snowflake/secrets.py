@@ -12,11 +12,10 @@ class UpdatingSecretException(Exception):
 def check_secret_updates(db):
     result = db.databackend.raw_sql("CALL v1.wrapper('SHOW SECRETS IN ADMIN')")
 
-    lookup = {r[1]: json.loads(r[5])['status']['hash'] for r in result}
+    lookup = {r[1].replace('-', '_').upper(): json.loads(r[5])['status']['hash'] for r in result}
 
     updating = []
     for k in lookup:
-        k = k.replace('-', '_').upper()
         if k not in os.environ:
             raise MissingSecretsException(f'Secret {k} is missing')
 

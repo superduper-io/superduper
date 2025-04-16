@@ -331,7 +331,7 @@ def delete(self, condition: t.Dict):
     # noqa
     """
     out = self.db.databackend.delete(self.table, condition)
-    self.db._post_delete(self.table, ids=out, type_='delete')
+    self.db._post_query(self.table, ids=out, type_='delete')
     return out
 
 

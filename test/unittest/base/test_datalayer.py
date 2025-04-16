@@ -187,7 +187,8 @@ def test_add_with_artifact(db):
     )
 
     db.apply(m)
-    db.cluster.cache.delete_uuid(m.uuid)
+    if db.cluster.cache is not None:
+        db.cluster.cache.delete_uuid(m.uuid)
 
     m = db.load('ObjectModel', m.identifier)
 

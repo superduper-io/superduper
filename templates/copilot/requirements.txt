@@ -1,0 +1,4 @@
+litellm
+superduper_redis
+pydantic
+watchdog

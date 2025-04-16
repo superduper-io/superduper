@@ -45,6 +45,7 @@ def _build_info_from_path(path: str):
             config_object = json.load(f)
     elif os.path.exists(os.path.join(path, "component.yaml")):
         import yaml
+
         config = os.path.join(path, "component.yaml")
         with open(config) as f:
             config_object = yaml.safe_load(f.read())
@@ -550,6 +551,7 @@ class Component(Base, metaclass=ComponentMeta):
         :param path: Path to the directory to save the component.
         :param defaults: Whether to save default values.
         :param metadata: Whether to save metadata.
+        :param format: Format to save the component. Accepts `json` and `yaml`.
 
         Created directory structure:
         ```
@@ -593,11 +595,13 @@ class Component(Base, metaclass=ComponentMeta):
                 json.dump(r, f, indent=2)
         elif format == 'yaml':
             import yaml
+
             with open(os.path.join(path, "component.yaml"), "w") as f:
                 yaml.dump(r, f)
         else:
             raise ValueError(
-                f"Format '{format}' not supported. Supported formats are:\n  - json\n  - yaml"
+                f"Format '{format}' not supported. "
+                'Supported formats are:\n  - json\n  - yaml'
             )
 
     @staticmethod

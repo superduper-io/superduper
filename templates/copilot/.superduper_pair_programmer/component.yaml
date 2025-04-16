@@ -1,0 +1,76 @@
+_blobs: {}
+_builds:
+  Commenter:copilot:
+    _path: components.Commenter
+    cdc_table: files_copilot
+    model: gpt-4-turbo
+    prompt: '
+
+      You are a code reviewer. Please review the following code and provide feedback
+      in 1 word (Good, Bad, or Neutral) and a short explanation of your reasoning.
+
+      If the code contains a diff, please focus on the changes reflected in the diff.
+
+      If the code does not contain a diff, please focus on the entire code.
+
+      If the code is "good enough", please write an empty string (no characters) -
+      DO NOT WRITE "It seems to be working as intended...".
+
+      If there is a diff, quote the diff as a code snippet ```...```
+
+      Before you say anything state "This is message from SUPERDUPER."
+
+      HERE IS THE CONTENT:
+
+      -------------
+
+      '
+    status: ready
+    upstream:
+    - ?Table:files_copilot
+    - ?Table:comments_copilot
+    version: 0
+  Plugin:plugin-components_py:
+    _path: superduper.components.plugin.Plugin
+    cache_path: ~/.superduper/plugins
+    path: '&:file:e66af4426efc88723faf4907e30f46d4944255e317fafb121282d26157f0d53c'
+    status: ready
+    upstream: null
+    version: 0
+  Table:comments_copilot:
+    _path: superduper.components.table.Table
+    component: false
+    data: null
+    fields:
+      comment: str
+      filename: str
+    path: null
+    primary_id: id
+    status: ready
+    upstream: null
+    version: 0
+  Table:files_copilot:
+    _path: superduper.components.table.Table
+    component: false
+    data: null
+    fields:
+      content: str
+      diff: str
+      filename: str
+      last_modified: str
+    path: null
+    primary_id: id
+    status: ready
+    upstream: null
+    version: 0
+_path: superduper.components.application.Application
+build_template: null
+build_variables: null
+components:
+- ?Commenter:copilot
+identifier: copilot
+link: null
+status: ready
+upstream:
+- ?Plugin:plugin-components_py
+version: 0

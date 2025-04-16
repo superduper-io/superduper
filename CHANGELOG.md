@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Create simpler developer contract for databackend
 - Snowflake native data-backend implementation
 - Add redis cache inside `db.metadata` for quick multi-process loading
+- Add redis plugin
 
 #### Bug Fixes
 
@@ -37,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed a bug where Ibis fails to insert data containing None values when using PostgreSQL as the backend
 - Fixed a bug where Ibis and SQLAlchemy cannot share the same connection
 - Fixed issues with Ibis regarding data types for arrays and vectors stored in the database
+- Fix missing triggers for update, delete
 
 ## [0.5.0](https://github.com/superduper-io/superduper/compare/0.5.0...0.4.0])    (2024-Nov-02)
 

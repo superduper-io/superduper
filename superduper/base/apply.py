@@ -146,12 +146,12 @@ def _wait_on_events(db, events):
     while True:
         remaining = len(events)
         for event in events:
-            identifier = event.component['identifier']
-            component = event.component['component']
-            version = event.component['version']
+            identifier = event.data['identifier']
+            component = event.component
+            version = event.data['version']
             try:
                 db.load(component=component, identifier=identifier, version=version)
-            except FileNotFoundError:
+            except NonExistentMetadataError:
                 pass
             else:
                 remaining -= 1

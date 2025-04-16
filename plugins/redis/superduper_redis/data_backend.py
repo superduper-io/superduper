@@ -1,38 +1,57 @@
+import typing as t
+import uuid
+
+import click
 import numpy
 import pandas
 import redis
-from redis.commands.json import JSON 
-
-import typing as t
-import uuid
-import click
-
+from redis.commands.json import JSON
+from superduper import CFG
 from superduper.backends.base.data_backend import BaseDataBackend
 from superduper.base.query import Query, QueryPart
 from superduper.base.schema import Schema
-from superduper import CFG
 
 
 class RedisDataBackend(BaseDataBackend):
+    """Redis data backend for SuperDuper.
+
+    :param uri: The Redis URI.
+    :param plugin: The plugin instance.
+    :param flavour: The flavour of the backend.
+    """
 
     def __init__(self, uri: str, plugin: t.Any, flavour: t.Optional[str] = None):
         super().__init__(uri, plugin, flavour)
         self.reconnect()
 
     def reconnect(self):
+        """Redis connection."""
         self.conn = redis.Redis.from_url(self.uri)
         self.json_client = JSON(self.conn)
 
-    def create_table_and_schema(
-        self, identifier: str, schema: Schema, primary_id: str
-    ):
+    def create_table_and_schema(self, identifier: str, schema: Schema, primary_id: str):
+        """
+        Create a table and schema in Redis.
+
+        :param identifier: The name of the table.
+        :param schema: The schema of the table.
+        :param primary_id: The primary key field.
+        """
         pass
 
     def drop_table(self, table: str):
+        """Drop a table in Redis.
+
+        :param table: The name of the table to drop.
+        """
         keys = self.conn.keys(f"{table}:*")
         self.conn.delete(*keys)
 
     def drop(self, force: bool = False):
+        """Drop the entire Redis DB.
+
+        :param force: If True, drop the DB without confirmation.
+        """
         if not force:
             if not click.confirm("Are you sure you want to drop the entire Redis DB?"):
                 return
@@ -40,23 +59,35 @@ class RedisDataBackend(BaseDataBackend):
         self.conn.flushall()
 
     def list_tables(self) -> t.List[str]:
+        """List all tables in Redis."""
         keys = self.conn.keys('*')
         return sorted(list(set(x.decode('utf-8').split(':')[0] for x in keys)))
 
     def get_table(self, identifier):
+        """Get a table from Redis."""
         pass
 
     def check_output_dest(self, predict_id: str) -> bool:
+        """Check if the output destination exists in Redis.
+
+        :param predict_id: The ID of the prediction output.
+        """
         tbl = CFG.output_prefix + predict_id
         return tbl in self.list_tables()
 
     def random_id(self) -> str:
+        """Generate a random ID for Redis documents."""
         return str(uuid.uuid4()).replace('-', '')[:24]
 
     def primary_id(self, query: Query) -> str:
+        """Get the primary ID field for a query."""
         return self.id_field
 
     def insert(self, table: str, documents: t.Sequence[t.Dict]) -> t.List[str]:
+        """Insert documents into a Redis table.
+
+        :param table: The name of the table.
+        """
         if not documents:
             return []
         inserted_ids = []
@@ -69,6 +100,11 @@ class RedisDataBackend(BaseDataBackend):
         return inserted_ids
 
     def replace(self, table: str, condition: t.Dict, r: t.Dict) -> t.List[str]:
+        """Replace documents in a Redis table.
+
+        :param table: The name of the table.
+        :param condition: The condition to match documents.
+        """
         df = self._get_table_df(table)
 
         query = []
@@ -90,6 +126,13 @@ class RedisDataBackend(BaseDataBackend):
         return ids
 
     def update(self, table: str, condition: t.Dict, key: str, value: t.Any):
+        """Update documents in a Redis table.
+
+        :param table: The name of the table.
+        :param condition: The condition to match documents.
+        :param key: The key to update.
+        :param value: The new value for the key.
+        """
         df = self._get_table_df(table)
         query = []
         for k in condition:
@@ -108,7 +151,11 @@ class RedisDataBackend(BaseDataBackend):
         return ids
 
     def delete(self, table: str, condition: t.Dict):
+        """Delete documents from a Redis table.
 
+        :param table: The name of the table.
+        :param condition: The condition to match documents.
+        """
         df = self._get_table_df(table)
 
         if df.empty:
@@ -172,7 +219,7 @@ class RedisDataBackend(BaseDataBackend):
                             ]
                         )
                         args = list(set(args))
-                    
+
                     name = part.name
                     if name == 'limit':
                         name = 'head'
@@ -196,9 +243,9 @@ class RedisDataBackend(BaseDataBackend):
                     pid = self.id_field
 
                 for predict_id in part.args:
-                    output_t = self._get_table_df(
-                        f"{CFG.output_prefix}{predict_id}"
-                    )[[f"{CFG.output_prefix}{predict_id}", "_source"]]
+                    output_t = self._get_table_df(f"{CFG.output_prefix}{predict_id}")[
+                        [f"{CFG.output_prefix}{predict_id}", "_source"]
+                    ]
                     q = q.merge(output_t, left_on=pid, right_on='_source')
 
             elif isinstance(part, str):
@@ -222,10 +269,19 @@ class RedisDataBackend(BaseDataBackend):
         return pandas.DataFrame(relevant_set)
 
     def select(self, query: Query) -> t.List[t.Dict]:
+        """Select documents from a Redis table.
+
+        :param query: The query to execute.
+        """
         df = self._build_pandas_df(query)
         return df.to_dict(orient='records')
 
     def missing_outputs(self, query: Query, predict_id: str) -> t.List[str]:
+        """Select documents with missing outputs.
+
+        :param query: The query to execute.
+        :param predict_id: The ID of the prediction output.
+        """
         pid = self.primary_id(query)
         df = self._build_pandas_df(query)
         output_df = self._get_table_df(f'{CFG.output_prefix + predict_id}')
@@ -243,4 +299,5 @@ class RedisDataBackend(BaseDataBackend):
         return joined_df[joined_df['_source'].isnan()][self.id_field].tolist()
 
     def execute_native(self, query: str):
+        """Execute a native Redis command (not-implemented)."""
         raise NotImplementedError

@@ -1,5 +1,6 @@
 import dataclasses as dc
 import datetime
+import time
 import typing as t
 import uuid
 from abc import ABC, abstractmethod
@@ -246,6 +247,38 @@ class Job(Event):
     method: str
     status: str = 'pending'
     dependencies: t.List[str] = dc.field(default_factory=list)
+
+    def get_status(self, db):
+        """Get the status of the job.
+
+        :param db: Datalayer instance
+        """
+        return db['Job'].get(job_id=self.job_id)['status']
+
+    def wait(self, db: 'Datalayer', heartbeat: float = 1, timeout: int = 60):
+        """Wait for the job to finish.
+
+        :param db: Datalayer instance
+        :param heartbeat: time to wait between checks
+        :param timeout: timeout in seconds
+        """
+        start = time.time()
+        status = 'pending'
+        while (status := self.get_status(db)) in {
+            'pending',
+            'running',
+        } and time.time() - start < timeout:
+            if status == 'pending':
+                logging.info(f'Job {self.job_id} is pending')
+            elif status == 'running':
+                logging.info(f'Job {self.job_id} is running')
+            else:
+                break
+
+            time.sleep(heartbeat)
+
+        logging.info(f'Job {self.job_id} finished with status: {status}')
+        return status
 
     @property
     def huuid(self):

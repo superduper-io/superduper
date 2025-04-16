@@ -199,4 +199,3 @@ test/sleep.json
 /example*
 .cache
 /templates/*/artifact_store
-/templates/copilot

@@ -108,8 +108,8 @@ class Base(metaclass=BaseMeta):
 
     @lazy_classproperty
     def table(cls):
-        from superduper.components.table import Table
         from superduper import Component
+        from superduper.components.table import Table
         from superduper.misc.importing import isreallyinstance
 
         return Table(

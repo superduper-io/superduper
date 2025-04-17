@@ -208,8 +208,12 @@ def get_schema(cls):
         if inferred_cls is None:
             schema[parameter] = 'dill'
             continue
-        schema[parameter] = _map_type_to_superduper(
-            cls.__name__, parameter, inferred_cls, iterable
-        )
+        try:
+            schema[parameter] = _map_type_to_superduper(
+                cls.__name__, parameter, inferred_cls, iterable
+            )
+        except TypeError:
+            # This is a forward reference that cannot be resolved
+            schema[parameter] = 'dill'
 
     return schema, annotations

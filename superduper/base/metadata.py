@@ -400,7 +400,7 @@ class MetaDataStore:
 
         :param job_id: job identifier
         """
-        return self.db['Jobs'].get(job_id=job_id)
+        return self.db['Job'].get(job_id=job_id)
 
     def update_job(self, job_id: str, key: str, value: t.Any):
         """
@@ -419,21 +419,23 @@ class MetaDataStore:
         """
         self.db['Job'].insert([info])
 
-    def show_jobs(self, component: str, identifier: str):
+    def show_jobs(self, component: str, identifier: str, status: str | None = None):
         """
         Show all jobs in the metadata store.
 
         :param component: type of component
         :param identifier: identifier of component
+        :param status: status of job
         """
-        return (
-            self.db['Job']
-            .filter(
-                self.db['Job']['component'] == component,
-                self.db['Job']['identifier'] == identifier,
-            )
-            .distinct('job_id')
-        )
+        filters = [
+            self.db['Job']['component'] == component,
+            self.db['Job']['identifier'] == identifier,
+        ]
+
+        if status is not None:
+            filters.append(self.db['Job']['status'] == status)
+
+        return self.db['Job'].filter(*filters).distinct('job_id')
 
     def show_components(self, component: str | None = None):
         """

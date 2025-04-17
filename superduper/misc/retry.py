@@ -75,7 +75,7 @@ def safe_retry(exception_to_check, retries=1, delay=0.3, verbose=1):
                     if verbose:
                         logging.warn(
                             f"Retrying {func.__name__} due to {e}"
-                            ", attempt {attempt} of {retries}..."
+                            f", attempt {attempt} of {retries}..."
                         )
                     time.sleep(delay)
 

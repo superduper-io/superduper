@@ -69,3 +69,62 @@ def hash_item(item: t.Any) -> str:
             hashes.append((hash_item(k), hash_item(item[k])))  # type: ignore[arg-type]
         return hashlib.sha256(str(hashes).encode()).hexdigest()
     return hashlib.sha256(str(item).encode()).hexdigest()
+
+
+def _history_listing_to_dict(raw: str) -> dict[str, str]:
+    import re
+
+    pattern = re.compile(r"^\s*(\d+/\d+|\d+):\s*(.*)$")
+    lines = raw.splitlines()
+    out = {}
+    i = 0
+    while i < len(lines):
+        m = pattern.match(lines[i])
+        if m:  # found a header
+            key, first = m.groups()
+            if first:  # code on same line
+                out[key] = first
+                i += 1
+            else:  # code starts next line(s)
+                i += 1
+                buf = []
+                while i < len(lines) and not pattern.match(lines[i]):
+                    buf.append(lines[i])
+                    i += 1
+                out[key] = "\n".join(buf)
+        else:
+            i += 1
+    return out
+
+
+def grab_source_code_ipython(cls_or_fn: t.Union[t.Type, t.Callable]) -> str:
+    """Grab the source code of a class or function.
+
+    :param cls_or_fn: The class or function
+    """
+    from contextlib import redirect_stdout
+    from io import StringIO
+
+    from IPython import get_ipython
+
+    ip = get_ipython()  # current InteractiveShell
+    buf = StringIO()
+
+    # Whatever would normally be printed by `%history -g foo` is
+    # captured in the StringIO buffer instead.
+    with redirect_stdout(buf):
+        ip.run_line_magic(
+            "history", f"-g {cls_or_fn.__name__}"
+        )  # replace “foo” with your pattern
+
+    hist_text = buf.getvalue()  # plain string with newlines
+
+    lookup = _history_listing_to_dict(hist_text)
+
+    relevant = [
+        v
+        for v in lookup.values()
+        if v.startswith(f"class {cls_or_fn.__name__}(")
+        or v.startswith(f"def {cls_or_fn.__name__}(")
+    ]
+    return relevant[-1] if relevant else ""

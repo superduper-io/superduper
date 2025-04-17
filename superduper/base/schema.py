@@ -229,3 +229,48 @@ def get_schema(db, schema: t.Union[Schema, str]) -> t.Optional[Schema]:
             f'A Datalayer instance is required for encoding with schema {schema}'
         )
     return db.load('schema', schema)
+
+
+class NotSupportedError(Exception):
+    """Exception raised when a schema is not supported.
+
+    # noqa
+    """
+
+
+def create_pydantic(
+    name: str, schema: Schema, components: t.Dict[str, t.Type] | None = None
+):
+    """Create pydantic model from schema.
+
+    :param name: Name of the model.
+    :param schema: Schema to create the model from.
+    :param components: Additional components to add to the model.
+    """
+    lookup = {
+        'str': str | None,
+        'int': int | None,
+        'float': float | None,
+        'bool': bool | None,
+        'bytes': bytes | None,
+        'dict': dict | None,
+        'list': list | None,
+        'json': dict | list | None,
+    }
+
+    from pydantic import BaseModel, create_model
+
+    components = components or {}
+
+    to_pass = {}
+    for k, v in schema.fields.items():
+        if str(v).lower() not in lookup and str(v).lower() not in components:
+            continue
+        to_pass[k] = (lookup[str(v).lower()], None)
+
+    if 'status' in to_pass:
+        del to_pass['status']
+    if 'version' in to_pass:
+        del to_pass['version']
+
+    return create_model(name, **to_pass, __base__=BaseModel)  # type: ignore[call-overload]

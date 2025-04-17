@@ -24,6 +24,9 @@ if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
 
 
+HASH_LENGTH = 16
+
+
 class Status(str, Enum):
     """Status enum.
 
@@ -154,10 +157,9 @@ class Component(Base, metaclass=ComponentMeta):
         """Get UUID."""
         t = self.get_merkle_tree(breaks=True)
         breaking = hash_item(
-            [self.component, self.identifier]
-            + [t[k][:32] for k in self.breaks if k in t]
+            [self.component, self.identifier] + [t[k] for k in self.breaks if k in t]
         )
-        return breaking[:32]
+        return breaking[:HASH_LENGTH]
 
     def get_merkle_tree(self, breaks: bool):
         """Get the merkle tree of the component.

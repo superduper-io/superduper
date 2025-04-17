@@ -199,7 +199,7 @@ class Template(Component):
         return substitute(dict(r))
 
     @ensure_setup
-    def __call__(self, **kwargs):
+    def __call__(self, identifier=None, **kwargs):
         """Method to create component from the given template and `kwargs`.
 
         :param kwargs: Variables to be set in the template.
@@ -220,6 +220,7 @@ class Template(Component):
         component = _replace_variables(
             self.template,
             **kwargs,
+            identifier=identifier,
             build_variables=kwargs,
             build_template=self.identifier,
         )
@@ -227,4 +228,8 @@ class Template(Component):
         component['_blobs'] = self.blobs
         component['_files'] = self.files
 
-        return Component.decode(component)
+        obj = Component.decode(component)
+        if identifier is not None:
+            obj.identifier = identifier
+
+        return obj

@@ -102,7 +102,7 @@ class ArtifactStore(ABC):
         for file_id, file_path in files.items():
             try:
                 self.put_file(file_path, file_id=file_id)
-            except FileExistsError:
+            except (FileExistsError, shutil.SameFileError):
                 continue
 
         # After we save the artifacts, we can remove the blobs and files

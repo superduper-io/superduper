@@ -14,7 +14,7 @@ import networkx
 from superduper import logging
 from superduper.base.annotations import trigger
 from superduper.base.base import Base, BaseMeta
-from superduper.base.constant import KEY_BLOBS, KEY_FILES
+from superduper.base.constant import KEY_BLOBS, KEY_FILES, LENGTH_UUID
 from superduper.base.event import Job
 from superduper.misc.annotations import lazy_classproperty
 from superduper.misc.importing import isreallyinstance
@@ -154,10 +154,9 @@ class Component(Base, metaclass=ComponentMeta):
         """Get UUID."""
         t = self.get_merkle_tree(breaks=True)
         breaking = hash_item(
-            [self.component, self.identifier]
-            + [t[k][:32] for k in self.breaks if k in t]
+            [self.component, self.identifier] + [t[k] for k in self.breaks if k in t]
         )
-        return breaking[:32]
+        return breaking[:LENGTH_UUID]
 
     def get_merkle_tree(self, breaks: bool):
         """Get the merkle tree of the component.

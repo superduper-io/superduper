@@ -409,6 +409,10 @@ class Datalayer:
                 builds=info.get('_builds', {}),
                 db=self,
             )
+        else:
+            raise ValueError(
+                'Must provide either `uuid` or `component` and `identifier`'
+            )
         return c
 
     def _remove_component_version(

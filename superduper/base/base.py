@@ -154,6 +154,33 @@ class Base(metaclass=BaseMeta):
             r.pop('_path')
         return self.from_dict(r, db=db)
 
+    @lazy_classproperty
+    def pydantic(cls):
+        """Get the Pydantic model of the class."""
+        from .schema import create_pydantic
+
+        return create_pydantic(name=cls.__name__, schema=cls.class_schema)
+
+    @lazy_classproperty
+    def source_code(cls):
+        """Get the source code of the class."""
+        import inspect
+
+        try:
+            return inspect.getsource(cls)
+        except OSError:
+            from superduper import logging
+
+            logging.warn(
+                f"Could not get source code for {cls.__name__} from {cls.__module__} "
+                "using inspect.getsource. "
+                "Falling back to IPython history. "
+                "This may not work in all environments."
+            )
+            from superduper.misc.utils import grab_source_code_ipython
+
+            return grab_source_code_ipython(cls)
+
     @classmethod
     def from_dict(cls, r: t.Dict, db: t.Optional['Datalayer'] = None):
         if hasattr(cls, '_alternative_init'):

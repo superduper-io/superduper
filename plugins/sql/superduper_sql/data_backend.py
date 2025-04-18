@@ -1,4 +1,3 @@
-import functools
 import threading
 import time
 import typing as t
@@ -28,7 +27,7 @@ INPUT_KEY = "_source"
 
 
 class ThreadLocalConnectionManager:
-    """A thread-local connection manager for SQLite and other thread-sensitive databases."""
+    """A thread-local connection manager for ibis."""
 
     def __init__(self, uri: str, flavour: t.Optional[str] = None):
         """Initialize the thread-local connection manager.
@@ -67,7 +66,8 @@ class ThreadLocalConnectionManager:
             )
             yield self.local.connection
         except Exception as e:
-            # If there's a connection error, clear the thread's connection so a new one will be created next time
+            # If there's a connection error,
+            # clear the thread's connection so a new one will be created next time
             if hasattr(self.local, "connection"):
                 delattr(self.local, "connection")
             logging.error(
@@ -405,7 +405,8 @@ class SQLDatabackend(IbisDataBackend):
             self.alchemy_engine = create_engine(self.uri, creator=lambda: conn.con)
             if not self._test_engine():
                 logging.warn(
-                    "Unable to reuse the ibis connection to create the SQLAlchemy engine. "
+                    "Unable to reuse the ibis connection "
+                    "to create the SQLAlchemy engine. "
                     "Creating a new connection with the URI."
                 )
                 self.alchemy_engine = create_engine(self.uri)

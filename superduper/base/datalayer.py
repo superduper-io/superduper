@@ -427,7 +427,7 @@ class Datalayer:
             )
         elif identifier is not None:
             assert component is not None
-            logging.info(f'Load ({component, identifier}) from metadata...')
+            logging.debug(f'Load ({component, identifier}) from metadata...')
             info = self.metadata.get_component(
                 component=component,
                 identifier=identifier,

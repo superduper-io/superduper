@@ -1,7 +1,7 @@
 import dataclasses as dc
 import typing as t
 
-from superduper import CFG, Document
+from superduper import CFG, Document, logging
 from superduper.base.annotations import trigger
 from superduper.base.datalayer import Datalayer
 from superduper.base.query import Query
@@ -142,6 +142,7 @@ class Listener(CDC):
 
     @trigger('apply', 'insert', 'update', requires='select')
     def run(self, ids: t.List[str] | None = None):
+        logging.info(f"[{self.huuid}] Running on '{self.cdc_table}'")
 
         self._check_signature()
 
@@ -149,10 +150,18 @@ class Listener(CDC):
         assert isinstance(self.db, Datalayer)
 
         if ids is None:
+            logging.info(f'[{self.huuid}] No ids provided, using select {self.select}')
             ids = self.select.missing_outputs(self.predict_id)
 
         if not ids:
+            logging.info(f'[{self.huuid}] No ids to process for {self.huuid}, skipping')
             return
+
+        logging.info(f'[{self.huuid}] Processing {len(ids)} ids')
+        if len(ids) <= 10:
+            logging.info(f'[{self.huuid}] Processing ids: {ids}')
+        else:
+            logging.info(f'[{self.huuid}] Processing ids: {ids[:10]}...')
 
         documents = self.select.subset(ids)
         if not documents:
@@ -174,6 +183,10 @@ class Listener(CDC):
                 for id, output in zip(ids, outputs)
                 for sub_output in output
             ]
+            logging.info(
+                f'[{self.huuid}] Flattened {len(outputs)} outputs into '
+                f'{len(output_documents)} documents'
+            )
         else:
             output_documents = [
                 {

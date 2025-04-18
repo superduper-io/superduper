@@ -228,7 +228,7 @@ class Datalayer:
             events.append(event)
         logging.info(f'Created {len(events)} events for {event_type} on [{table}]')
         logging.info(f'Publishing {len(events)} events')
-        return self.cluster.scheduler.publish(events)  # type: ignore[arg-type]
+        self.cluster.scheduler.publish(events)  # type: ignore[arg-type]
 
     def create(self, object: t.Type[Base]):
         """Create a new type of component/ leaf.

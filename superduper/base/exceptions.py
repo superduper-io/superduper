@@ -63,3 +63,11 @@ class ServiceRequestException(BaseException):
 
     :param msg: msg for BaseException
     """
+
+
+class InvalidArguments(BaseException):
+    """
+    Wrong arguments have been provided to the function.
+
+    :param msg: msg for BaseException
+    """

@@ -85,10 +85,15 @@ class LocalScheduler(Bookkeeping, BaseScheduler):
             for event in events:
                 self.Q[event.queue].append(event)
 
-        queues = list(self.Q.keys())
-        for queue in queues:
-            events = self.Q[queue]
-            self.Q[queue] = []
+            queues = list(self.Q.keys())
+            data = []
+            for queue in queues:
+                events = self.Q[queue].copy()
+                self.Q[queue] = []
+                if len(events) > 0:
+                    data.append((queue, events))
+
+        for queue, events in data:
             consume_events(
                 events=events,
                 table=queue,

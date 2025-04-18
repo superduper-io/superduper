@@ -666,8 +666,11 @@ class File(BaseDataType):
         if isinstance(item, FileItem):
             return item.identifier
         try:
-            with open(item, 'rb') as f:
-                header = f.read(1024)
+            file_stats = os.stat(item)
+            file_size = file_stats.st_size
+            mod_time = file_stats.st_mtime
+            name = os.path.basename(item)
+            header = f'{name}:{file_size}:{mod_time}'.encode()
         except IsADirectoryError:
             header = []
             for file in Path(item).iterdir():

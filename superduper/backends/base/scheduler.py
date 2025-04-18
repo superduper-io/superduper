@@ -148,8 +148,10 @@ def consume_events(events: t.List[Event], table: str, db: 'Datalayer'):
     :param db: Datalayer instance.
     """
     if table != '_apply':
+        logging.info(f'Consuming events on {table}, events: {events}')
         consume_streaming_events(events=events, table=table, db=db)
     else:
+        logging.info(f'Consuming {len(events)} events on {table}')
         for event in events:
             event.execute(db)
         return

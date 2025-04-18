@@ -397,7 +397,7 @@ class Datalayer:
             )
         elif identifier is not None:
             assert component is not None
-            logging.info(f'Load ({component, identifier}) from metadata...')
+            logging.debug(f'Load ({component, identifier}) from metadata...')
             info = self.metadata.get_component(
                 component=component,
                 identifier=identifier,
@@ -408,6 +408,10 @@ class Datalayer:
                 info,
                 builds=info.get('_builds', {}),
                 db=self,
+            )
+        else:
+            raise ValueError(
+                'Must provide either `uuid` or `component` and `identifier`'
             )
         return c
 

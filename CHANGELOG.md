@@ -40,6 +40,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed a bug where Ibis and SQLAlchemy cannot share the same connection
 - Fixed issues with Ibis regarding data types for arrays and vectors stored in the database
 - Fix missing triggers for update, delete
+- Fix multiple bugs:
+  - Reduce UUID length from 32 to 16
+  - Fix error when saving duplicate files
+  - Fix issue where listener.run doesn't unpack data
+  - Add dill as compatibility datatype for component serialization
 
 ## [0.5.0](https://github.com/superduper-io/superduper/compare/0.5.0...0.4.0])    (2024-Nov-02)
 

@@ -1,9 +1,11 @@
 import sys
+import traceback
 import types
 import typing as t
 from dataclasses import fields
 from typing import Any, ForwardRef, get_args, get_origin
 
+from superduper import logging
 from superduper.base.base import Base
 from superduper.components.component import Component
 
@@ -62,7 +64,7 @@ def _safe_get_type_hints(cls: t.Type[t.Any]) -> dict[str, t.Any]:
     # can see the same globals that `cls` sees:
     mro_globals = gather_mro_globals(cls)
     module_globals = sys.modules[cls.__module__].__dict__
-    superduper_globals = sys.modules['superduper'].__dict__
+    superduper_globals = sys.modules["superduper"].__dict__
 
     hints = {}
 
@@ -114,17 +116,17 @@ class _DataTypeFactory:
         if cls in {str, int, bool, float}:
             return cls.__name__
         if cls in {list, dict}:
-            return 'json'
+            return "json"
         try:
             if isinstance(cls, t.NewType):
-                return str(cls).split('.')[-1].lower()
+                return str(cls).split(".")[-1].lower()
             if issubclass(cls, Component):
-                return 'componenttype'
+                return "componenttype"
             if issubclass(cls, Base):
-                return 'basetype'
+                return "basetype"
         except TypeError:
             pass
-        return 'dill'
+        return "dill"
 
 
 def _map_type_to_superduper(source, name, cls, iterable):
@@ -132,15 +134,15 @@ def _map_type_to_superduper(source, name, cls, iterable):
         return _DataTypeFactory(source, name)[cls]
     if cls and issubclass(cls, Base):
         if iterable is list:
-            return 'componentlist'
+            return "componentlist"
         if iterable is dict:
-            return 'componentdict'
+            return "componentdict"
         raise ValueError(f"Unsupported iterable type {iterable} for {cls}")
     if cls is None and iterable in {list, dict}:
-        return 'json'
-    if cls in {str, int, float, bool}:
-        return 'json'
-    return 'dill'
+        return "json"
+    if cls in {str, int, float, bool, dict}:
+        return "json"
+    return "dill"
 
 
 def process(annotation):
@@ -181,9 +183,18 @@ def process(annotation):
     if origin is dict:
         inferred_cls, iterable_ = _process_dict(args)
 
+    if origin is t.Literal:
+        # Literal is a special case, we need to get the first argument
+        # and check if it's a string or not
+        if all(isinstance(t, str) for t in args):
+            inferred_cls = str
+        elif all(isinstance(t, int) for t in args):
+            inferred_cls = int
+        iterable_ = None
+
     if isinstance(inferred_cls, ForwardRef):
         module_globals = sys.modules[inferred_cls.__module__].__dict__
-        superduper_globals = sys.modules['superduper'].__dict__
+        superduper_globals = sys.modules["superduper"].__dict__
         inferred_cls = _evaluate_forward_ref(
             inferred_cls, {**module_globals, **superduper_globals}
         )
@@ -202,18 +213,20 @@ def get_schema(cls):
     for parameter in annotations:
         annotation = annotations[parameter]
         if annotation is None:
-            schema[parameter] = 'str'
+            schema[parameter] = "str"
             continue
         inferred_cls, iterable = process(annotation)
         if inferred_cls is None:
-            schema[parameter] = 'dill'
+            schema[parameter] = "dill"
             continue
         try:
             schema[parameter] = _map_type_to_superduper(
                 cls.__name__, parameter, inferred_cls, iterable
             )
-        except TypeError:
-            # This is a forward reference that cannot be resolved
-            schema[parameter] = 'dill'
+        except TypeError as e:
+            logging.error(
+                f"Error processing annotation {cls.__name__}.{parameter}: {annotation}"
+            )
+            raise e
 
     return schema, annotations

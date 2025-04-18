@@ -240,7 +240,7 @@ class FileSystemArtifactStore(ArtifactStore):
         """
         path = os.path.join(self.blobs, file_id)
         if os.path.exists(path):
-            logging.warn(f"File {path} already exists")
+            logging.debug(f"File {path} already exists")
 
         with open(path, 'wb') as f:
             f.write(serialized)
@@ -283,7 +283,7 @@ class FileSystemArtifactStore(ArtifactStore):
 
         :param file_id: The id of the file.
         """
-        logging.info(f"Loading file {file_id} from {self.files}")
+        logging.debug(f"Loading file {file_id} from {self.files}")
         path = os.path.join(self.files, file_id)
         files = os.listdir(path)
         assert len(files) == 1, f"Expected 1 file, got {len(files)}"

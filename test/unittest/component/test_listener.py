@@ -91,6 +91,7 @@ def test_listener_chaining(db):
         select=db[listener1.outputs].select(),
         key=listener1.outputs,
         identifier='listener2',
+        upstream=[listener1],
     )
 
     db.apply(listener2)

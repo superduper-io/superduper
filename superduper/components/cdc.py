@@ -35,7 +35,7 @@ class CDC(Component):
     def dependencies(self):
         """Get dependencies of this component."""
         if self.cdc_table.startswith(CFG.output_prefix):
-            return [tuple(self.cdc_table.split('__'))]
+            return [tuple(['Listener'] + list(self.cdc_table.split('__')[1:]))]
         return []
 
 

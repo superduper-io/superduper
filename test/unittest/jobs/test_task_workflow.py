@@ -61,6 +61,7 @@ def test_downstream_task_workflows_are_triggered(db, data, flatten):
         key=upstream_listener.outputs,
         select=db[upstream_listener.outputs].select(),
         identifier="downstream",
+        upstream=[upstream_listener],
     )
 
     db.apply(downstream_listener)

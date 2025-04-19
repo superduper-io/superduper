@@ -496,3 +496,78 @@ def test_retry_on_token_expiry(db):
             db.databackend.test_retry()
             assert reconnect.call_count == 1
             assert mock_test_retry.call_count == 2
+
+
+class Container(Component):
+    model: Model
+
+
+def test_remove_not_recursive(db: Datalayer):
+
+    m = Container(
+        identifier='container',
+        model=FakeModel('test'),
+    )
+
+    db.apply(m)
+
+    assert db.show('Container', 'container') == [0]
+
+    db.remove('Container', 'container')
+
+    assert 'container' not in db.show('Container')
+
+    assert 'test' in db.show('FakeModel')
+
+
+def test_remove_recursive(db: Datalayer):
+
+    m = Container(
+        identifier='container',
+        model=FakeModel('test'),
+    )
+
+    db.apply(m)
+
+    assert db.show('Container', 'container') == [0]
+
+    db.remove('Container', 'container', recursive=True)
+
+    assert 'container' not in db.show('Container')
+
+    assert 'test' not in db.show('FakeModel')
+
+
+def test_remove_shared(db: Datalayer):
+
+    fm = FakeModel('test')
+
+    m1 = Container(
+        identifier='container1',
+        model=fm
+    )
+    m2 = Container(
+        identifier='container2',
+        model=fm
+    )
+
+    db.apply(m1)
+    db.apply(m2)
+
+    assert db.show('Container', 'container1') == [0]
+    assert db.show('Container', 'container2') == [0]
+
+    with pytest.raises(Exception) as e:
+        db.remove('Container', 'container1', recursive=True)
+
+    assert 'container2' in str(e)
+
+    # Check that the container is not removed, since a child failed
+    assert 'container1' in db.show('Container')
+
+    db.remove('Container', 'container2', recursive=True, force=True)
+
+    assert 'container2' not in db.show('Container')
+    assert 'container1' in db.show('Container')
+    assert 'test' in db.show('FakeModel')
+

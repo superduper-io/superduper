@@ -2,6 +2,7 @@ import typing as t
 from collections import namedtuple
 
 import click
+import pandas
 
 import superduper as s
 from superduper import CFG, logging
@@ -13,6 +14,7 @@ from superduper.base.base import Base
 from superduper.base.config import Config
 from superduper.base.datatype import BaseType, ComponentType
 from superduper.base.document import Document
+from superduper.base.event import Delete
 from superduper.base.metadata import (
     MetaDataStore,
     NonExistentMetadataError,
@@ -261,7 +263,6 @@ class Datalayer:
         self,
         component: str,
         identifier: str,
-        version: t.Optional[int] = None,
         recursive: bool = False,
         force: bool = False,
     ):
@@ -271,48 +272,58 @@ class Datalayer:
         :param component: Cmponent to remove ('Model', 'Listener', etc.)
         :param identifier: Identifier of the component (refer to
                             `container.base.Component`).
-        :param version: [Optional] Numerical version to remove.
         :param recursive: Toggle to remove all descendants of the component.
-        :param force: Force skip confirmation (use with caution).
         """
-        if version is not None:
-            return self._remove_component_version(
-                component, identifier, version=version, force=force, recursive=recursive
+
+        events = []
+        failed = []
+        self._build_remove(
+            component=component, 
+            identifier=identifier, 
+            events=events, 
+            failed=failed,
+            recursive=recursive, 
+        )
+
+
+        if failed and not force:
+            raise exceptions.ComponentInUseError(
+                f'Failed to remove {component}:{identifier} because the following components are in use:\n'
+                '\n'.join(failed) + '\n'
             )
 
-        versions = self.metadata.show_component_versions(component, identifier)
-        versions_in_use = []
-        for v in versions:
-            if self.metadata.component_version_has_parents(component, identifier, v):
-                versions_in_use.append(v)
+        for i, e in enumerate(events):
+            logging.info(f'Removing component [{i + 1}/{len(events)}] {e.component}:{e.identifier}')
+            e.execute(self)
+            logging.info(f'Removing component [{i + 1}/{len(events)}] {e.component}:{e.identifier}... DONE')
 
-        if versions_in_use:
-            component_versions_in_use = []
-            for v in versions_in_use:
-                uuid = self.metadata.get_uuid(component, identifier, v)
-                component_versions_in_use.append(
-                    f"{uuid} -> "
-                    f"{self.metadata.get_component_version_parents(uuid)}",
-                )
-            if not force:
-                raise exceptions.ComponentInUseError(
-                    f'Component versions: {component_versions_in_use} are in use'
-                )
+    def _build_remove(self, component: str, identifier: str, events: t.List, failed: t.List, recursive: bool = False):
 
-        if force or click.confirm(
-            f'You are about to delete {component}/{identifier}, are you sure?',
-            default=False,
-        ):
-            for v in sorted(list(set(versions) - set(versions_in_use))):
-                self._remove_component_version(
-                    component, identifier, v, recursive=recursive, force=True
-                )
+        object = self.load(component=component, identifier=identifier)
 
-            for v in sorted(versions_in_use):
-                self.metadata.hide_component_version(component, identifier, v)
+        previous = [e.huuid for e in events]
 
-        else:
-            logging.warn('aborting.')
+        parents = self.metadata.get_component_parents(component=component, identifier=identifier)
+        fail = False
+        if parents:
+            # Only fail the deletion attempt if the parents aren't in this cascade
+            for p in parents:
+                if f'{p[0]}:{p[1]}' not in previous:
+                    failed.append(f'{component}:{identifier} -> {p[0]}:{p[1]}')
+                    fail = True
+
+            # If the deletion fails, we need to stop
+            if fail:
+                return
+
+        events.append(
+            Delete(component=component, identifier=identifier)
+        )
+
+        if recursive:
+            children = object.get_children()
+            for c in children:
+                self._build_remove(c.component, c.identifier, recursive=True, events=events, failed=failed)
 
     def load_all(self, component: str, **kwargs) -> t.List[Component]:
         """Load all instances of component.
@@ -487,7 +498,7 @@ class Datalayer:
                 else:
                     raise e
 
-    def _save_artifact(self, uuid, info: t.Dict):
+    def _save_artifact(self, info: t.Dict):
         """
         Save an artifact to the artifact store.
 

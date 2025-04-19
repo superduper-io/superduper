@@ -5,11 +5,9 @@ import click
 from rich.console import Console
 
 from superduper import Component, logging
-from superduper.base.datatype import Blob
 from superduper.base.document import Document
 from superduper.base.event import Create, Signal, Update
 from superduper.base.metadata import NonExistentMetadataError
-from superduper.base.query import Query
 from superduper.components.component import Status
 from superduper.misc.tree import dict_to_tree
 
@@ -190,6 +188,7 @@ def _apply(
     object.db = db
 
     create_events = {}
+    children = []
 
     def wrapper(child):
         nonlocal create_events
@@ -199,14 +198,14 @@ def _apply(
             object=child,
             context=context,
             job_events=job_events,
-            parent=[object.component, object.uuid],
+            parent=[object.component, object.identifier, object.uuid],
             global_diff=global_diff,
             non_breaking_changes=non_breaking_changes,
         )
 
         job_events.update(j)
         create_events.update(c)
-
+        children.append((child.component, child.identifier, child.uuid))
         return f'&:component:{child.huuid}'
 
     try:
@@ -246,7 +245,7 @@ def _apply(
     # instances.
     serialized = serialized.map(wrapper, lambda x: isinstance(x, Component))
     Document(object.metadata).map(wrapper, lambda x: isinstance(x, Component))
-    serialized = db._save_artifact(object.uuid, serialized.encode())
+    serialized = db._save_artifact(serialized.encode())
 
     if apply_status == 'same':
         return create_events, job_events
@@ -258,6 +257,7 @@ def _apply(
             path=object.__module__ + '.' + object.__class__.__name__,
             data=serialized,
             parent=parent,
+            children=children,
         )
 
         these_job_events = object.create_jobs(
@@ -272,6 +272,7 @@ def _apply(
             path=object.__module__ + '.' + object.__class__.__name__,
             data=serialized,
             parent=parent,
+            children=children,
         )
 
         these_job_events = object.create_jobs(

@@ -58,7 +58,9 @@ class ParentChildAssociations(Base):
     """
 
     parent_component: str
+    parent_identifier: str
     parent_uuid: str
+    child_identifier: str
     child_component: str
     child_uuid: str
 
@@ -70,7 +72,9 @@ class ArtifactRelations(Base):
     :param artifact_id: UUID of component version
     """
 
-    component_id: str
+    component: str
+    identifier: str
+    uuid: str
     artifact_id: str
 
 
@@ -217,13 +221,16 @@ class MetaDataStore:
 
         return t
 
-    def delete_parent_child_relationships(self, parent_uuid: str):
+    def delete_parent_child_relationships(self, parent_component: str, parent_identifier: str):
         """
         Delete parent-child mappings.
 
         :param parent_uuid: parent component uuid
         """
-        self.db['ParentChildAssociations'].delete({'parent_uuid': parent_uuid})
+        self.db['ParentChildAssociations'].delete({
+            'parent_component': parent_component,
+            'parent_identifier': parent_identifier
+        })
 
     def create_component(self, info: t.Dict, path: str, raw: bool = True):
         """
@@ -257,8 +264,10 @@ class MetaDataStore:
     def create_parent_child(
         self,
         parent_component: str,
+        parent_identifier: str,
         parent_uuid: str,
         child_component: str,
+        child_identifier: str,
         child_uuid: str,
     ):
         """
@@ -273,14 +282,16 @@ class MetaDataStore:
             [
                 {
                     'parent_component': parent_component,
+                    'parent_identifier': parent_identifier,
                     'parent_uuid': parent_uuid,
                     'child_component': child_component,
+                    'child_identifier': child_identifier,
                     'child_uuid': child_uuid,
                 }
             ]
         )
 
-    def create_artifact_relation(self, uuid, artifact_ids):
+    def create_artifact_relation(self, component, identifier, uuid, artifact_ids):
         """
         Create a relation between an artifact and a component version.
 
@@ -292,12 +303,12 @@ class MetaDataStore:
         )
         data = []
         for artifact_id in artifact_ids:
-            data.append({'component_id': uuid, 'artifact_id': artifact_id})
+            data.append({'component': component, 'identifier': identifier, 'uuid': uuid, 'artifact_id': artifact_id})
 
         if data:
             self.db['ArtifactRelations'].insert(data, raw=True)
 
-    def delete_artifact_relation(self, uuid, artifact_ids):
+    def delete_artifact_relation(self, component, identifier, artifact_ids):
         """
         Delete a relation between an artifact and a component version.
 
@@ -309,10 +320,22 @@ class MetaDataStore:
         )
         for artifact_id in artifact_ids:
             self.db['ArtifactRelations'].delete(
-                {'component_id': uuid, 'artifact_id': artifact_id}
+                {'component': component, 'identifier': identifier, 'artifact_id': artifact_id}
             )
 
-    def get_artifact_relations(self, uuid=None, artifact_id=None):
+    def get_artifact_relations_for_component(self, component, identifier):
+        """
+        Get all relations between an artifact and a component version.
+
+        :param component: type of component
+        :param identifier: identifier of component
+        """
+        t = self.db['ArtifactRelations']
+        relations = t.filter(t['component'] == component, t['identifier'] == identifier).execute()
+        ids = [relation['artifact_id'] for relation in relations]
+        return ids
+
+    def get_artifact_relations_for_artifacts(self, artifact_ids):
         """
         Get all relations between an artifact and a component version.
 
@@ -320,15 +343,7 @@ class MetaDataStore:
         :param artifact_id: artifact
         """
         t = self.db['ArtifactRelations']
-        if uuid is None and artifact_id is None:
-            raise ValueError('Either `uuid` or `artifact_id` must be provided')
-        elif uuid:
-            relations = t.filter(t['component_id'] == uuid).execute()
-            ids = [relation['artifact_id'] for relation in relations]
-        else:
-            relations = t.filter(t['artifact_id'] == artifact_id).execute()
-            ids = [relation['component_id'] for relation in relations]
-        return ids
+        return t.filter(t['artifact_id'].isin(artifact_ids)).execute()
 
     def set_component_status(self, component: str, uuid: str, status: str):
         """
@@ -530,6 +545,23 @@ class MetaDataStore:
         t = self.db[component]
         return t.filter(t['identifier'] == identifier).distinct('version')
 
+    def delete_component(self, component: str, identifier: str):
+        """
+        Delete a component version from the metadata store.
+
+        :param component: type of component
+        :param identifier: identifier of component
+        :param version: version of component
+        """
+        if self.cache:
+            uuids = self.db[component].distinct('uuid')
+            for uuid in uuids:
+                try:
+                    del self.cache[component, identifier, uuid]
+                except KeyError:
+                    pass
+        self.db[component].delete({'identifier': identifier})
+
     def delete_component_version(self, component: str, identifier: str, version: int):
         """
         Delete a component version from the metadata store.
@@ -719,17 +751,27 @@ class MetaDataStore:
             self.cache[component, info["identifier"], uuid] = info
         self.db[component].replace({'uuid': uuid}, info)
 
-    def remove_by_uuid(self, component: str, uuid: str):
+    def remove_by_uuid(self, component: str, identifier: str):
         """
         Remove an object in the metadata store.
 
         :param component: type of component.
         :param uuid: unique identifier of the object.
         """
-        if self.cache:
-            self.cache.delete_uuid(uuid)
+        self.db[component].delete({'identifier': identifier})
 
-        self.db[component].delete({'uuid': uuid})
+    def get_component_parents(self, component: str, identifier: str):
+        """
+        Get the parents of a component.
+        
+        :param component: type of component
+        :param identifier: identifier of component
+        """
+        t = self.db['ParentChildAssociations']
+        q = t.filter(t['child_component'] == component, t['child_identifier'] == identifier).select('parent_component', 'parent_identifier')
+        results = q.execute()
+        return [(r['parent_component'], r['parent_identifier']) for r in results]
+
 
     def get_component_version_parents(self, uuid: str):
         """

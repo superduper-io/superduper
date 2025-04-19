@@ -80,6 +80,7 @@ def build_graph_listener(db: "Datalayer"):
         .outputs(listener_a.predict_id),
         identifier="b",
         predict_kwargs={"max_chunk_size": 1},
+        upstream=[listener_a],
     )
 
     def func_c(x, y, z, o_a, o_b):
@@ -96,22 +97,20 @@ def build_graph_listener(db: "Datalayer"):
         .outputs(listener_a.predict_id, listener_b.predict_id),
         identifier="c",
         predict_kwargs={"max_chunk_size": 1},
+        upstream=[listener_a, listener_b],
     )
 
     db.apply(listener_a)
     db.apply(listener_b)
     db.apply(listener_c)
 
-    data = Document(
-        list(
-            db["documents"]
-            .select()
-            .outputs(
-                listener_a.predict_id, listener_b.predict_id, listener_c.predict_id
-            )
-            .execute()
-        )[0].unpack()
+    q = (
+        db["documents"]
+        .select()
+        .outputs(listener_a.predict_id, listener_b.predict_id, listener_c.predict_id)
     )
+
+    data = q.execute()[0]
 
     output_a = data[listener_a.outputs]
     output_b = data[listener_b.outputs]

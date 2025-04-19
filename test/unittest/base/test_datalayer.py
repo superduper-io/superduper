@@ -204,92 +204,6 @@ def test_add_table(db):
     db.apply(component)
 
 
-def test_remove_component_version(db):
-    for component in [
-        TestComponent(identifier='test', inc=0),
-        TestComponent(identifier='test', inc=1),
-    ]:
-        db.apply(component)
-    assert db.show('TestComponent', 'test') == [0, 1]
-
-    # Don't remove if not confirmed
-    with patch('click.confirm', return_value=False):
-        db._remove_component_version('TestComponent', 'test', 0)
-        assert db.show('TestComponent', 'test') == [0, 1]
-
-    # Remove if confirmed
-    with patch('click.confirm', return_value=True):
-        db._remove_component_version('TestComponent', 'test', 0)
-        # Wait for the db to update
-        time.sleep(0.1)
-        assert db.show('TestComponent', 'test') == [1]
-
-    # Remove force
-    db._remove_component_version('TestComponent', 'test', 1, force=True)
-    # Wait for the db to update
-    time.sleep(0.1)
-    assert db.show('TestComponent', 'test') == []
-
-
-def test_remove_component_with_parent(db):
-    # Can not remove the child component if the parent exists
-    db.apply(
-        TestComponent(
-            identifier='test_3_parent',
-            inc=0,
-            child=TestComponent(identifier='test_3_child', inc=0),
-        )
-    )
-
-    with pytest.raises(Exception) as e:
-        db._remove_component_version('TestComponent', 'test_3_child', 0)
-    assert 'is involved in other components' in str(e)
-
-
-def test_remove_component_with_clean_up(db):
-    # Test clean up
-    component_clean_up = TestComponent(
-        identifier='test_clean_up', inc=0, check_clean_up=True
-    )
-    db.apply(component_clean_up)
-    with pytest.raises(Exception) as e:
-        db._remove_component_version('TestComponent', 'test_clean_up', 0, force=True)
-    assert 'cleanup' in str(e)
-
-
-def test_remove_component_with_artifact(db):
-    # Test artifact is deleted from artifact store
-    component_with_artifact = TestComponent(
-        identifier='test_with_artifact',
-        inc=0,
-        artifact={'test': 'test'},
-    )
-    db.apply(component_with_artifact)
-    info_with_artifact = db.metadata.get_component(
-        'TestComponent', 'test_with_artifact', 0
-    )
-    artifact_file_id = info_with_artifact['artifact'].split(':')[-1]
-    with patch.object(db.artifact_store, '_delete_bytes') as mock_delete:
-        db._remove_component_version(
-            'TestComponent', 'test_with_artifact', 0, force=True
-        )
-        mock_delete.assert_called_once_with(artifact_file_id)
-
-
-def test_remove_one_version(db):
-    for component in [
-        TestComponent(identifier='test', inc=0),
-        TestComponent(identifier='test', inc=1),
-    ]:
-        db.apply(component)
-
-    # Only remove the version
-    db.remove('TestComponent', 'test', 1, force=True)
-    # Wait for the db to update
-    time.sleep(0.1)
-    assert db.show('TestComponent', 'test') == [0]
-
-
 def test_remove_multi_version(db):
     for component in [
         TestComponent(identifier='test', inc=0),
@@ -496,3 +410,71 @@ def test_retry_on_token_expiry(db):
             db.databackend.test_retry()
             assert reconnect.call_count == 1
             assert mock_test_retry.call_count == 2
+
+
+class Container(Component):
+    model: Model
+
+
+def test_remove_not_recursive(db: Datalayer):
+
+    m = Container(
+        identifier='container',
+        model=FakeModel('test'),
+    )
+
+    db.apply(m)
+
+    assert db.show('Container', 'container') == [0]
+
+    db.remove('Container', 'container')
+
+    assert 'container' not in db.show('Container')
+
+    assert 'test' in db.show('FakeModel')
+
+
+def test_remove_recursive(db: Datalayer):
+
+    m = Container(
+        identifier='container',
+        model=FakeModel('test'),
+    )
+
+    db.apply(m)
+
+    assert db.show('Container', 'container') == [0]
+
+    db.remove('Container', 'container', recursive=True)
+
+    assert 'container' not in db.show('Container')
+
+    assert 'test' not in db.show('FakeModel')
+
+
+def test_remove_shared(db: Datalayer):
+
+    fm = FakeModel('test')
+
+    m1 = Container(identifier='container1', model=fm)
+    m2 = Container(identifier='container2', model=fm)
+
+    db.apply(m1)
+    db.apply(m2)
+
+    assert db.show('Container', 'container1') == [0]
+    assert db.show('Container', 'container2') == [0]
+
+    with pytest.raises(Exception) as e:
+        db.remove('Container', 'container1', recursive=True)
+
+    assert 'container2' in str(e)
+
+    # Check that the container is not removed, since a child failed
+    assert 'container1' in db.show('Container')
+
+    db.remove('Container', 'container2', recursive=True, force=True)
+
+    assert 'container2' not in db.show('Container')
+    assert 'container1' in db.show('Container')
+    assert 'test' in db.show('FakeModel')

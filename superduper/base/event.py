@@ -5,6 +5,9 @@ import typing as t
 import uuid
 from abc import ABC, abstractmethod
 
+import numpy
+import pandas
+
 from superduper import logging
 from superduper.backends.base.compute import ComputeBackend
 
@@ -120,6 +123,7 @@ class Create(Event):
     :param path: path of the component to be created
     :param data: the data of the component
     :param parent: the parent of the component (if any)
+    :param children: the children of the component (if any)
     """
 
     genus: t.ClassVar[str] = 'create'
@@ -129,6 +133,7 @@ class Create(Event):
     path: str
     data: t.Dict
     parent: list | None = None
+    children: t.List | None = None
 
     @property
     def component(self):
@@ -146,25 +151,26 @@ class Create(Event):
         )
 
         artifact_ids, _ = db._find_artifacts(self.data)
-        db.metadata.create_artifact_relation(self.data['uuid'], artifact_ids)
+
+        db.metadata.create_artifact_relation(
+            component=self.component,
+            identifier=self.data['identifier'],
+            uuid=self.data['uuid'],
+            artifact_ids=artifact_ids,
+        )
 
         db.metadata.create_component(self.data, path=self.path)
         component = db.load(component=self.component, uuid=self.data['uuid'])
 
-        if self.parent:
-            db.metadata.create_parent_child(
-                self.parent[0], self.parent[1], self.component, component.uuid
-            )
-
-        if hasattr(component, 'dependencies') and component.dependencies:
-            for dep in component.dependencies:
-                if isinstance(dep, (tuple, list)):
-                    dep = dep[-1]
+        if self.children:
+            for child in self.children:
                 db.metadata.create_parent_child(
-                    component.component,
-                    component.uuid,
-                    'Listener',
-                    dep,
+                    child_component=child[0],
+                    child_identifier=child[1],
+                    child_uuid=child[2],
+                    parent_component=self.component,
+                    parent_identifier=component.identifier,
+                    parent_uuid=component.uuid,
                 )
 
         component.on_create()
@@ -173,6 +179,61 @@ class Create(Event):
     def huuid(self):
         """Return the hashed uuid."""
         return f'{self.component}:' f'{self.data["identifier"]}:' f'{self.data["uuid"]}'
+
+
+@dc.dataclass(kw_only=True)
+class Delete(Event):
+    """
+    Class for component deletion events.
+
+    :param component: the type of component to be created
+    :param identifier: the identifier of the component to be deleted
+    """
+
+    genus: t.ClassVar[str] = 'delete'
+    queue: t.ClassVar[str] = '_apply'
+
+    component: str
+    identifier: str
+
+    @property
+    def huuid(self):
+        """Return the hashed uuid."""
+        return f'{self.component}:{self.identifier}'
+
+    def execute(self, db: 'Datalayer'):
+        """Execute the delete event.
+
+        :param db: Datalayer instance.
+        """
+        object = db.load(component=self.component, identifier=self.identifier)
+
+        db.metadata.delete_component(self.component, self.identifier)
+        artifact_ids = db.metadata.get_artifact_relations_for_component(
+            self.component, self.identifier
+        )
+
+        if artifact_ids:
+            parents_to_artifacts = db.metadata.get_artifact_relations_for_artifacts(
+                artifact_ids
+            )
+            df = pandas.DataFrame(parents_to_artifacts)
+            if not df.empty:
+                condition = numpy.logical_or(
+                    df['component'] != self.component,
+                    df['identifier'] != self.identifier,
+                )
+                other_relations = df[condition]
+                to_exclude = other_relations['artifact_id'].tolist()
+                artifact_ids = sorted(list(set(artifact_ids) - set(to_exclude)))
+            db.artifact_store.delete_artifact(artifact_ids)
+
+        db.metadata.delete_parent_child_relationships(
+            parent_component=self.component,
+            parent_identifier=self.identifier,
+        )
+
+        object.cleanup()
 
 
 @dc.dataclass(kw_only=True)
@@ -202,9 +263,13 @@ class Update(Event):
 
         :param db: Datalayer instance.
         """
-        # TODO decide where to assign version
         artifact_ids, _ = db._find_artifacts(self.data)
-        db.metadata.create_artifact_relation(self.data['uuid'], artifact_ids)
+        db.metadata.create_artifact_relation(
+            component=self.component,
+            identifier=self.data['identifier'],
+            uuid=self.data['uuid'],
+            artifact_ids=artifact_ids,
+        )
         db.metadata.replace_object(
             self.component, uuid=self.data['uuid'], info=self.data
         )

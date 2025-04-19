@@ -43,6 +43,7 @@ def build_chain_listener(db: "Datalayer"):
         select=db[listener_a.outputs].select(),
         key=listener_a.outputs,
         identifier="b",
+        upstream=[listener_a],
     )
     db.apply(listener_b)
 
@@ -51,6 +52,7 @@ def build_chain_listener(db: "Datalayer"):
         select=db[listener_b.outputs].select(),
         key=listener_b.outputs,
         identifier="c",
+        upstream=[listener_a, listener_b],
     )
     db.apply(listener_c)
 

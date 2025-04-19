@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Simplify the `Template` class
 - Simplify `Component` lifecycle by removing `Component.pre_create`
 - Renamed `Component.init` to `Component.setup`
+- Require `.upstream` when setting upstream dependencies
+- Disable ability to remove components verion-by-version
 
 #### New Features & Functionality
 

@@ -111,25 +111,12 @@ class Listener(CDC):
         """Get reference to outputs of listener model."""
         return f'{CFG.output_prefix}{self.predict_id}'
 
-    # TODO deprecate
     @property
     def dependencies(self):
-        """Listener model dependencies."""
-        # args, kwargs = self.mapping.mapping
-        key = self.key[:]
-        if isinstance(key, str):
-            all_ = [key]
-        elif isinstance(key, (list, tuple)) and isinstance(key[0], str):
-            all_ = list(key)
-        else:
-            all_ = list(key[0]) + list(key[1].values())
-
-        # all_ = list(args) + list(kwargs.values())
-        out = []
-        for x in all_:
-            if x.startswith(CFG.output_prefix):
-                out.append(tuple(x[len(CFG.output_prefix) :].split('.')[0].split('__')))
-        return out
+        """Get dependencies of this component."""
+        tables = self.select.tables if self.select else []
+        tables = [t for t in tables if t.startswith(CFG.output_prefix)]
+        return [tuple(['Listener'] + list(t.split('__')[1:])) for t in tables]
 
     def _check_signature(self):
         model_signature = self.model.signature

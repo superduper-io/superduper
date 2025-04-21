@@ -142,14 +142,16 @@ class Datalayer:
 
         if component is None:
             nt = namedtuple('nt', ('component', 'identifier'))
-            out = self.metadata.show_components()
+            out = self.metadata.show_components(use_cache=False)
             out = sorted(list(set([nt(**x) for x in out])))
             out = [x._asdict() for x in out]
             return out
 
         if identifier is None:
             try:
-                out = self.metadata.show_components(component=component)
+                out = self.metadata.show_components(
+                    component=component, use_cache=False
+                )
             except NonExistentMetadataError:
                 return []
             return sorted(out)

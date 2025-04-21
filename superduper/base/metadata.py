@@ -437,16 +437,17 @@ class MetaDataStore:
 
         return self.db['Job'].filter(*filters).distinct('job_id')
 
-    def show_components(self, component: str | None = None):
+    def show_components(self, component: str | None = None, use_cache=True):
         """
         Show all components in the metadata store.
 
         :param component: type of component
+        :param use_cache: whether to use cache
         """
         if component is None:
             out = []
 
-            if self.cache:
+            if self.cache and use_cache:
                 metadata = self.cache.get_with_component('Table')
                 components = [r['identifier'] for r in metadata if r['component']]
             else:
@@ -480,7 +481,7 @@ class MetaDataStore:
                 except ModuleNotFoundError as e:
                     logging.error(f'Component type not found: {component}; ', e)
 
-            if self.cache:
+            if self.cache and use_cache:
                 identifiers = sorted(
                     list(
                         set(
@@ -497,7 +498,7 @@ class MetaDataStore:
             out.extend([{'component': 'Table', 'identifier': x} for x in identifiers])
             return out
 
-        if self.cache:
+        if self.cache and use_cache:
             return sorted(
                 list(
                     set(

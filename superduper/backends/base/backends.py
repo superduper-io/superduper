@@ -57,7 +57,6 @@ class Bookkeeping(ABC):
             f'Putting component: {component.huuid} on to {self.__class__.__name__}'
         )
         tool = self.build_tool(component)
-        tool.db = self.db
         self.component_uuid_mapping[(component.component, component.identifier)].add(
             component.uuid
         )

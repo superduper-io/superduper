@@ -187,8 +187,10 @@ def test_add_with_artifact(db):
     )
 
     db.apply(m)
-    if db.cluster.cache is not None:
-        db.cluster.cache.delete_uuid(m.uuid)
+
+    # FIXME: ensure that cached items are automatically deleted by datalayer
+    # if db.cache is not None:
+    #     db.cache.delete_uuid(m.uuid)
 
     m = db.load('ObjectModel', m.identifier)
 

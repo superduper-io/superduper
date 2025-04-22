@@ -35,19 +35,6 @@ class BaseScheduler(BaseBackend):
         :param events: list of events
         """
 
-    @property
-    def db(self) -> 'Datalayer':
-        """Get the ``db``."""
-        return self._db
-
-    @db.setter
-    def db(self, value: 'Datalayer'):
-        """Set the ``db``.
-
-        :param value: ``Datalayer`` instance.
-        """
-        self._db = value
-
 
 class JobFutureException(Exception):
     """Exception when futures are not ready.
@@ -139,7 +126,7 @@ def _consume_event_type(event_type, ids, table, db: 'Datalayer'):
     db.cluster.compute.release_futures(context)
 
 
-def consume_events(events: t.List[Event], table: str, db: 'Datalayer'):
+def consume_events(events: t.List[Event], table: str, db: 'Datalayer') -> None:
     """
     Consume events from table queue.
 
@@ -147,6 +134,8 @@ def consume_events(events: t.List[Event], table: str, db: 'Datalayer'):
     :param table: Queue Table.
     :param db: Datalayer instance.
     """
+    assert db, "Empty datalayer"
+
     if table != '_apply':
         logging.info(f'Consuming events on {table}, events: {events}')
         consume_streaming_events(events=events, table=table, db=db)
@@ -154,4 +143,5 @@ def consume_events(events: t.List[Event], table: str, db: 'Datalayer'):
         logging.info(f'Consuming {len(events)} events on {table}')
         for event in events:
             event.execute(db)
-        return
+
+    return None

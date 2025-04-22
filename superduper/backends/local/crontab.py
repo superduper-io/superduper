@@ -7,6 +7,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from superduper import logging
 from superduper.backends.base.backends import Bookkeeping
 from superduper.backends.base.crontab import CrontabBackend
+from superduper.base.datalayer import Datalayer
 from superduper.components.cron_job import CronJob
 
 
@@ -53,7 +54,10 @@ class LocalCrontabBackend(Bookkeeping, CrontabBackend):
 
     cls = CronJob
 
-    def __init__(self):
+    def __init__(self, db: Datalayer):
+        assert db, "Empty datalayer"
+        self._db = db
+
         Bookkeeping.__init__(self)
         CrontabBackend.__init__(self)
         self.scheduler = BackgroundScheduler(

@@ -71,19 +71,6 @@ class ComputeBackend(BaseBackend):
         :param component: Component to put.
         """
 
-    @property
-    def db(self) -> 'Datalayer':
-        """Get the ``db``."""
-        return self._db
-
-    @db.setter
-    def db(self, value: 'Datalayer'):
-        """Set the ``db``.
-
-        :param value: ``Datalayer`` instance.
-        """
-        self._db = value
-
     @abstractmethod
     def drop_component(self, component: str, identifier: str):
         """Drop the component from compute.

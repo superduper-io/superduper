@@ -3,6 +3,7 @@ from collections import defaultdict
 
 from superduper import logging
 from superduper.backends.base.compute import ComputeBackend
+from superduper.base.datalayer import Datalayer
 from superduper.base.event import Job
 
 if t.TYPE_CHECKING:
@@ -19,13 +20,17 @@ class LocalComputeBackend(ComputeBackend):
 
     def __init__(
         self,
+        db: Datalayer,
         uri: t.Optional[str] = None,
         **kwargs,
     ):
+        assert db, "Empty datalayer"
+        self._db = db
+
         self.uri = uri
         self.kwargs = kwargs
         self._cache: t.Dict = {}
-        self._db = None
+
         self.futures: t.DefaultDict = defaultdict(lambda: {})
 
     def release_futures(self, context: str):
@@ -47,8 +52,8 @@ class LocalComputeBackend(ComputeBackend):
         args, kwargs = job.get_args_kwargs(self.futures[job.context])
 
         assert job.job_id is not None
-        component = self.db.load(component=job.component, uuid=job.uuid)
-        self.db.metadata.update_job(job.job_id, 'status', 'running')
+        component = self._db.load(component=job.component, uuid=job.uuid)
+        self._db.metadata.update_job(job.job_id, 'status', 'running')
 
         try:
             logging.debug(
@@ -57,10 +62,10 @@ class LocalComputeBackend(ComputeBackend):
             method = getattr(component, job.method)
             output = method(*args, **kwargs)
         except Exception as e:
-            self.db.metadata.update_job(job.job_id, 'status', 'failed')
+            self._db.metadata.update_job(job.job_id, 'status', 'failed')
             raise e
 
-        self.db.metadata.update_job(job.job_id, 'status', 'success')
+        self._db.metadata.update_job(job.job_id, 'status', 'success')
         self.futures[job.context][job.job_id] = output
         assert job.job_id is not None
         return job.job_id

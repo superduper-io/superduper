@@ -712,6 +712,9 @@ class MetaDataStore:
         :param version: version of component
         :param allow_hidden: whether to allow hidden components
         """
+        assert component
+        assert identifier
+
         if (component, identifier) in self.preset_components:
             return self.preset_components[(component, identifier)]
 

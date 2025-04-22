@@ -19,16 +19,3 @@ class CDCBackend(BaseBackend):
         :param ids: The ids to handle.
         """
         pass
-
-    @property
-    def db(self) -> 'Datalayer':
-        """Get the ``db``."""
-        return self._db
-
-    @db.setter
-    def db(self, value: 'Datalayer'):
-        """Set the ``db``.
-
-        :param value: ``Datalayer`` instance.
-        """
-        self._db = value

@@ -26,11 +26,11 @@ class CronJob(Component):
     def cleanup(self):
         """Cleanup crontab service."""
         super().cleanup()
-        self.db.cluster.crontab.drop(self)
+        self.db.cluster.crontab.drop_component(self.component, self.identifier)
 
     def initialize(self):
         """Initialize the crontab."""
-        self.db.cluster.crontab.initialize()
+        self.db.cluster.crontab.put_component(self)
 
 
 class FunctionCronJob(CronJob):

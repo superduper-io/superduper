@@ -27,21 +27,29 @@ class JobWrapper:
 
     def drop(self):
         """Drop the job."""
-        self.scheduler.remove_job(self.job.uuid)
+        if self.scheduler.get_job(self.job.uuid):
+            logging.info(f"Removing job {self.job.uuid}")
+            self.scheduler.remove_job(self.job.uuid)
+        else:
+            logging.info(f"Job {self.job.uuid} not found, skipping removal.")
 
     def initialize(self):
         """Initialize the job."""
         minute, hour, day, month, day_of_week = self.job.schedule.split()
-        self.scheduler.add_job(
-            self.job.run,
-            "cron",
-            minute=minute,
-            hour=hour,
-            day=day,
-            month=month,
-            day_of_week=day_of_week,
-            id=self.job.uuid,
-        )
+        # check if job already exists
+        if not self.scheduler.get_job(self.job.uuid):
+            self.scheduler.add_job(
+                self.job.run,
+                "cron",
+                minute=minute,
+                hour=hour,
+                day=day,
+                month=month,
+                day_of_week=day_of_week,
+                id=self.job.uuid,
+            )
+        else:
+            logging.info(f"Job {self.job.uuid} already exists, skipping creation.")
         # check if scheduler is not started
         if not self.scheduler.running:
             logging.info("Starting scheduler")

@@ -107,6 +107,20 @@ def _process_union(args):
         return None, None
 
 
+def _process_literal(args):
+
+    # Literal is a special case, we need to get the first argument
+    # and check if it's a string or not
+    if all(isinstance(t, str) for t in args):
+        inferred_cls = str
+    elif all(isinstance(t, int) for t in args):
+        inferred_cls = int
+    else:
+        inferred_cls = None
+    iterable_ = None
+    return inferred_cls, iterable_
+
+
 class _DataTypeFactory:
     def __init__(self, source, name):
         self.source = source
@@ -184,13 +198,7 @@ def process(annotation):
         inferred_cls, iterable_ = _process_dict(args)
 
     if origin is t.Literal:
-        # Literal is a special case, we need to get the first argument
-        # and check if it's a string or not
-        if all(isinstance(t, str) for t in args):
-            inferred_cls = str
-        elif all(isinstance(t, int) for t in args):
-            inferred_cls = int
-        iterable_ = None
+        inferred_cls, iterable_ = _process_literal(args)
 
     if isinstance(inferred_cls, ForwardRef):
         module_globals = sys.modules[inferred_cls.__module__].__dict__

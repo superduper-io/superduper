@@ -585,7 +585,7 @@ class MetaDataStore:
         """
         if self.cache:
             t = self.db[component]
-            uuids = t[t['identifier'] == identifier].distinct('uuid')
+            uuids = t.filter(t['identifier'] == identifier).distinct('uuid')
             for uuid in uuids:
                 try:
                     del self.cache[component, identifier, uuid]

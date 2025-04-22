@@ -1,5 +1,5 @@
+import threading
 import time
-import traceback
 from typing import (
     Any,
     Callable,
@@ -10,7 +10,6 @@ from typing import (
     Sequence,
     Tuple,
     Union,
-    cast,
 )
 
 import numpy as np
@@ -40,6 +39,8 @@ class LocalVectorSearchBackend(VectorSearchBackend):
         super().__init__()
         self._db = db
         self.searcher_impl = searcher_impl
+        # Add lock for thread safety when modifying component mappings
+        self._lock = threading.RLock()
 
     def build_tool(self, component: Any) -> BaseVectorSearcher:
         """Build a searcher tool from a component.
@@ -65,14 +66,15 @@ class LocalVectorSearchBackend(VectorSearchBackend):
                     # Load each vector index from the database
                     vector_index = self._db.load('VectorIndex', identifier=identifier)
 
-                    # Register the component with the backend
-                    self.put_component(vector_index)
+                    # Thread-safe registration of the component with the backend
+                    with self._lock:
+                        self.put_component(vector_index)
 
-                    # Convert raw vector data to VectorItem objects
-                    vectors = [VectorItem(**v) for v in vector_index.get_vectors()]
+                        # Convert raw vector data to VectorItem objects
+                        vectors = [VectorItem(**v) for v in vector_index.get_vectors()]
 
-                    # Add vectors to the searcher tool
-                    self.get_tool(vector_index.uuid).add(vectors)
+                        # Add vectors to the searcher tool
+                        self.get_tool(vector_index.uuid).add(vectors)
                 except (FileNotFoundError, TypeError) as e:
                     logging.error(f'Failed to load vector index {identifier}: {e}')
         except NonExistentMetadataError:
@@ -96,6 +98,7 @@ class LocalVectorSearchBackend(VectorSearchBackend):
         :param within_ids: list of ids to search within
         :return: Tuple of (ids, scores)
         """
+        # No lock needed for read-only operation on a stable reference
         return self[vector_index].find_nearest_from_array(h, n, within_ids)
 
     def find_nearest_from_id(
@@ -115,6 +118,7 @@ class LocalVectorSearchBackend(VectorSearchBackend):
         :param within_ids: list of ids to search within
         :return: Tuple of (ids, scores)
         """
+        # No lock needed for read-only operation on a stable reference
         return self[vector_index].find_nearest_from_id(id, n, within_ids)
 
     def __getitem__(self, identifier: str) -> BaseVectorSearcher:
@@ -129,13 +133,15 @@ class LocalVectorSearchBackend(VectorSearchBackend):
         # Load the vector index component from database
         component = self._db.load('VectorIndex', identifier=identifier)
 
-        # Check if we already have a searcher tool for this component
-        if component.uuid not in self.uuid_tool_mapping:
-            # Create and register a new searcher tool
-            self.put_component(component)
+        # Thread-safe component registration and tool retrieval
+        with self._lock:
+            # Check if we already have a searcher tool for this component
+            if component.uuid not in self.uuid_tool_mapping:
+                # Create and register a new searcher tool
+                self.put_component(component)
 
-        # Return the searcher tool
-        return self.get_tool(component.uuid)
+            # Return the searcher tool
+            return self.get_tool(component.uuid)
 
 
 class InMemoryVectorSearcher(BaseVectorSearcher):
@@ -163,6 +169,9 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
         self._db = db
         self.identifier = identifier
         self.dimensions = dimensions
+
+        # Add lock for thread safety
+        self._lock = threading.RLock()
 
         # Batching state
         self._cache: List[VectorItem] = []  # Temporary storage for batch items
@@ -198,18 +207,20 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
 
     def drop(self) -> None:
         """Drop the vector index by clearing all vectors and data from memory."""
-        self.h = None
-        self.index = []
-        self.lookup = {}
-        self._cache = []
+        with self._lock:
+            self.h = None
+            self.index = []
+            self.lookup = {}
+            self._cache = []
 
     def __len__(self) -> int:
         """Return the number of vectors in the index.
 
         Includes both committed vectors and those waiting in cache.
         """
-        committed_count = len(self.index) if self.h is not None else 0
-        return committed_count + len(self._cache)
+        with self._lock:
+            committed_count = len(self.index) if self.h is not None else 0
+            return committed_count + len(self._cache)
 
     def _normalize(self, vectors: NDArray[np.float64]) -> NDArray[np.float64]:
         """Normalize vectors for cosine similarity.
@@ -242,17 +253,24 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
             self._process_items(items)
             return
 
-        # Batch mode: accumulate items
-        self._cache.extend(items)
+        # Thread-safe batch processing
+        process_now = False
+        with self._lock:
+            # Batch mode: accumulate items
+            self._cache.extend(items)
 
-        # Check if batch should be processed
-        batch_size_reached = len(self._cache) >= self._BATCH_SIZE
-        batch_timeout_reached = (
-            self._cache  # Avoid timeout check if cache is empty
-            and time.time() - self._last_batch_time >= self._BATCH_TIMEOUT
-        )
+            # Check if batch should be processed
+            batch_size_reached = len(self._cache) >= self._BATCH_SIZE
+            batch_timeout_reached = (
+                self._cache  # Avoid timeout check if cache is empty
+                and time.time() - self._last_batch_time >= self._BATCH_TIMEOUT
+            )
 
-        if batch_size_reached or batch_timeout_reached:
+            if batch_size_reached or batch_timeout_reached:
+                process_now = True
+
+        # Process batch outside of lock if needed
+        if process_now:
             self._process_batch()
 
     def post_create(self) -> None:
@@ -261,7 +279,11 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
         Called before search operations to ensure all pending vectors
         are indexed and searchable.
         """
-        if self._cache:
+        process_needed = False
+        with self._lock:
+            process_needed = bool(self._cache)
+
+        if process_needed:
             self._process_batch()
 
     def _process_batch(self) -> None:
@@ -269,9 +291,15 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
 
         Commits all cached items to the main index and resets batching state.
         """
-        self._process_items(self._cache)
-        self._cache = []
-        self._last_batch_time = time.time()
+        cached_items = []
+        with self._lock:
+            cached_items = self._cache.copy()
+            self._cache = []
+            self._last_batch_time = time.time()
+
+        # Process items outside the lock
+        if cached_items:
+            self._process_items(cached_items)
 
     def _process_items(self, items: Sequence[VectorItem]) -> None:
         """Process vector items and update the index.
@@ -283,35 +311,38 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
         if not items:
             return
 
-        # Extract data from items
+        # Extract data from items (outside lock for efficiency)
         new_ids = [item.id for item in items]
         new_vectors = np.vstack([np.array(item.vector) for item in items])
 
-        # Handle existing data
-        if self.h is not None:
-            # Remove duplicates from existing data
-            # Keep only IDs that are not being updated
-            keep_mask = [i for i, id_ in enumerate(self.index) if id_ not in new_ids]
+        with self._lock:
+            # Handle existing data
+            if self.h is not None:
+                # Remove duplicates from existing data
+                # Keep only IDs that are not being updated
+                keep_mask = [
+                    i for i, id_ in enumerate(self.index) if id_ not in new_ids
+                ]
 
-            if keep_mask:
-                # Combine existing and new data
-                self.h = np.vstack((self.h[keep_mask], new_vectors))
-                self.index = [self.index[i] for i in keep_mask] + new_ids
+                if keep_mask:
+                    # Combine existing and new data
+                    self.h = np.vstack((self.h[keep_mask], new_vectors))
+                    self.index = [self.index[i] for i in keep_mask] + new_ids
+                else:
+                    # All existing IDs were replaced
+                    self.h = new_vectors
+                    self.index = new_ids
             else:
-                # All existing IDs were replaced
+                # First time adding vectors
                 self.h = new_vectors
                 self.index = new_ids
-        else:
-            # First time adding vectors
-            self.h = new_vectors
-            self.index = new_ids
 
-        # Normalize if using cosine similarity
-        if self.measure_name == 'cosine':
-            self.h = self._normalize(self.h)
+            # Normalize if using cosine similarity
+            if self.measure_name == 'cosine':
+                self.h = self._normalize(self.h)
 
-        # Rebuild lookup table
-        self.lookup = {id_: i for i, id_ in enumerate(self.index)}
+            # Rebuild lookup table
+            self.lookup = {id_: i for i, id_ in enumerate(self.index)}
 
     def find_nearest_from_array(
         self, h: ArrayLike, n: int = 100, within_ids: Optional[Sequence[str]] = None
@@ -329,30 +360,35 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
         # Ensure all pending items are processed
         self.post_create()
 
-        if self.h is None:
-            return [], []  # No vectors in index
-
-        # Prepare query vector
+        # Prepare query vector (outside lock for efficiency)
         query = np.array(h).reshape(1, -1)
-        if self.measure_name == 'cosine':
-            query = self._normalize(query)
 
-        # Handle ID filtering
-        if within_ids:
-            # Find indices of valid IDs
-            indices = [self.lookup[id_] for id_ in within_ids if id_ in self.lookup]
-            if not indices:
-                return [], []  # No valid IDs to search
+        # Make a thread-safe copy of the data we need for the search
+        with self._lock:
+            if self.h is None:
+                return [], []  # No vectors in index
 
-            # Create filtered vectors and IDs
-            target_vectors = self.h[indices]
-            target_ids = [self.index[i] for i in indices]
-        else:
-            # Search all vectors
-            target_vectors = self.h
-            target_ids = self.index
+            if self.measure_name == 'cosine':
+                query = self._normalize(query)
 
-        # Calculate similarities
+            # Handle ID filtering
+            if within_ids:
+                # Find indices of valid IDs
+                indices = [self.lookup[id_] for id_ in within_ids if id_ in self.lookup]
+                if not indices:
+                    return [], []  # No valid IDs to search
+
+                # Create filtered vectors and IDs
+                target_vectors = self.h[
+                    indices
+                ].copy()  # Make copy to avoid race conditions
+                target_ids = [self.index[i] for i in indices]
+            else:
+                # Search all vectors
+                target_vectors = self.h.copy()  # Make copy to avoid race conditions
+                target_ids = self.index.copy()  # Make copy to avoid race conditions
+
+        # Calculate similarities (outside lock for better performance)
         similarities = self.measure(query, target_vectors)[0]
 
         # Find top N indices (negative for descending sort)
@@ -377,12 +413,20 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
         # Ensure all pending items are processed
         self.post_create()
 
-        # Check if ID exists
-        if self.h is None or id not in self.lookup:
-            return [], []
+        # Thread-safe access to look up vector by ID
+        vector = None
+        with self._lock:
+            # Check if ID exists
+            if self.h is None or id not in self.lookup:
+                return [], []
 
-        # Get vector for ID and search
-        return self.find_nearest_from_array(self.h[self.lookup[id]], n, within_ids)
+            # Get vector for ID
+            vector = self.h[
+                self.lookup[id]
+            ].copy()  # Make copy to avoid race conditions
+
+        # Search with the vector (outside the lock)
+        return self.find_nearest_from_array(vector, n, within_ids)
 
     def delete(self, ids: Sequence[str]) -> None:
         """Delete vectors from the index.
@@ -394,23 +438,26 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
         # Ensure all pending items are processed
         self.post_create()
 
-        if not ids or self.h is None:
-            return
+        with self._lock:
+            if not ids or self.h is None:
+                return
 
-        # Find IDs that actually exist in the index
-        ids_to_delete = set(ids) & set(self.lookup.keys())
-        if not ids_to_delete:
-            return  # Nothing to delete
+            # Find IDs that actually exist in the index
+            ids_to_delete = set(ids) & set(self.lookup.keys())
+            if not ids_to_delete:
+                return  # Nothing to delete
 
-        # Find indices to keep
-        keep_mask = [i for i, id_ in enumerate(self.index) if id_ not in ids_to_delete]
+            # Find indices to keep
+            keep_mask = [
+                i for i, id_ in enumerate(self.index) if id_ not in ids_to_delete
+            ]
 
-        if not keep_mask:
-            # All vectors deleted - clear everything
-            self.drop()
-            return
+            if not keep_mask:
+                # All vectors deleted - clear everything
+                self.drop()
+                return
 
-        # Rebuild data structures without deleted IDs
-        self.h = self.h[keep_mask]
-        self.index = [self.index[i] for i in keep_mask]
-        self.lookup = {id_: i for i, id_ in enumerate(self.index)}
+            # Rebuild data structures without deleted IDs
+            self.h = self.h[keep_mask]
+            self.index = [self.index[i] for i in keep_mask]
+            self.lookup = {id_: i for i, id_ in enumerate(self.index)}

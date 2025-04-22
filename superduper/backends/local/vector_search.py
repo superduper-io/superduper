@@ -1,6 +1,5 @@
-import time
 import threading
-import traceback
+import time
 from typing import (
     Any,
     Callable,
@@ -11,7 +10,6 @@ from typing import (
     Sequence,
     Tuple,
     Union,
-    cast,
 )
 
 import numpy as np
@@ -320,10 +318,13 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
         with self._lock:
             # Handle existing data
             if self.vectors is not None:
+                # Convert to set for faster lookups
+                new_ids_set = set(new_ids)
+
                 # Remove duplicates from existing data
                 # Keep only IDs that are not being updated
                 keep_mask = [
-                    i for i, id_ in enumerate(self.index) if id_ not in new_ids
+                    i for i, id_ in enumerate(self.index) if id_ not in new_ids_set
                 ]
 
                 if keep_mask:
@@ -452,7 +453,7 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
             if not ids_to_delete:
                 return  # Nothing to delete
 
-            # Find indices to keep
+            # Find indices to keep (using set for faster lookups)
             keep_mask = [
                 i for i, id_ in enumerate(self.index) if id_ not in ids_to_delete
             ]

@@ -1,12 +1,8 @@
-import typing as t
-
 import numpy as np
 
 from superduper.base import Base
+from superduper.base.datalayer import Datalayer
 from superduper.components.listener import Listener
-
-if t.TYPE_CHECKING:
-    from superduper.base.datalayer import Datalayer
 
 VECTOR_SIZE = 300
 
@@ -16,7 +12,7 @@ class documents(Base):
     label: int
 
 
-def add_data(db: "Datalayer", start: int, end: int):
+def add_data(db: Datalayer, start: int, end: int):
     """
     :param db: Datalayer
     :param start: int to start assigning to `x` column
@@ -26,7 +22,7 @@ def add_data(db: "Datalayer", start: int, end: int):
 
 
 def build_vector_index(
-    db: "Datalayer",
+    db: Datalayer,
     n: int = 100,
     list_embeddings=False,
     measure=None,

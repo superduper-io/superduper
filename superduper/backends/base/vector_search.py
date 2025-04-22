@@ -36,19 +36,6 @@ class VectorSearchBackend(Bookkeeping, BaseBackend):
         """
         self.get_tool(uuid).delete(ids)
 
-    @property
-    def db(self) -> 'Datalayer':
-        """Get the ``db``."""
-        return self._db
-
-    @db.setter
-    def db(self, value: 'Datalayer'):
-        """Set the ``db``.
-
-        :param value: ``Datalayer`` instance.
-        """
-        self._db = value
-
     @abstractmethod
     def find_nearest_from_array(
         self,
@@ -165,30 +152,25 @@ class BaseVectorSearcher(VectorSearcherInterface):
     ):
         pass
 
-    @property
-    def db(self) -> 'Datalayer':
-        return self._db
-
-    @db.setter
-    def db(self, value: 'Datalayer'):
-        self._db = value
-
     @classmethod
-    def from_component(cls, index: 'VectorIndex'):
+    def from_component(cls, db: 'Datalayer', index: 'VectorIndex'):
         """Create a vector searcher from a vector index.
 
-        :param vi: ``VectorIndex`` instance
+        :param db: Datalayer instance
+        :param index: ``VectorIndex`` instance
         """
+        assert db, "Empty datalayer"
+
         return cls(
-            identifier=index.uuid, dimensions=index.dimensions, measure=index.measure
+            db=db,
+            identifier=index.uuid,
+            dimensions=index.dimensions,
+            measure=index.measure,
         )
 
     @abstractmethod
-    def initialize(self, db):
-        """Initialize the vector-searcher.
-
-        :param db: ``Datalayer`` instance.
-        """
+    def initialize(self):
+        """Initialize the vector-searcher."""
         pass
 
     @abstractmethod

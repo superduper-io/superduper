@@ -1,16 +1,14 @@
+import time
 import traceback
-import typing as t
 from typing import (
     Any,
     Callable,
     Dict,
     Final,
-    Generic,
     List,
     Optional,
     Sequence,
     Tuple,
-    TypeVar,
     Union,
     cast,
 )
@@ -25,97 +23,72 @@ from superduper.backends.base.vector_search import (
     VectorSearchBackend,
     measures,
 )
-from superduper.base.exceptions import InvalidArguments
+from superduper.base.datalayer import Datalayer
 from superduper.base.metadata import NonExistentMetadataError
-
-if t.TYPE_CHECKING:
-    from superduper import VectorIndex
-    from superduper.backends.base.backends import Bookkeeping
-
-T = TypeVar('T')  # Generic type for callable return values
 
 
 class LocalVectorSearchBackend(VectorSearchBackend):
     """Local vector search backend.
 
+    This backend manages multiple vector search indexes locally in memory.
+    It loads indexes from the database and creates searcher tools for each index.
+
     :param searcher_impl: class to use for requesting similarities
     """
 
-    def __init__(self, searcher_impl: type[BaseVectorSearcher]) -> None:
-        # Explicit call to avoid untyped super().__init__
-        VectorSearchBackend.__init__(self)
-
+    def __init__(self, db: Datalayer, searcher_impl: type[BaseVectorSearcher]) -> None:
+        super().__init__()
+        self._db = db
         self.searcher_impl = searcher_impl
-        self._db: Optional['Bookkeeping'] = None
-
-    @property
-    def db(self) -> Optional['Bookkeeping']:
-        """Get the database reference.
-
-        :return: Current database instance
-        """
-        return self._db
-
-    @db.setter
-    def db(self, value: 'Bookkeeping') -> None:
-        """Set the database reference and update all tools.
-
-        :param value: Database instance to set
-        """
-        logging.warn("Replacing database")
-        self._db = value
-        for tool in self.tools:
-            tool.db = value
-        return None
 
     def build_tool(self, component: Any) -> BaseVectorSearcher:
         """Build a searcher tool from a component.
 
+        Creates a new searcher instance for a vector index component.
+        This is used when a new vector index is created or loaded.
+
         :param component: Component to create searcher from
         :return: Initialized searcher instance
         """
-        searcher = self.searcher_impl.from_component(component)
-        return cast(BaseVectorSearcher, searcher)  # Cast to avoid Any return type
+        return self.searcher_impl.from_component(self._db, component)
 
     def initialize(self) -> None:
-        """Initialize the vector search by loading indexes from the database."""
-        if self._db is None:
-            logging.warn("Database not set during initialization")
-            return None
+        """Initialize the vector search by loading indexes from the database.
 
-        db = self._db  # Type narrowing for mypy
+        This method loads all existing vector indexes from the database
+        and initializes them in memory. Called during startup.
+        """
         try:
-            for identifier in db.show('VectorIndex'):
+            # Get all vector index identifiers from the database
+            for identifier in self._db.show('VectorIndex'):
                 try:
-                    vector_index: 'VectorIndex' = db.load(
-                        'VectorIndex', identifier=identifier
-                    )
-                    self.put_component(vector_index)
-                    vector_items = [
-                        VectorItem(**vector) for vector in vector_index.get_vectors()
-                    ]
-                    self.get_tool(vector_index.uuid).add(vector_items)
-                except FileNotFoundError:
-                    logging.error(
-                        f'Could not load vector index: {identifier} '
-                        'Is the artifact store correctly configured?'
-                    )
-                except TypeError as e:
-                    logging.error(f'Could not load vector index: {identifier} {e}')
-                    logging.error(traceback.format_exc())
-        except NonExistentMetadataError:
-            pass  # No vector indexes exist yet
+                    # Load each vector index from the database
+                    vector_index = self._db.load('VectorIndex', identifier=identifier)
 
-        return None
+                    # Register the component with the backend
+                    self.put_component(vector_index)
+
+                    # Convert raw vector data to VectorItem objects
+                    vectors = [VectorItem(**v) for v in vector_index.get_vectors()]
+
+                    # Add vectors to the searcher tool
+                    self.get_tool(vector_index.uuid).add(vectors)
+                except (FileNotFoundError, TypeError) as e:
+                    logging.error(f'Failed to load vector index {identifier}: {e}')
+        except NonExistentMetadataError:
+            # No vector indexes exist yet - this is normal on first run
+            pass
 
     def find_nearest_from_array(
         self,
         h: ArrayLike,
         vector_index: str,
         n: int = 100,
-        within_ids: Sequence[str] = (),
+        within_ids: Optional[Sequence[str]] = None,
     ) -> Tuple[List[str], List[float]]:
         """Find the nearest vectors to the given vector.
+
+        Delegates to the specific searcher tool for the vector index.
 
         :param h: vector
         :param vector_index: name of vector-index
@@ -123,16 +96,18 @@ class LocalVectorSearchBackend(VectorSearchBackend):
         :param within_ids: list of ids to search within
         :return: Tuple of (ids, scores)
         """
-        return self[vector_index].find_nearest_from_array(h, n=n, within_ids=within_ids)
+        return self[vector_index].find_nearest_from_array(h, n, within_ids)
 
     def find_nearest_from_id(
         self,
         id: str,
         vector_index: str,
         n: int = 100,
-        within_ids: Sequence[str] = (),
+        within_ids: Optional[Sequence[str]] = None,
     ) -> Tuple[List[str], List[float]]:
         """Find the nearest vectors to the vector identified by ID.
+
+        Delegates to the specific searcher tool for the vector index.
 
         :param id: id of the vector to search with
         :param vector_index: name of vector-index
@@ -140,262 +115,302 @@ class LocalVectorSearchBackend(VectorSearchBackend):
         :param within_ids: list of ids to search within
         :return: Tuple of (ids, scores)
         """
-        return self[vector_index].find_nearest_from_id(id, n=n, within_ids=within_ids)
+        return self[vector_index].find_nearest_from_id(id, n, within_ids)
 
     def __getitem__(self, identifier: str) -> BaseVectorSearcher:
         """Get a vector index by identifier.
 
+        Loads the vector index if not already cached and returns its searcher tool.
+        Provides dict-like access to vector indexes.
+
         :param identifier: Vector index identifier
         :return: Searcher tool for the vector index
         """
-        if self._db is None:
-            raise ValueError("Database not set")
+        # Load the vector index component from database
+        component = self._db.load('VectorIndex', identifier=identifier)
 
-        db = self._db  # Type narrowing for mypy
-        component = db.load('VectorIndex', identifier=identifier)
+        # Check if we already have a searcher tool for this component
         if component.uuid not in self.uuid_tool_mapping:
+            # Create and register a new searcher tool
             self.put_component(component)
-        searcher = self.get_tool(component.uuid)
-        return cast(BaseVectorSearcher, searcher)  # Cast to avoid Any return
+
+        # Return the searcher tool
+        return self.get_tool(component.uuid)
 
 
 class InMemoryVectorSearcher(BaseVectorSearcher):
     """Simple hash-set for looking up with vector similarity.
+
+    This searcher stores vectors in memory and performs similarity search
+    using numpy operations. It supports batching with size and time limits.
 
     :param identifier: Unique string identifier of index
     :param dimensions: Dimension of the vector embeddings
     :param measure: measure to assess similarity
     """
 
-    _CACHE_SIZE: Final[int] = 10000
+    # Class constants for batching behavior
+    _BATCH_SIZE: Final = 1000  # Maximum items in a batch
+    _BATCH_TIMEOUT: Final = 10.0  # Maximum seconds to wait before processing
 
     def __init__(
         self,
+        db: Datalayer,
         identifier: str,
         dimensions: int,
-        measure: Union[
-            str,
-            Callable[[NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]],
-        ] = 'cosine',
+        measure: Union[str, Callable] = 'cosine',
     ) -> None:
+        self._db = db
         self.identifier = identifier
         self.dimensions = dimensions
-        self._cache: List[VectorItem] = []
 
+        # Batching state
+        self._cache: List[VectorItem] = []  # Temporary storage for batch items
+        self._last_batch_time = time.time()  # Track when last batch was processed
+
+        # Set up similarity measure
         if isinstance(measure, str):
             self.measure_name = measure
-            self.measure = measures[measure]
+            self.measure = measures[measure]  # Look up predefined measure
         else:
             self.measure_name = measure.__name__
             self.measure = measure
 
-        self.h: Optional[NDArray[np.float64]] = None
-        self.index: Optional[List[str]] = None
-        self.lookup: Optional[Dict[str, int]] = None
+        # Vector storage
+        self.h: Optional[NDArray[np.float64]] = None  # Matrix of vectors
+        self.index: List[str] = []  # List of vector IDs (parallel to self.h)
+        self.lookup: Dict[str, int] = {}  # Map ID to index in self.h
+
+    def initialize(self) -> None:
+        """Initialize the vector index from the database.
+
+        Loads all vectors for this index from the database during startup.
+        """
+        # Load the vector index component
+        vector_index = self._db.load('VectorIndex', uuid=self.identifier)
+
+        # Convert raw data to VectorItem objects
+        vectors = [VectorItem(**v) for v in vector_index.get_vectors()]
+
+        if vectors:
+            # Add vectors using batch mode for efficiency
+            self.add(vectors, batch=True)
 
     def drop(self) -> None:
         """Drop the vector index by clearing all vectors and data from memory."""
         self.h = None
-        self.index = None
-        self.lookup = None
+        self.index = []
+        self.lookup = {}
         self._cache = []
-        return None
 
     def __len__(self) -> int:
-        """Return the number of vectors in the index."""
-        return 0 if self.h is None else self.h.shape[0]
+        """Return the number of vectors in the index.
 
-    def to_numpy(self, vector: ArrayLike) -> NDArray[np.float64]:
-        """Convert a vector to numpy array."""
-        return (
-            vector
-            if isinstance(vector, np.ndarray)
-            else np.array(vector, dtype=np.float64)
+        Includes both committed vectors and those waiting in cache.
+        """
+        committed_count = len(self.index) if self.h is not None else 0
+        return committed_count + len(self._cache)
+
+    def _normalize(self, vectors: NDArray[np.float64]) -> NDArray[np.float64]:
+        """Normalize vectors for cosine similarity.
+
+        Normalizes vectors to unit length to enable cosine similarity
+        via dot product computation.
+        """
+        # Calculate vector norms (L2)
+        norms = np.linalg.norm(vectors, axis=1, keepdims=True)
+
+        # Prevent division by zero for zero vectors
+        norms = np.maximum(norms, 1e-10)
+
+        return vectors / norms
+
+    def add(self, items: Sequence[VectorItem], batch: bool = False) -> None:
+        """Add vectors to the index.
+
+        In batch mode, accumulates items until size or time limits are reached.
+        In non-batch mode, processes items immediately.
+
+        :param items: List of vectors to add
+        :param batch: Whether to batch process vectors
+        """
+        if not items:
+            return
+
+        # Non-batch mode: process immediately
+        if not batch:
+            self._process_items(items)
+            return
+
+        # Batch mode: accumulate items
+        self._cache.extend(items)
+
+        # Check if batch should be processed
+        batch_size_reached = len(self._cache) >= self._BATCH_SIZE
+        batch_timeout_reached = (
+            self._cache  # Avoid timeout check if cache is empty
+            and time.time() - self._last_batch_time >= self._BATCH_TIMEOUT
         )
 
-    def _setup(self, h: NDArray[np.float64], index: List[str]) -> None:
-        """Set up the vector index.
+        if batch_size_reached or batch_timeout_reached:
+            self._process_batch()
 
-        :param h: Array of vectors
-        :param index: List of vector IDs
+    def post_create(self) -> None:
+        """Process any remaining vectors in cache.
+
+        Called before search operations to ensure all pending vectors
+        are indexed and searchable.
         """
-        h = self.to_numpy(h)
+        if self._cache:
+            self._process_batch()
 
+    def _process_batch(self) -> None:
+        """Process cached items.
+
+        Commits all cached items to the main index and resets batching state.
+        """
+        self._process_items(self._cache)
+        self._cache = []
+        self._last_batch_time = time.time()
+
+    def _process_items(self, items: Sequence[VectorItem]) -> None:
+        """Process vector items and update the index.
+
+        Handles deduplication, normalization, and index updates.
+
+        :param items: Vector items to add
+        """
+        if not items:
+            return
+
+        # Extract data from items
+        new_ids = [item.id for item in items]
+        new_vectors = np.vstack([np.array(item.vector) for item in items])
+
+        # Handle existing data
+        if self.h is not None:
+            # Remove duplicates from existing data
+            # Keep only IDs that are not being updated
+            keep_mask = [i for i, id_ in enumerate(self.index) if id_ not in new_ids]
+
+            if keep_mask:
+                # Combine existing and new data
+                self.h = np.vstack((self.h[keep_mask], new_vectors))
+                self.index = [self.index[i] for i in keep_mask] + new_ids
+            else:
+                # All existing IDs were replaced
+                self.h = new_vectors
+                self.index = new_ids
+        else:
+            # First time adding vectors
+            self.h = new_vectors
+            self.index = new_ids
+
+        # Normalize if using cosine similarity
         if self.measure_name == 'cosine':
-            # Normalize vectors for cosine similarity
-            norms = np.linalg.norm(h, axis=1)[:, None]
-            # Prevent division by zero
-            norms = np.maximum(norms, 1e-10)
-            h = h / norms
+            self.h = self._normalize(self.h)
 
-        self.h = h
-        self.index = index
-        self.lookup = dict(zip(index, range(len(index))))
-        return None
-
-    def find_nearest_from_id(
-        self, _id: str, n: int = 100, within_ids: Optional[Sequence[str]] = None
-    ) -> Tuple[List[str], List[float]]:
-        """Find the nearest vectors to the given ID.
-
-        :param _id: ID of the vector
-        :param n: number of nearest vectors to return
-        :param within_ids: list of IDs to search within
-        :return: Tuple of (ids, scores)
-        """
-        self.post_create()
-
-        if (
-            self.h is None
-            or self.index is None
-            or self.lookup is None
-            or _id not in self.lookup
-        ):
-            logging.error(f"Vector with ID {_id} not found or index not initialized")
-            return [], []
-
-        return self.find_nearest_from_array(
-            self.h[self.lookup[_id]], n=n, within_ids=within_ids
-        )
+        # Rebuild lookup table
+        self.lookup = {id_: i for i, id_ in enumerate(self.index)}
 
     def find_nearest_from_array(
         self, h: ArrayLike, n: int = 100, within_ids: Optional[Sequence[str]] = None
     ) -> Tuple[List[str], List[float]]:
         """Find the nearest vectors to the given vector.
 
+        Performs similarity search using the configured measure.
+        Optionally restricts search to a subset of IDs.
+
         :param h: vector
         :param n: number of nearest vectors to return
         :param within_ids: list of IDs to search within
         :return: Tuple of (ids, scores)
         """
+        # Ensure all pending items are processed
         self.post_create()
 
-        if self.h is None or self.index is None or self.lookup is None:
-            logging.error('Vector database not initialized')
-            return [], []
+        if self.h is None:
+            return [], []  # No vectors in index
 
-        # Convert and normalize input vector
-        h_array = self.to_numpy(h).reshape(1, -1)
-        if self.measure_name == 'cosine' and np.linalg.norm(h_array) > 0:
-            h_array = h_array / np.linalg.norm(h_array)
+        # Prepare query vector
+        query = np.array(h).reshape(1, -1)
+        if self.measure_name == 'cosine':
+            query = self._normalize(query)
+
+        # Handle ID filtering
+        if within_ids:
+            # Find indices of valid IDs
+            indices = [self.lookup[id_] for id_ in within_ids if id_ in self.lookup]
+            if not indices:
+                return [], []  # No valid IDs to search
+
+            # Create filtered vectors and IDs
+            target_vectors = self.h[indices]
+            target_ids = [self.index[i] for i in indices]
+        else:
+            # Search all vectors
+            target_vectors = self.h
+            target_ids = self.index
 
         # Calculate similarities
-        if within_ids:
-            # Filter IDs that exist in the lookup
-            valid_ids = [id_ for id_ in within_ids if id_ in self.lookup]
-            if not valid_ids:
-                return [], []
+        similarities = self.measure(query, target_vectors)[0]
 
-            ix = [self.lookup[id_] for id_ in valid_ids]
-            similarities = self.measure(h_array, self.h[ix, :])
+        # Find top N indices (negative for descending sort)
+        top_indices = np.argsort(-similarities)[:n]
 
-            # Get top scores
-            top_n_idxs = np.argsort(-similarities[0])[: min(n, len(ix))]
-            result_indices = [ix[i] for i in top_n_idxs]
-            scores = similarities[0][top_n_idxs].tolist()
-        else:
-            similarities = self.measure(h_array, self.h)[0]
+        # Return IDs and scores for top results
+        return [target_ids[i] for i in top_indices], similarities[top_indices].tolist()
 
-            # Get top scores
-            sorted_indices = np.argsort(-similarities)[: min(n, len(self.index))]
-            result_indices = sorted_indices.tolist()
-            scores = similarities[sorted_indices].tolist()
+    def find_nearest_from_id(
+        self, id: str, n: int = 100, within_ids: Optional[Sequence[str]] = None
+    ) -> Tuple[List[str], List[float]]:
+        """Find the nearest vectors to the vector identified by ID.
 
-        if self.index is None:  # Extra check for mypy
+        Convenience method that looks up the vector by ID and then
+        calls find_nearest_from_array.
+
+        :param id: id of the vector to search with
+        :param n: number of nearest vectors to return
+        :param within_ids: list of IDs to search within
+        :return: Tuple of (ids, scores)
+        """
+        # Ensure all pending items are processed
+        self.post_create()
+
+        # Check if ID exists
+        if self.h is None or id not in self.lookup:
             return [], []
 
-        result_ids = [self.index[i] for i in result_indices]
-        return result_ids, scores
-
-    def initialize(self) -> None:
-        """Initialize the vector index from the database."""
-        if not hasattr(self, 'db') or self.db is None:
-            logging.error("Database not set during initialization")
-            return None
-
-        db = self.db  # Type narrowing for mypy
-        component = db.load('VectorIndex', uuid=self.identifier)
-        vectors = component.get_vectors()
-        vector_items = [
-            VectorItem(id=vector['id'], vector=vector['vector']) for vector in vectors
-        ]
-        self.add(vector_items, batch=True)
-        return None
-
-    def add(self, items: Sequence[VectorItem] = (), batch: bool = False) -> None:
-        """Add vectors to the index.
-
-        :param items: List of vectors to add
-        :param batch: Whether to batch process vectors
-        """
-        if not items:
-            raise InvalidArguments("empty items")
-
-        if not batch:
-            self._add(items)
-            return None
-
-        # Add to cache and process when full
-        self._cache.extend(items)
-        if len(self._cache) >= self._CACHE_SIZE:
-            self._add(self._cache)
-            self._cache = []
-
-        return None
-
-    def post_create(self) -> None:
-        """Process any remaining vectors in cache."""
-        if self._cache:
-            self._add(self._cache)
-            self._cache = []
-        return None
-
-    def _add(self, items: Sequence[VectorItem]) -> None:
-        """Add vectors directly to the index.
-
-        :param items: Vector items to add
-        """
-        if not items:
-            return None
-
-        # Extract vectors and IDs
-        index = [item.id for item in items]
-        vectors = [self.to_numpy(item.vector) for item in items]
-
-        # Using np.vstack which is statically typed instead of np.stack
-        h: NDArray[np.float64] = np.vstack(vectors)
-
-        # If we already have vectors, preserve the existing ones
-        if self.h is not None and self.index is not None and self.lookup is not None:
-            old_not_in_new = list(set(self.index) - set(index))
-            if old_not_in_new:
-                ix_old = [self.lookup[_id] for _id in old_not_in_new]
-
-                # Using np.vstack which is statically typed instead of np.concatenate
-                h = np.vstack((self.h[ix_old], h))
-                index = [self.index[i] for i in ix_old] + index
-
-        self._setup(h, index)
-        return None
+        # Get vector for ID and search
+        return self.find_nearest_from_array(self.h[self.lookup[id]], n, within_ids)
 
     def delete(self, ids: Sequence[str]) -> None:
         """Delete vectors from the index.
 
+        Removes specified IDs from the index and rebuilds data structures.
+
         :param ids: List of IDs to delete
         """
+        # Ensure all pending items are processed
         self.post_create()
 
-        if not ids or self.h is None or self.index is None or self.lookup is None:
-            return None
+        if not ids or self.h is None:
+            return
 
-        # Filter for IDs that exist in the index
-        ids_to_delete = [id_ for id_ in ids if id_ in self.lookup]
+        # Find IDs that actually exist in the index
+        ids_to_delete = set(ids) & set(self.lookup.keys())
         if not ids_to_delete:
-            return None
+            return  # Nothing to delete
 
-        # Delete vectors and rebuild index
-        ix = [self.lookup[id_] for id_ in ids_to_delete]
-        h = np.delete(self.h, ix, axis=0)
-        index = [_id for _id in self.index if _id not in set(ids_to_delete)]
-        self._setup(h, index)
-        return None
+        # Find indices to keep
+        keep_mask = [i for i, id_ in enumerate(self.index) if id_ not in ids_to_delete]
+
+        if not keep_mask:
+            # All vectors deleted - clear everything
+            self.drop()
+            return
+
+        # Rebuild data structures without deleted IDs
+        self.h = self.h[keep_mask]
+        self.index = [self.index[i] for i in keep_mask]
+        self.lookup = {id_: i for i, id_ in enumerate(self.index)}

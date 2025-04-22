@@ -1,3 +1,4 @@
+import threading
 import time
 import typing as t
 import uuid
@@ -45,30 +46,6 @@ class ThreadLocalConnectionManager:
         in_memory = False
         ibis_conn = ibis.connect(self.uri)
         return ibis_conn, name, in_memory
-
-    @contextmanager
-    def get_connection(self):
-        """Get a connection for the current thread, creating it if it doesn't exist."""
-        thread_name = threading.current_thread().name
-
-        if not hasattr(self.local, "connection"):
-            with self.lock:  # Lock only during connection creation
-                self.local.connection, self.local.name, self.local.in_memory = (
-                    self._create_connection()
-                )
-
-                logging.info(f"Created new connection for thread '{thread_name}'")
-
-        try:
-            logging.info(f"Reusing connection for thread '{thread_name}'")
-            yield self.local.connection
-        except Exception as e:
-            # If there's a connection error, clear the thread's connection
-            # so a new one will be created next time
-            if hasattr(self.local, "connection"):
-                delattr(self.local, "connection")
-            logging.error(f"Connection error in thread '{thread_name}: {e}'")
-            raise e
 
     @contextmanager
     def get_connection(self):

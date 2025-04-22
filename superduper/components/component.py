@@ -518,7 +518,7 @@ class Component(Base, metaclass=ComponentMeta):
 
     def on_create(self):
         """Declare the component to the cluster."""
-        assert self.db is not None
+        assert self.db
 
     @staticmethod
     def read(path: str):

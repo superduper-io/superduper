@@ -2,10 +2,10 @@ import typing as t
 from collections import namedtuple
 
 import click
-import pandas
 
 import superduper as s
 from superduper import CFG, logging
+from superduper.backends.base.cache import Cache
 from superduper.backends.base.cluster import Cluster
 from superduper.backends.base.data_backend import BaseDataBackend
 from superduper.base import apply, exceptions
@@ -32,23 +32,23 @@ class Datalayer:
     Base connector.
 
     :param databackend: Object containing connection to Datastore.
-    :param artifact_store: Object containing connection to Artifactstore.
-    :param cluster: Cluster object containing connections to infrastructure.
+    :param artifact_store: Object containing connection to ArtifactStore.
+    :param cache: Used cached object.
     """
 
     def __init__(
         self,
         databackend: BaseDataBackend,
         artifact_store: ArtifactStore,
-        cluster: Cluster,
+        cache: Cache,
     ):
         """
         Initialize Datalayer.
 
         :param databackend: Object containing connection to Databackend.
-        :param metadata: Object containing connection to Metadatastore.
         :param artifact_store: Object containing connection to Artifactstore.
-        :param compute: Object containing connection to ComputeBackend.
+        :param cache: The cache to store intermediate objects
+        ok, the
         """
         logging.info("Building Data Layer")
 
@@ -58,16 +58,28 @@ class Datalayer:
         self.databackend = databackend
         self.databackend.db = self
 
-        self.cluster = cluster
-        self.cluster.db = self
-
         self._cfg = s.CFG
-        self.startup_cache: t.Dict[str, t.Any] = {}
 
-        self.metadata = MetaDataStore(self, cache=self.cluster.cache)
+        self.metadata = MetaDataStore(self, cache=cache)
         self.metadata.init()
 
-        logging.info("Data Layer built")
+        logging.warn("Datalayer object has been created but not yet initialized")
+
+        # Field that will be set later
+        self.cluster = None
+
+    def initialize(self, cluster: Cluster):
+        """Set the cluster to the datalayer.
+
+        :param cluster: Cluster object containing connections to infrastructure.
+        """
+        assert Cluster
+
+        self.cluster = cluster
+
+        # Start other process
+
+        logging.info("Datalayer has been initialized")
 
     def __getitem__(self, item):
         return Query(table=item, parts=(), db=self)
@@ -82,6 +94,7 @@ class Datalayer:
         data = [x.dict() for x in items]
         for r in data:
             del r['_path']
+
         return self[table.identifier].insert(data)
 
     @property
@@ -110,8 +123,11 @@ class Datalayer:
         ):
             logging.warn("Aborting...")
 
+        # The cluster is lazily loaded, so we need to first check that is not empty.
+        if self.cluster:
+            self.cluster.drop(force=True)
+
         # drop the cache, vector-indexes, triggers, queues
-        self.cluster.drop(force=True)
 
         self.databackend.drop(force=True)
         self.artifact_store.drop(force=True)

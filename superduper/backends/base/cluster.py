@@ -1,11 +1,10 @@
 import dataclasses as dc
 import time
-import typing as t
 from abc import ABC, abstractmethod
 
 import click
 
-from superduper.backends.base.cache import Cache
+from superduper import logging
 from superduper.backends.base.cdc import CDCBackend
 from superduper.backends.base.compute import ComputeBackend
 from superduper.backends.base.crontab import CrontabBackend
@@ -17,7 +16,6 @@ from superduper.backends.base.vector_search import VectorSearchBackend
 class Cluster(ABC):
     """Cluster object for managing the backend.
 
-    :param cache: The cache backend.
     :param scheduler: The scheduler backend.
     :param vector_search: The vector search backend.
     :param compute: The compute backend.
@@ -25,15 +23,14 @@ class Cluster(ABC):
     :param crontab: The crontab backend.
     """
 
-    cache: Cache
     scheduler: BaseScheduler
     vector_search: VectorSearchBackend
     compute: ComputeBackend
     cdc: CDCBackend
     crontab: CrontabBackend
 
-    def __post_init__(self):
-        self._db = None
+    # def __post_init__(self):
+    #     self._db = None
 
     def drop(self, force: bool = False):
         """Drop all of the backends.
@@ -65,43 +62,9 @@ class Cluster(ABC):
         """
         pass
 
-    @property
-    def db(self):
-        """Get the ``db``."""
-        return self._db
-
-    @db.setter
-    def db(self, value):
-        """Set the ``db``.
-
-        :param value: ``Datalayer`` instance.
-        """
-        self._db = value
-        self.scheduler.db = value
-        self.vector_search.db = value
-        self.crontab.db = value
-        if self.compute is not None:
-            self.compute.db = value
-        self.cdc.db = value
-
-    def load_custom_plugins(self):
-        """Load user plugins."""
-        from superduper import logging
-
-        if 'Plugin' in self.db.show('Table'):
-            logging.info("Found custom plugins - loading...")
-            for plugin in self.db.show('Plugin'):
-                logging.info(f"Loading plugin: {plugin}")
-                plugin = self.db.load('Plugin', plugin)
-
     def initialize(self):
         """Initialize the cluster."""
-        from superduper import logging
-
         start = time.time()
-        assert self.db
-
-        self.load_custom_plugins()
 
         self.scheduler.initialize()
         self.compute.initialize()

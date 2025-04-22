@@ -8,6 +8,7 @@ from superduper.backends.base.scheduler import (
     BaseScheduler,
     consume_events,
 )
+from superduper.base.datalayer import Datalayer
 from superduper.base.event import Event
 from superduper.components.cdc import CDC
 from superduper.misc.importing import isreallyinstance
@@ -41,20 +42,15 @@ class LocalScheduler(Bookkeeping, BaseScheduler):
     :param uri: uri to connect.
     """
 
-    def __init__(self):
+    def __init__(self, db: Datalayer):
         Bookkeeping.__init__(self)
         BaseScheduler.__init__(self)
 
+        assert db, "Empty datalayer"
+        self._db = db
+
         self.lock = threading.Lock()
         self.Q: t.Dict = {'_apply': []}
-
-    @property
-    def db(self):
-        return self._db
-
-    @db.setter
-    def db(self, value):
-        self._db = value
 
     def drop(self):
         """Drop the queue."""
@@ -66,21 +62,25 @@ class LocalScheduler(Bookkeeping, BaseScheduler):
     def initialize(self):
         """Initialize the scheduler."""
         self.Q['_apply'] = []
-        for component_data in self.db.show():
+        for component_data in self._db.show():
             component = component_data['component']
             identifier = component_data['identifier']
-            c = self.db.load(component=component, identifier=identifier)
+            c = self._db.load(component=component, identifier=identifier)
             if isreallyinstance(c, CDC):
                 self.put_component(c)
                 with self.lock:
                     self.Q[component, identifier] = []
 
-    def publish(self, events: t.List[Event]):
+    def publish(self, events: t.List[Event]) -> None:
         """
         Publish events to local queue.
 
         :param events: list of events
         """
+        if len(events) == 0:
+            logging.warn("Empty Event List")
+            return None
+
         with self.lock:
             for event in events:
                 self.Q[event.queue].append(event)
@@ -97,5 +97,5 @@ class LocalScheduler(Bookkeeping, BaseScheduler):
             consume_events(
                 events=events,
                 table=queue,
-                db=self.db,
+                db=self._db,
             )

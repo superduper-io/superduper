@@ -1,10 +1,10 @@
-import typing as t
+from typing import TYPE_CHECKING, Dict, Optional, Set, Tuple
 
 from superduper.backends.base.cdc import CDCBackend
 from superduper.base.datalayer import Datalayer
 from superduper.components.cdc import CDC
 
-if t.TYPE_CHECKING:
+if TYPE_CHECKING:
     from superduper import Component
 
 
@@ -17,8 +17,10 @@ class LocalCDCBackend(CDCBackend):
         assert db, "Empty datalayer"
         self._db = db
 
-        self.triggers = set()
-        self._trigger_uuid_mapping = {}
+        # Based on put_component usage: (component.component, component.identifier)
+        self.triggers: Set[Tuple[str, str]] = set()
+        # Currently not used in the code but assuming it maps some key to UUID strings
+        self._trigger_uuid_mapping: Dict[str, str] = {}
 
     def handle_event(self, table, ids, event_type):
         """Handle an event.
@@ -44,7 +46,9 @@ class LocalCDCBackend(CDCBackend):
     def drop_component(self, component, identifier):
         c = self._db.load(component=component, identifier=identifier)
         if isinstance(c, CDC):
-            self.triggers.remove(c.cdc_table)
+            # Note: This looks like a potential bug - it's trying to remove 'cdc_table'
+            # but 'triggers' contains tuples of (component, identifier)
+            self.triggers.remove(c.cdc_table)  # This might need to be fixed
 
     def initialize(self):
         """Initialize the CDC."""
@@ -58,7 +62,7 @@ class LocalCDCBackend(CDCBackend):
                 )
             # TODO consider re-initialzing CDC jobs since potentially failure
 
-    def drop(self, component: t.Optional['Component'] = None):
+    def drop(self, component: Optional['Component'] = None):
         """Drop the CDC.
 
         :param component: Component to remove.

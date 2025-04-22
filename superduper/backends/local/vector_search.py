@@ -84,7 +84,7 @@ class LocalVectorSearchBackend(VectorSearchBackend):
         h: ArrayLike,
         vector_index: str,
         n: int = 100,
-        within_ids: Optional[Sequence[str]] = None,
+        within_ids: Sequence[str] = None,
     ) -> Tuple[List[str], List[float]]:
         """Find the nearest vectors to the given vector.
 
@@ -103,7 +103,7 @@ class LocalVectorSearchBackend(VectorSearchBackend):
         id: str,
         vector_index: str,
         n: int = 100,
-        within_ids: Optional[Sequence[str]] = None,
+        within_ids: Sequence[str] = None,
     ) -> Tuple[List[str], List[float]]:
         """Find the nearest vectors to the vector identified by ID.
 
@@ -176,8 +176,8 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
             self.measure_name = measure.__name__
             self.measure = measure
 
-        # Vector storage
-        self.h: Optional[NDArray[np.float64]] = None  # Matrix of vectors
+        # Vector storage - Initialize all attributes
+        self.h: NDArray[np.float64] = None  # Matrix of vectors
         self.index: List[str] = []  # List of vector IDs (parallel to self.h)
         self.lookup: Dict[str, int] = {}  # Map ID to index in self.h
 

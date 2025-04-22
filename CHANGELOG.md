@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add redis plugin
 - Add pydantic schema support
 - Modify `DataBackend` to support multiple threads
+- Remove setters and getters from cluster components.
 
 #### Bug Fixes
 

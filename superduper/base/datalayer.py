@@ -40,7 +40,7 @@ class Datalayer:
         self,
         databackend: BaseDataBackend,
         artifact_store: ArtifactStore,
-        cache: Cache,
+        cache: Cache | None,
     ):
         """
         Initialize Datalayer.
@@ -73,8 +73,6 @@ class Datalayer:
 
         :param cluster: Cluster object containing connections to infrastructure.
         """
-        assert Cluster
-
         self.cluster = cluster
 
         # Start other process
@@ -242,9 +240,11 @@ class Datalayer:
         for id in ids:
             event = Change(ids=[str(id)], queue=table, type=event_type)
             events.append(event)
+
         logging.info(f'Created {len(events)} events for {event_type} on [{table}]')
         logging.info(f'Publishing {len(events)} events')
-        self.cluster.scheduler.publish(events)  # type: ignore[arg-type]
+
+        self.cluster.scheduler.publish(events)
 
     def create(self, object: t.Type[Base]):
         """Create a new type of component/ leaf.

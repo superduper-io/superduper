@@ -4,6 +4,7 @@ import typing as t
 from prettytable import PrettyTable
 
 from superduper import CFG, logging
+from superduper.backends.base.cache import Cache
 from superduper.backends.base.compute import ComputeBackend
 from superduper.backends.base.data_backend import DataBackendProxy
 from superduper.backends.local.cache import LocalCache

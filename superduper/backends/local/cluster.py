@@ -13,12 +13,6 @@ from superduper.misc.importing import load_plugin
 
 class LocalCluster(Cluster):
     """Local cluster for running infra locally.
-
-    :param compute: The compute backend.
-    :param scheduler: The scheduler backend.
-    :param vector_search: The vector search backend.
-    :param cdc: The change data capture backend.
-    :param crontab: The crontab backend.
     """
 
     @classmethod

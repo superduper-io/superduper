@@ -3,8 +3,9 @@ import typing as t
 
 from prettytable import PrettyTable
 
+import superduper as s
+from superduper.base.config import Config
 from superduper import CFG, logging
-from superduper.backends.base.cache import Cache
 from superduper.backends.base.compute import ComputeBackend
 from superduper.backends.base.data_backend import DataBackendProxy
 from superduper.backends.local.cache import LocalCache
@@ -82,11 +83,6 @@ def build_datalayer(
     """
     # Configuration
     # ------------------------------
-    # Lazy imports to avoid circular dependencies
-    import superduper as s
-    from superduper.base.config import Config  # Assuming Config class exists
-    from superduper.base.datalayer import Datalayer  # Assuming Datalayer class exists
-    from superduper.misc.importing import load_plugin
 
     # Use the provided configuration or fall back to the default configuration.
     if s.CFG.cluster_engine != 'local':

@@ -29,11 +29,9 @@ class Cluster(ABC):
     cdc: CDCBackend
     crontab: CrontabBackend
 
-    # def __post_init__(self):
-    #     self._db = None
 
     def drop(self, force: bool = False):
-        """Drop all of the backends.
+        """Drop all backends.
 
         :param force: Skip confirmation.
         """

@@ -106,25 +106,25 @@ class MetaDataStore:
             ('Table', 'Table'): Table(
                 identifier='Table',
                 primary_id='uuid',
-                component=True,
+                is_component=True,
                 path='superduper.components.table.Table',
             ).encode(),
             ('Table', 'ParentChildAssociations'): Table(
                 identifier='ParentChildAssociations',
                 primary_id='uuid',
-                component=True,
+                is_component=True,
                 path='superduper.base.metadata.ParentChildAssociations',
             ).encode(),
             ('Table', 'ArtifactRelations'): Table(
                 identifier='ArtifactRelations',
                 primary_id='uuid',
-                component=True,
+                is_component=True,
                 path='superduper.base.metadata.ArtifactRelations',
             ).encode(),
             ('Table', 'Job'): Table(
                 identifier='Job',
                 primary_id='job_id',
-                component=True,
+                is_component=True,
                 path='superduper.base.metadata.Job',
             ).encode(),
         }
@@ -187,7 +187,7 @@ class MetaDataStore:
                     'Table',
                     path='superduper.components.table.Table',
                     primary_id='uuid',
-                    component=True,
+                    is_component=True,
                 )
                 r = self.db['Table'].insert(
                     [{**t.dict(), 'version': 0, 'uuid': t.uuid}],
@@ -208,7 +208,7 @@ class MetaDataStore:
             identifier=cls.__name__,
             path=f'{cls.__module__}.{cls.__name__}',
             primary_id=pid,
-            component=issubclass(cls, Component),
+            is_component=issubclass(cls, Component),
         )
 
         r = t.dict()
@@ -449,10 +449,10 @@ class MetaDataStore:
 
             if self.cache and use_cache:
                 metadata = self.cache.get_with_component('Table')
-                components = [r['identifier'] for r in metadata if r['component']]
+                components = [r['identifier'] for r in metadata if r['is_component']]
             else:
                 t = self.db['Table']
-                components = t.filter(t['component'] == True).distinct(  # noqa: E712
+                components = t.filter(t['is_component'] == True).distinct(  # noqa: E712
                     'identifier'
                 )
 
@@ -702,7 +702,6 @@ class MetaDataStore:
         component: str,
         identifier: str,
         version: t.Optional[int] = None,
-        allow_hidden: bool = False,  # TODO remove this
     ) -> t.Dict[str, t.Any]:
         """
         Get a component from the metadata store.
@@ -710,7 +709,6 @@ class MetaDataStore:
         :param component: type of component
         :param identifier: identifier of component
         :param version: version of component
-        :param allow_hidden: whether to allow hidden components
         """
         if (component, identifier) in self.preset_components:
             return self.preset_components[(component, identifier)]

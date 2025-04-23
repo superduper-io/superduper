@@ -375,7 +375,6 @@ class Datalayer:
         version: t.Optional[int] = None,
         uuid: t.Optional[str] = None,
         huuid: t.Optional[str] = None,
-        allow_hidden: bool = False,
         overrides: t.Dict | None = None,
     ) -> Component:
         """
@@ -391,8 +390,6 @@ class Datalayer:
         :param version: [Optional] Numerical version.
         :param uuid: [Optional] UUID of the component to load.
         :param huuid: [Optional] human-readable UUID of the component to load.
-        :param allow_hidden: Toggle to ``True`` to allow loading
-                             of deprecated components.
         :param overrides: [Optional] Dictionary of overrides to apply to the component.
         """
         if version is not None:
@@ -402,7 +399,6 @@ class Datalayer:
                 component=component,
                 identifier=identifier,
                 version=version,
-                allow_hidden=allow_hidden,
             )
             uuid = info['uuid']
             info.update(overrides or {})
@@ -433,7 +429,6 @@ class Datalayer:
             info = self.metadata.get_component(
                 component=component,
                 identifier=identifier,
-                allow_hidden=allow_hidden,
             )
             info.update(overrides or {})
             c = ComponentType().decode_data(

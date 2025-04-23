@@ -660,6 +660,7 @@ class MetaDataStore:
         :param path: path to the component class.
         :param raw: whether to insert raw data.
         """
+
         component = path.rsplit('.', 1)[1]
 
         try:

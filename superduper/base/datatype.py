@@ -609,10 +609,15 @@ class PickleEncoder(_Encodable, _PickleMixin, BaseDataType):
 
 class _DillMixin:
     def _encode_data(self, item):
-        return dill.dumps(item, recurse=True)
+        return dill.dumps(item, recurse=True, byref=False)
 
     def _decode_data(self, item):
-        return dill.loads(item)
+        try:
+            return dill.loads(item, ignore=True)
+        except Exception as e:
+            print(dill.detect.trace())
+            logging.error(f'Failed to decode with dill: {e}')
+            raise e
 
 
 class Dill(_Artifact, _DillMixin, BaseDataType):

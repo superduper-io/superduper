@@ -216,10 +216,9 @@ def _decode_base(r, builds, db: t.Optional['Datalayer'] = None):
     dict_ = {k: v for k, v in r.items() if k != '_path'}
 
     if inspect.isfunction(cls):
+        signature_params = inspect.signature(cls).parameters
         out = cls(
-            **{
-                k: v for k, v in dict_.items() if k in inspect.signature(cls).parameters
-            },
+            **{k: v for k, v in dict_.items() if k in signature_params},
             db=db,
         )
     else:

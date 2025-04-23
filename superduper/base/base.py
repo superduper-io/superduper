@@ -184,12 +184,9 @@ class Base(metaclass=BaseMeta):
     @classmethod
     def from_dict(cls, r: t.Dict, db: t.Optional['Datalayer'] = None):
         if hasattr(cls, '_alternative_init'):
+            signature_params = inspect.signature(cls._alternative_init).parameters
             return cls._alternative_init(
-                **{
-                    k: v
-                    for k, v in r.items()
-                    if k in inspect.signature(cls._alternative_init).parameters
-                },
+                **{k: v for k, v in r.items() if k in signature_params},
                 db=db,
             )
         try:
@@ -197,11 +194,8 @@ class Base(metaclass=BaseMeta):
             return out
         except TypeError as e:
             if 'got an unexpected keyword argument' in str(e):
-                init_params = {
-                    k: v
-                    for k, v in r.items()
-                    if k in inspect.signature(cls.__init__).parameters
-                }
+                signature_params = inspect.signature(cls.__init__).parameters
+                init_params = {k: v for k, v in r.items() if k in signature_params}
                 post_init_params = {
                     k: v for k, v in r.items() if k in cls.set_post_init
                 }
@@ -377,11 +371,8 @@ class Base(metaclass=BaseMeta):
 
         :param r: Encoded data.
         """
-        modified = {
-            k: v
-            for k, v in r.items()
-            if k in inspect.signature(cls.__init__).parameters
-        }
+        signature_params = inspect.signature(cls.__init__).parameters
+        modified = {k: v for k, v in r.items() if k in signature_params}
         return cls(**modified)
 
     def setup(self, db=None):

@@ -30,20 +30,6 @@ class ArtifactStore(ABC):
         self._db = None
         self.flavour = flavour
 
-    @property
-    def db(self):
-        """Return the db."""
-        assert self._db is not None, 'db not initialized!'
-        return self._db
-
-    @db.setter
-    def db(self, value):
-        """Set the db.
-
-        :param value: The db.
-        """
-        self._db = value
-
     @abstractmethod
     def url(self):
         """Artifact store connection url."""

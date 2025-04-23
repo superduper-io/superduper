@@ -70,19 +70,6 @@ class BaseDataBackend(ABC):
         """Generate random-id."""
         pass
 
-    @property
-    def db(self):
-        """Return the datalayer."""
-        return self._db
-
-    @db.setter
-    def db(self, value):
-        """Set the datalayer.
-
-        :param value: The datalayer.
-        """
-        self._db = value
-
     @abstractmethod
     def create_table_and_schema(
         self, identifier: str, schema: 'Schema', primary_id: str
@@ -380,19 +367,6 @@ class DataBackendProxy:
 
     def __init__(self, backend):
         self._backend = backend
-
-    @property
-    def db(self):
-        """Return the datalayer."""
-        return self._backend._datalayer
-
-    @db.setter
-    def db(self, value):
-        """Set the datalayer.
-
-        :param value: The datalayer.
-        """
-        self._backend._db = value
 
     @property
     def type(self):

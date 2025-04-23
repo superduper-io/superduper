@@ -95,19 +95,6 @@ class SnowflakeDataBackend(BaseDataBackend):
         """
         self._run_query(f'DROP TABLE IF EXISTS {self.schema}."{table}"')
 
-    @property
-    def db(self):
-        """Return the datalayer."""
-        return self._db
-
-    @db.setter
-    def db(self, value):
-        """Set the datalayer.
-
-        :param value: The datalayer.
-        """
-        self._db = value
-
     def create_table_and_schema(self, identifier: str, schema: Schema, primary_id: str):
         """Create a schema in the data-backend.
 

@@ -154,16 +154,3 @@ class BaseBackend(ABC):
         :param component: Component name.
         :param identifier: Component identifier.
         """
-
-    @property
-    def db(self) -> 'Datalayer':
-        """Get the ``db``."""
-        return self._db
-
-    @db.setter
-    def db(self, value: 'Datalayer'):
-        """Set the ``db``.
-
-        :param value: ``Datalayer`` instance.
-        """
-        self._db = value

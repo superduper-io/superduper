@@ -50,16 +50,3 @@ class RedisCache(Cache):
         :param uuid: Component uuid.
         """
         self.redis.flushdb()
-
-    @property
-    def db(self):
-        """Get the ``db``."""
-        return self._db
-
-    @db.setter
-    def db(self, value):
-        """Set the ``db``.
-
-        :param value: The value to set the ``db`` to.
-        """
-        self._db = value

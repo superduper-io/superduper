@@ -1,15 +1,17 @@
 import re
 import typing as t
+from typing import Callable
 
+import deprecation
 from prettytable import PrettyTable
 
 import superduper as s
-from superduper.base.config import Config
-from superduper import CFG, logging
+from superduper import logging
 from superduper.backends.base.compute import ComputeBackend
 from superduper.backends.base.data_backend import DataBackendProxy
 from superduper.backends.local.cache import LocalCache
 from superduper.base.artifacts import FileSystemArtifactStore
+from superduper.base.config import Config
 from superduper.base.datalayer import Datalayer
 from superduper.misc.anonymize import anonymize_url
 from superduper.misc.importing import load_plugin
@@ -64,14 +66,119 @@ class _DataBackendLoader(_Loader):
     }
 
 
-def _build_artifact_store():
-    return FileSystemArtifactStore(CFG.artifact_store)
+class Builder:
+    r"""
+    Builder for creating a Datalayer instance with a fluent interface.
+
+    This class provides a functional-style parameterization pattern to configure
+    various components of a Datalayer before building the final instance.
+
+    :Example:
+
+    . code-block:: python
+
+        datalayer = Builder() \\
+            .with_compute(engine) \\
+            .with_data_backend("path/to/data") \\
+            .with_local_cache() \\
+            .build()
+    """
+
+    def __init__(self):
+        # Core components
+        self._data_backend = None
+        self._artifact_store = None
+        self._cache = None
+        self._compute_callback = None
+
+    def with_data_backend(self, uri: str) -> 'Builder':
+        """
+        Configure the data backend using the provided URI.
+
+        :param uri: Location identifier for the data backend
+        :return: Self for method chaining
+        """
+        self._data_backend = DataBackendProxy(_DataBackendLoader).create(uri)
+        return self
+
+    def with_artifact_store(self, uri: str) -> 'Builder':
+        """
+        Set the artifact store using a filesystem path.
+
+        :param uri: Path to the artifact store location
+        :return: Self for method chaining
+        """
+        self._artifact_store = FileSystemArtifactStore(uri)
+        return self
+
+    def with_local_cache(self) -> 'Builder':
+        """
+        Use a local in-memory cache implementation.
+
+        :return: Self for method chaining
+        """
+        self._cache = LocalCache()
+        return self
+
+    def with_redis_cache(self, uri: str) -> 'Builder':
+        """
+        Configure Redis as the caching backend.
+
+        :param uri: Redis connection URI
+        :return: Self for method chaining
+        """
+        self._cache = load_plugin('redis').Cache(uri=uri)
+        return self
+
+    def with_compute(
+        self, callback: 'Callable[[Datalayer], ComputeBackend]'
+    ) -> 'Builder':
+        """
+        Set the compute backend using a callback function.
+
+        :param callback: A function that receives the datalayer being built
+                        and returns a configured compute backend
+        :return: Self for method chaining
+
+        :Example:
+
+        . code-block:: python
+
+            def setup_compute(datalayer: 'Datalayer') -> 'ComputeBackend':
+                return LocalComputeBackend(datalayer)
+
+            datalayer = Builder().with_compute(setup_compute).build()
+        """
+        self._compute_callback = callback
+        return self
+
+    def build(self) -> 'Datalayer':
+        """
+        Build and initialize the configured Datalayer instance.
+
+        :return: A fully initialized Datalayer instance
+
+        . note::
+            This method first creates the Datalayer with the configured components,
+            then initializes it with the compute backend.
+        """
+        # Create datalayer with configured components
+        datalayer = Datalayer(
+            databackend=self._data_backend,
+            artifact_store=self._artifact_store,
+            cache=self._cache,
+        )
+
+        # Set up compute backend using the callback
+        cluster = self._compute_callback(datalayer)
+
+        # Initialize datalayer with the compute backend
+        datalayer.initialize(cluster)
+
+        return datalayer
 
 
-def _build_databackend(uri):
-    return DataBackendProxy(_DataBackendLoader.create(uri))
-
-
+@deprecation.deprecated(details="Use Builder() instead.")
 def build_datalayer(
     cfg=None, compute: ComputeBackend | None = None, **kwargs
 ) -> 'Datalayer':
@@ -96,8 +203,8 @@ def build_datalayer(
     cfg = t.cast(Config, cfg)
 
     # Lazy imports for builder functions to avoid circular dependencies
-    databackend_obj = _build_databackend(cfg.data_backend)
-    artifact_store = _build_artifact_store()
+    databackend_obj = DataBackendProxy(_DataBackendLoader).create(cfg.data_backend)
+    artifact_store = FileSystemArtifactStore(CFG.artifact_store)
 
     # Create the cache
     cache = None

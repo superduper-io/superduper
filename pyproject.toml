@@ -59,6 +59,7 @@ dependencies = [
     "httpx",
     "toml",
     "papermill>=2.6.0",
+    "deprecation",
     "jupyter"
 ]
 

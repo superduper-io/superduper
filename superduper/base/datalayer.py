@@ -63,7 +63,7 @@ class Datalayer:
         self.metadata = MetaDataStore(self, cache=cache)
         self.metadata.init()
 
-        logging.warn("Datalayer object has been created but not yet initialized")
+        logging.info("Datalayer has been created but not yet initialized")
 
         # Field that will be set later
         self.cluster = None

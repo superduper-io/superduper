@@ -401,7 +401,7 @@ def test_retry_on_token_expiry(db):
         else:
             return True
 
-    db.databackend._backend.test_retry = check_retry
+    db.databackend.backend.test_retry = check_retry
 
     with patch.object(db.databackend._backend, 'reconnect') as reconnect:
         with patch.object(

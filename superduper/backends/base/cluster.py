@@ -29,7 +29,6 @@ class Cluster(ABC):
     cdc: CDCBackend
     crontab: CrontabBackend
 
-
     def drop(self, force: bool = False):
         """Drop all backends.
 

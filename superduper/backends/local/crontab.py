@@ -55,11 +55,12 @@ class LocalCrontabBackend(Bookkeeping, CrontabBackend):
     cls = CronJob
 
     def __init__(self, db: Datalayer):
+        Bookkeeping.__init__(self)
+        CrontabBackend.__init__(self)
+
         assert db, "Empty datalayer"
         self._db = db
 
-        Bookkeeping.__init__(self)
-        CrontabBackend.__init__(self)
         self.scheduler = BackgroundScheduler(
             jobstores={"default": MemoryJobStore()},
             executors={"default": ThreadPoolExecutor(20)},

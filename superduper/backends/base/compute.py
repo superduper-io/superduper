@@ -5,7 +5,6 @@ from superduper.backends.base.backends import BaseBackend
 from superduper.misc.importing import isreallysubclass
 
 if t.TYPE_CHECKING:
-    from superduper.base.datalayer import Datalayer
     from superduper.base.event import Job
     from superduper.components.component import Component
 

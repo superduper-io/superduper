@@ -52,11 +52,8 @@ def trigger(
                 )
             else:
                 self.setup()
-                kwargs = {
-                    k: v
-                    for k, v in kwargs.items()
-                    if k in inspect.signature(f).parameters
-                }
+                signature_params = inspect.signature(f).parameters
+                kwargs = {k: v for k, v in kwargs.items() if k in signature_params}
                 return f(self, **kwargs)
 
         decorated.events = event_types

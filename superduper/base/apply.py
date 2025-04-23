@@ -78,7 +78,7 @@ def _wait_on_events(db: 'Datalayer', events: list, retry_delay=RETRY_DELAY):
             event_key = f"{component}/{identifier}:{version}"
 
             try:
-                logging.info(f"Processing event: {event_key}")
+                logging.info(f"Waiting for event '{event_key}'")
                 db.load(component=component, identifier=identifier, version=version)
                 # Successfully loaded, don't add to still_pending
             except NonExistentMetadataError:

@@ -54,7 +54,7 @@ class Bookkeeping(ABC):
         :param kwargs: kwargs dictionary.
         """
         logging.info(
-            f'Putting component: {component.huuid} on to {self.__class__.__name__}'
+            f"Putting component '{component.huuid}' to '{self.__class__.__name__}'"
         )
         tool = self.build_tool(component)
         self.component_uuid_mapping[(component.component, component.identifier)].add(

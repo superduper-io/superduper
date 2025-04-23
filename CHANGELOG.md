@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add pydantic schema support
 - Modify `DataBackend` to support multiple threads
 - Remove setters and getters from cluster components.
+- Add parameterizable `Builder` for `Datalayer`
 
 #### Bug Fixes
 

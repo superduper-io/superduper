@@ -616,7 +616,7 @@ class MetaDataStore:
         )
         if r is None:
             raise NonExistentMetadataError(
-                f'{identifier} does not exist in metadata for {component}'
+                f"metadata not found for object '{component}/{identifier}:{version}'"
             )
         return r['uuid']
 
@@ -648,7 +648,7 @@ class MetaDataStore:
 
         if not versions:
             raise NonExistentMetadataError(
-                f'{identifier} does not exist in metadata for {component}'
+                f"metadata not found for identifier '{component}/{identifier}'"
             )
         return max(versions)
 
@@ -672,9 +672,7 @@ class MetaDataStore:
             r = self.db[component].get(uuid=uuid, raw=True)
 
         if r is None:
-            raise NonExistentMetadataError(
-                f'Object {uuid} does not exist in metadata for {component}'
-            )
+            raise NonExistentMetadataError(f"metadata not found for uuid '{uuid}'")
 
         if self.cache:
             self.cache[component, r['identifier'], r['uuid']] = r
@@ -740,7 +738,7 @@ class MetaDataStore:
 
         if r is None:
             raise NonExistentMetadataError(
-                f'Object {identifier} does not exist in metadata for {component}'
+                f"metadata not found for object '{component}/{identifier}:{version}'"
             )
 
         if self.cache:

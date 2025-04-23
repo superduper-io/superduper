@@ -21,14 +21,14 @@ class Table(Component):
     :param primary_id: The primary id of the table
     :param data: Data to insert post creation
     :param path: The path to the class
-    :param component: Whether the table is a component
+    :param is_component: Whether the table is a component
     """
 
     fields: t.Dict | None = None
     primary_id: str = DEFAULT_PRIMARY_ID
     data: Component | None = None
     path: str | None = None
-    component: bool = False
+    is_component: bool = False
 
     def postinit(self):
         """Post initialization method."""

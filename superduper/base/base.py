@@ -117,7 +117,7 @@ class Base(metaclass=BaseMeta):
             fields=cls.class_schema.fields,
             path=cls.__module__ + '.' + cls.__name__,
             primary_id='uuid',
-            component=isreallyinstance(cls, Component),
+            is_component=isreallyinstance(cls, Component),
         )
 
     @staticmethod

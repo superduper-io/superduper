@@ -1,0 +1,6 @@
+data_backend: mongodb://localhost:27017/test_db
+artifact_store: filesystem:///tmp/artifact_store
+cache: null
+log_colorize: false
+json_native: true
+force_apply: true

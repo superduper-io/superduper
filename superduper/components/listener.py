@@ -16,6 +16,7 @@ if t.TYPE_CHECKING:
 
 
 SELECT_TEMPLATE = {'documents': [], 'query': '<collection_name>.find()'}
+LENGTH_OUTPUT_NAME = 50
 
 
 class Listener(CDC):
@@ -62,8 +63,10 @@ class Listener(CDC):
     @property
     def predict_id(self):
         """Predict ID property."""
-        # TODO: Truncate predict_id to within 40 characters
-        return f'{self.identifier}__{self.uuid}'
+        length_uuid = len(self.uuid)
+        name_length = LENGTH_OUTPUT_NAME - length_uuid - 2
+        name = self.identifier[:name_length]
+        return f'{name}__{self.uuid}'
 
     # TODO deprecate this
     @staticmethod

@@ -123,7 +123,6 @@ def consume_events(events: t.List[Event], table: str, db: 'Datalayer') -> None:
     return None
 
 
-
 def consume_streaming_events(events, table, db):
     """
     Consumer work from streaming events.

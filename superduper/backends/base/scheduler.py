@@ -43,30 +43,6 @@ class JobFutureException(Exception):
     """
 
 
-def consume_streaming_events(events, table, db):
-    """
-    Consumer work from streaming events.
-
-    Streaming event-types are {'insert', 'update', 'delete'}.
-
-    :param events: list of events.
-    :param table: table on which events were found.
-    :param db: Datalayer instance.
-    """
-    out = defaultdict(lambda: [])
-    for event in events:
-        out[event.type].append(event)
-
-    for event_type, events in out.items():
-        ids: t.List[str] = sum([event.ids for event in events], [])
-        _consume_event_type(
-            event_type,
-            ids=ids,
-            table=table,
-            db=db,
-        )
-
-
 @dc.dataclass
 class Future:
     """
@@ -137,11 +113,36 @@ def consume_events(events: t.List[Event], table: str, db: 'Datalayer') -> None:
     assert db, "Empty datalayer"
 
     if table != '_apply':
-        logging.info(f'Consuming events on {table}, events: {events}')
+        logging.info(f"Consuming streaming events on '{table}', events: '{events}'")
         consume_streaming_events(events=events, table=table, db=db)
     else:
-        logging.info(f'Consuming {len(events)} events on {table}')
         for event in events:
+            logging.info(f"Consuming event '{event}' from '{table}'")
             event.execute(db)
 
     return None
+
+
+
+def consume_streaming_events(events, table, db):
+    """
+    Consumer work from streaming events.
+
+    Streaming event-types are {'insert', 'update', 'delete'}.
+
+    :param events: list of events.
+    :param table: table on which events were found.
+    :param db: Datalayer instance.
+    """
+    out = defaultdict(lambda: [])
+    for event in events:
+        out[event.type].append(event)
+
+    for event_type, events in out.items():
+        ids: t.List[str] = sum([event.ids for event in events], [])
+        _consume_event_type(
+            event_type,
+            ids=ids,
+            table=table,
+            db=db,
+        )

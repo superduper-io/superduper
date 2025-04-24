@@ -50,8 +50,6 @@ class Datalayer:
         :param cache: The cache to store intermediate objects
         ok, the
         """
-        logging.info("Building Data Layer")
-
         self.artifact_store = artifact_store
         self.artifact_store.db = self
 

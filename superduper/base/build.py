@@ -175,6 +175,8 @@ class Builder:
         # Initialize datalayer with the compute backend
         datalayer.initialize(cluster)
 
+        logging.info("New Datalayer has been created")
+
         return datalayer
 
 

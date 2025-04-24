@@ -61,7 +61,7 @@ class ThreadLocalConnectionManager:
                 logging.info(f"Created new connection for thread '{thread_name}'")
 
         try:
-            logging.info(f"Reusing connection for thread '{thread_name}'")
+            logging.debug(f"Reusing connection for thread '{thread_name}'")
             yield self.local.connection
         except Exception as e:
             # If there's a connection error, clear the thread's connection

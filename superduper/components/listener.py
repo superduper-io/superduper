@@ -200,8 +200,14 @@ class Listener(CDC):
                 }
                 for id, output in zip(ids, outputs)
             ]
+        insert_result = self.db[self.outputs].insert(output_documents)
 
-        return self.db[self.outputs].insert(output_documents)
+        logging.info(
+            f'[{self.huuid}] Inserted {len(output_documents)} documents into '
+            f'{self.outputs}'
+        )
+        logging.info(f'[{self.huuid}] Finished processing {len(ids)} ids, ')
+        return insert_result
 
     def cleanup(self):
         """Clean up when the listener is deleted."""

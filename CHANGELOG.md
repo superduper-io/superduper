@@ -50,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix the issue related to removing components.
 - Truncate the listener’s output name.
 - Remove `.component` of `Table`
+- Add some logs to the Listener.
 
 ## [0.5.0](https://github.com/superduper-io/superduper/compare/0.5.0...0.4.0])    (2024-Nov-02)
 

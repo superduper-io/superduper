@@ -1,14 +1,12 @@
 import threading
 import typing as t
 
-from superduper import logging
 from superduper.backends.base.backends import Bookkeeping
-from superduper.backends.base.compute import ComputeBackend
 from superduper.backends.base.scheduler import (
     BaseScheduler,
     consume_events,
 )
-from superduper.base.event import Event
+from superduper.base import Base
 from superduper.components.cdc import CDC
 from superduper.misc.importing import isreallyinstance
 
@@ -75,7 +73,7 @@ class LocalScheduler(Bookkeeping, BaseScheduler):
                 with self.lock:
                     self.Q[component, identifier] = []
 
-    def publish(self, events: t.List[Event]):
+    def publish(self, events: t.List[Base]):
         """
         Publish events to local queue.
 

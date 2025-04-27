@@ -3,7 +3,7 @@ from collections import defaultdict
 
 from superduper import logging
 from superduper.backends.base.compute import ComputeBackend
-from superduper.base.event import Job
+from superduper.base.metadata import Job
 
 if t.TYPE_CHECKING:
     from superduper import Component

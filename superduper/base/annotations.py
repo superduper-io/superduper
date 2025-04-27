@@ -1,8 +1,6 @@
 import inspect
 import typing as t
 
-from superduper.base.event import Job
-
 
 def trigger(
     *event_types: t.Sequence[str],
@@ -40,6 +38,7 @@ def trigger(
                 from superduper.components.cdc import CDC
 
                 assert isinstance(self, CDC), msg
+            from superduper.base.metadata import Job
 
             if job:
                 return Job(

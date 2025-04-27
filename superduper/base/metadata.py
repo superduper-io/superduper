@@ -1,5 +1,6 @@
 import dataclasses as dc
 import datetime
+import time
 import typing as t
 import uuid
 
@@ -12,6 +13,9 @@ from superduper.components.cdc import CDC
 from superduper.components.component import Component
 from superduper.components.table import Table
 from superduper.misc.importing import import_object
+
+if t.TYPE_CHECKING:
+    from superduper.base.datalayer import Datalayer
 
 
 class NonExistentMetadataError(Exception):
@@ -28,12 +32,13 @@ class UniqueConstraintError(Exception):
     """
 
 
-# TODO merge with Event/Job
 class Job(Base):
     """Job table.
 
     #noqa
     """
+
+    queue: t.ClassVar[str] = '_apply'
 
     context: str
     component: str
@@ -46,6 +51,80 @@ class Job(Base):
     method: str
     status: str = 'pending'
     dependencies: t.List[str] = dc.field(default_factory=list)
+
+    def get_status(self, db):
+        """Get the status of the job.
+
+        :param db: Datalayer instance
+        """
+        return db['Job'].get(job_id=self.job_id)['status']
+
+    def wait(self, db: 'Datalayer', heartbeat: float = 1, timeout: int = 60):
+        """Wait for the job to finish.
+
+        :param db: Datalayer instance
+        :param heartbeat: time to wait between checks
+        :param timeout: timeout in seconds
+        """
+        start = time.time()
+        status = 'pending'
+        while (status := self.get_status(db)) in {
+            'pending',
+            'running',
+        } and time.time() - start < timeout:
+            if status == 'pending':
+                logging.info(f'Job {self.job_id} is pending')
+            elif status == 'running':
+                logging.info(f'Job {self.job_id} is running')
+            else:
+                break
+
+            time.sleep(heartbeat)
+
+        logging.info(f'Job {self.job_id} finished with status: {status}')
+        return status
+
+    @property
+    def huuid(self):
+        """Return the hashed uuid."""
+        return f'{self.component}:{self.identifier}:{self.uuid}.{self.method}'
+
+    def get_args_kwargs(self, futures):
+        """Get args and kwargs for job execution.
+
+        :param futures: dict of futures
+        """
+        from superduper.backends.base.scheduler import Future
+
+        dependencies = []
+        if self.dependencies:
+            dependencies = [futures[k] for k in self.dependencies if k in futures]
+        args = []
+        for arg in self.args:
+            if isinstance(arg, Future):
+                args.append(futures[arg.job_id])
+            else:
+                args.append(arg)
+        kwargs = {}
+        for k, v in self.kwargs.items():
+            if isinstance(v, Future):
+                kwargs[k] = futures[v.job_id]
+            else:
+                kwargs[k] = v
+        kwargs['dependencies'] = dependencies
+        return args, kwargs
+
+    def execute(
+        self,
+        db: 'Datalayer',
+    ):
+        """Execute the job event.
+
+        :param db: Datalayer instance
+        """
+        meta = {k: v for k, v in self.dict().items() if k not in {'genus', 'queue'}}
+        db.metadata.create_job(meta)
+        return db.cluster.compute.submit(self)
 
 
 class ParentChildAssociations(Base):

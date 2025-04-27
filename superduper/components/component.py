@@ -5,7 +5,7 @@ import json
 import os
 import shutil
 import typing as t
-from collections import OrderedDict, defaultdict, namedtuple
+from collections import OrderedDict, defaultdict
 from enum import Enum
 from functools import wraps
 
@@ -15,13 +15,13 @@ from superduper import logging
 from superduper.base.annotations import trigger
 from superduper.base.base import Base, BaseMeta
 from superduper.base.constant import KEY_BLOBS, KEY_FILES, LENGTH_UUID
-from superduper.base.event import Job
 from superduper.misc.annotations import lazy_classproperty
 from superduper.misc.importing import isreallyinstance
 from superduper.misc.utils import hash_item
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
+    from superduper.base.metadata import Job
 
 
 class Status(str, Enum):
@@ -347,9 +347,9 @@ class Component(Base, metaclass=ComponentMeta):
         context: str,
         event_type: str,
         ids: t.Sequence[str] | None = None,
-        jobs: t.Sequence[Job] = (),
+        jobs: t.Sequence['Job'] = (),
         requires: t.Sequence[str] | None = None,
-    ) -> t.List[Job]:
+    ) -> t.List['Job']:
         """Deploy apply jobs for the component.
 
         :param context: The context of the component.
@@ -367,7 +367,7 @@ class Component(Base, metaclass=ComponentMeta):
 
         # local_job_lookup is {j.method_name: j.job_id for j in local_jobs}
         local_job_lookup = {}
-        local_jobs: t.List[Job] = []
+        local_jobs: t.List['Job'] = []
         # component_to_job_lookup is {c.uuid: <list-of-job-ids-for-component>}
         component_to_job_lookup = defaultdict(list)
         for j in jobs:
@@ -426,9 +426,9 @@ class Component(Base, metaclass=ComponentMeta):
 
                 # 'apply' event doesn't need inputs
                 if event_type == 'apply':
-                    job: Job = attr(job=True, context=context)
+                    job: 'Job' = attr(job=True, context=context)
                 else:
-                    job: Job = attr(ids=ids, job=True, context=context)  # type: ignore[no-redef]
+                    job: 'Job' = attr(ids=ids, job=True, context=context)  # type: ignore[no-redef]
                 job.dependencies = dependencies
 
                 # TODO rename the call method to execute or deploy
@@ -446,7 +446,7 @@ class Component(Base, metaclass=ComponentMeta):
                 break
 
         if event_type == 'apply' and local_jobs:
-            status_update: Job = self.set_status(
+            status_update: 'Job' = self.set_status(
                 status=Status.ready, job=True, context=context
             )
             status_update.dependencies = [j.job_id for j in local_jobs]

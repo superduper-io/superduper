@@ -95,11 +95,13 @@ def apply(
     for i, c in enumerate(create_events.values()):
         if c.parent:
             try:
-                logging.info(f'[{i}]: {c.huuid}: {c.genus} ~ [{steps[c.parent[1]]}]')
+                logging.info(
+                    f'[{i}]: {c.huuid}: {c.__class__.__name__} ~ [{steps[c.parent[1]]}]'
+                )
             except KeyError:
-                logging.info(f'[{i}]: {c.huuid}: {c.genus}')
+                logging.info(f'[{i}]: {c.huuid}: {c.__class__.__name__}')
         else:
-            logging.info(f'[{i}]: {c.huuid}: {c.genus}')
+            logging.info(f'[{i}]: {c.huuid}: {c.__class__.__name__}')
 
     logging.info('-' * 100)
     logging.info('JOBS EVENTS:')

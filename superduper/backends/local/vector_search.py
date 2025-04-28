@@ -263,6 +263,8 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
             self._cache = []
 
     def _add(self, items: t.Sequence[VectorItem]) -> None:
+        if not items:
+            return
         index = [item.id for item in items]
         h = numpy.stack([item.vector for item in items])
 

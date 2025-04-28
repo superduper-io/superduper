@@ -67,6 +67,8 @@ class Datalayer:
         self.metadata = MetaDataStore(self, cache=self.cluster.cache)
         self.metadata.init()
 
+        self._component_cache: t.Dict[t.Tuple[str, str], Component] = {}
+
         logging.info("Data Layer built")
 
     def __getitem__(self, item):
@@ -376,6 +378,7 @@ class Datalayer:
         uuid: t.Optional[str] = None,
         huuid: t.Optional[str] = None,
         overrides: t.Dict | None = None,
+        component_cache: bool = True,
     ) -> Component:
         """
         Load a component using uniquely identifying information.
@@ -391,6 +394,7 @@ class Datalayer:
         :param uuid: [Optional] UUID of the component to load.
         :param huuid: [Optional] human-readable UUID of the component to load.
         :param overrides: [Optional] Dictionary of overrides to apply to the component.
+        :param component_cache: [Optional] Whether to use the component cache.
         """
         if version is not None:
             assert component is not None
@@ -402,6 +406,24 @@ class Datalayer:
             )
             uuid = info['uuid']
             info.update(overrides or {})
+        else:
+            if component_cache and (component, identifier) in self._component_cache:
+
+                assert isinstance(identifier, str)
+                if self._component_cache[
+                    (component, identifier)
+                ].uuid == self.metadata.get_latest_uuid(
+                    component=component,
+                    identifier=identifier,
+                ):
+                    logging.info(f'Found {component, identifier} in cache...')
+                    return self._component_cache[(component, identifier)]
+                else:
+                    logging.info(
+                        f'Found {component, identifier} '
+                        'in cache but UUID does not match...'
+                    )
+                    del self._component_cache[(component, identifier)]
 
         if huuid is not None:
             uuid = huuid.split(':')[-1]
@@ -440,6 +462,9 @@ class Datalayer:
             raise ValueError(
                 'Must provide either `uuid` or `component` and `identifier`'
             )
+
+        if getattr(c, 'component_cache', False):
+            self._component_cache[(c.component, c.identifier)] = c
         return c
 
     def _save_artifact(self, info: t.Dict):

@@ -194,12 +194,13 @@ class Base(metaclass=BaseMeta):
             return out
         except TypeError as e:
             if 'got an unexpected keyword argument' in str(e):
+                r['db'] = db
                 signature_params = inspect.signature(cls.__init__).parameters
                 init_params = {k: v for k, v in r.items() if k in signature_params}
                 post_init_params = {
                     k: v for k, v in r.items() if k in cls.set_post_init
                 }
-                instance = cls(**init_params, db=db)
+                instance = cls(**init_params)
                 for k, v in post_init_params.items():
                     setattr(instance, k, v)
                 return instance

@@ -4,7 +4,7 @@ from pprint import pprint
 import numpy as np
 import pytest
 
-from superduper import ObjectModel, Schema, superduper
+from superduper import Application, ObjectModel, Schema, superduper
 from superduper.base.datatype import pickle_encoder
 from superduper.base.document import Document
 from superduper.components.listener import Listener
@@ -95,3 +95,31 @@ def test_wrap_as_application_from_db(db: "Datalayer"):
     assert get_listener_output(listener1) == 2
     assert get_listener_output(listener2) == 4
     assert np.allclose(get_listener_output(listener3), data["z"] * 3)
+
+
+def test_component_cache(db: 'Datalayer', capsys):
+    m = ObjectModel('test', object=lambda x: x + 1)
+    app = Application('test', components=[m])
+
+    db.apply(app, force=True)
+
+    assert ('Application', 'test') in db._component_cache
+
+    db.load('Application', 'test')
+
+    log = capsys.readouterr().out
+
+    assert "Found ('Application', 'test') in cache..." in log
+
+    m2 = ObjectModel('test', object=lambda x: x + 1)
+    app2 = Application('test', components=[m2])
+
+    db.apply(app2, force=True)
+
+    db._component_cache[('Application', 'test')] = app
+    reloaded = db.load('Application', 'test')
+
+    assert reloaded.uuid == app2.uuid
+    log = capsys.readouterr().out
+
+    assert " but UUID does not match..." in log

@@ -47,7 +47,7 @@ class Change(Base):
 
     type: str
     queue: str
-    ids: t.Sequence[str]
+    ids: t.List[str]
 
     def execute(
         self,

@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Renamed `Component.init` to `Component.setup`
 - Require `.upstream` when setting upstream dependencies
 - Disable ability to remove components verion-by-version
+- Add load cache checking for latest `uuid`
 
 #### New Features & Functionality
 

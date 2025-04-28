@@ -22,6 +22,7 @@ class Application(Component):
     """
 
     breaks: t.ClassVar[t.Sequence[str]] = ('components',)
+    component_cache: t.ClassVar[bool] = True
 
     components: t.List[Component]
     link: t.Optional[str] = None

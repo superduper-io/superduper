@@ -61,6 +61,7 @@ class Cache:
         out = [self[k] for k in keys]
         if not out:
             return None
+
         out = max(out, key=lambda x: x['version'])  # type: ignore[arg-type, call-overload]
         return out
 

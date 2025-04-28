@@ -520,6 +520,15 @@ class Component(Base, metaclass=ComponentMeta):
         """Declare the component to the cluster."""
         assert self.db is not None
 
+    def reload(self):
+        """Reload the component from the datalayer."""
+        assert self.db is not None
+
+        latest_uuid = self.db.metadata.get_latest_uuid(self.component, self.identifier)
+        if latest_uuid != self.uuid:
+            return self.db.load(self.component, self.identifier)
+        return self
+
     @staticmethod
     def read(path: str):
         """

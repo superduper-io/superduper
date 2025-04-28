@@ -776,6 +776,14 @@ class MetaDataStore:
 
         return r
 
+    def get_latest_uuid(self, component: str, identifier: str):
+        """Check if a component version has been updated.
+
+        :param component: type of component
+        :param identifier: identifier of component
+        """
+        return self.get_component(component, identifier)['uuid']
+
     def get_component(
         self,
         component: str,

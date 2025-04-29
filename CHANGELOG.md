@@ -1,11 +1,11 @@
 # superduper.io Changelog
 
-All notable changes to this project will be documented in this file.  
+All notable changes to this project will be documented in this file.
 
 The format is inspired by (but not strictly follows) [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-**Before you create a Pull Request, remember to update the Changelog with your changes.** 
+**Before you create a Pull Request, remember to update the Changelog with your changes.**
 
 ## [0.6.0](https://github.com/superduper-io/superduper/compare/0.6.0...0.5.0])    (2025-Mar-26)
 
@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Require `.upstream` when setting upstream dependencies
 - Disable ability to remove components verion-by-version
 - Add load cache checking for latest `uuid`
+- Add temporary caching for db.load of components during apply.
 
 #### New Features & Functionality
 
@@ -53,6 +54,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Truncate the listener’s output name.
 - Remove `.component` of `Table`
 - Allow multiple implementations of `VectorIndex`
+- Fix key pattern matching in Redis plugin
+- Fix the snowflake plugin
+- Fix the bug where an empty variable was added to the vector.
+- Fix the primary_id of ArtifactRelations
 
 ## [0.5.0](https://github.com/superduper-io/superduper/compare/0.5.0...0.4.0])    (2024-Nov-02)
 

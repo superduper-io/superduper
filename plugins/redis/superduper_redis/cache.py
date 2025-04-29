@@ -31,6 +31,7 @@ class RedisCache(Cache):
         :param pattern: The pattern to search for.
         """
         pattern = ':'.join(pattern)
+        pattern = pattern or "*"
         strings = list(self.redis.keys(pattern))
         return [tuple(re.split(':', string)) for string in strings]
 

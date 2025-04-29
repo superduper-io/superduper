@@ -88,6 +88,13 @@ class SnowflakeDataBackend(BaseDataBackend):
         logging.info(f"Executing query... DONE ({time.time() - start:.2f}s)")
         return result
 
+    def _run_bind_query(self, sql, params):
+        start = time.time()
+        logging.info(f"Executing query: {sql} with params: {params}")
+        result = self.session.sql(sql).bind(params).collect()
+        logging.info(f"Executing query... DONE ({time.time() - start:.2f}s)")
+        return result
+
     def drop_table(self, table: str):
         """Drop data from table.
 
@@ -212,8 +219,8 @@ class SnowflakeDataBackend(BaseDataBackend):
 
         if len(raw_documents) == 0:
             return []
-        if len(raw_documents) == 1:
-            return [self._insert_row(table_name, raw_documents[0], primary_id)]
+        # if len(raw_documents) == 1:
+        #     return [self._insert_row(table_name, raw_documents[0], primary_id)]
 
         schema = self.get_table(table_name).schema
         ids = self._fill_primary_id(raw_documents, primary_id)
@@ -245,7 +252,13 @@ class SnowflakeDataBackend(BaseDataBackend):
             elif r[hr] is None:
                 to_insert.append("NULL")
             elif f.datatype == VariantType():
-                to_insert.append(f"PARSE_JSON('{json.dumps(r[hr])}')")
+                value = r[hr]
+                if isinstance(value, str):
+                    value = f"PARSE_JSON('{value}')"
+                else:
+                    value = f"PARSE_JSON('{json.dumps(value)}')"
+                value = value.replace("'", "''")
+                to_insert.append(value)
             elif f.datatype == BooleanType():
                 to_insert.append(f"{str(r[hr]).upper()}")
             elif f.datatype == StringType():
@@ -265,12 +278,24 @@ class SnowflakeDataBackend(BaseDataBackend):
         :param condition: The condition to update.
         :param r: The document to replace.
         """
-        repl = r.copy()
-        for k, v in r.items():
+        t = self.get_table(table)
+        cond = None
+        for k, v in condition.items():
             if isinstance(v, str):
-                repl[k] = f"'{v}'"
-        repl_part = ", ".join([f"{k} = {v}" for k, v in repl.items()])
-        self._run_query(f"UPDATE {table} SET {repl_part} WHERE {condition}")
+                v = str(v)
+            k = quote_identifier(k)
+            expr = t[k] == v
+            cond = expr if cond is None else (cond & expr)
+
+        update_r = {}
+        for k, v in r.items():
+            k = quote_identifier(k)
+            if isinstance(v, str):
+                v = str(v)
+            update_r[k] = v
+
+        t.update(update_r, cond)
+        return list(r.keys())
 
     def update(self, table: str, condition: t.Dict, key: str, value: t.Any):
         """Update data in the database.
@@ -280,15 +305,7 @@ class SnowflakeDataBackend(BaseDataBackend):
         :param key: The key to update.
         :param value: The value to update.
         """
-        terms = []
-        for k, v in condition.items():
-            if isinstance(v, str):
-                v = f"'{v}'"
-            terms.append(f'"{k}" = {v}')
-        condition = " AND ".join(terms)
-        if isinstance(value, str):
-            value = f"'{value}'"
-        self._run_query(f'UPDATE "{table}" SET "{key}" = {value} WHERE {condition}')
+        return self.replace(table, condition, {key: value})
 
     def delete(self, table: str, condition: t.Dict):
         """Update data in the database.
@@ -318,11 +335,12 @@ class SnowflakeDataBackend(BaseDataBackend):
         columns = output_df.columns
         columns = [c for c in columns if c != '"id"']
         output_df = output_df.select(*columns)
+        output_df = output_df.with_column_renamed('"_source"', '"_source_target"')
 
         joined_df = df.join(
-            output_df, df[f'"{pid}"'] == output_df['"_source"'], join_type="left"
+            output_df, df[f'"{pid}"'] == output_df['"_source_target"'], join_type="left"
         )
-        anti_join = joined_df.filter(col('"_source"').is_null())
+        anti_join = joined_df.filter(col('"_source_target"').is_null())
 
         return (
             anti_join.select(f'"{pid}"')
@@ -366,7 +384,7 @@ class SnowflakeDataBackend(BaseDataBackend):
         logging.info(f"Executing query... DONE ({time.time() - start:.2f}s)")
         merged_schemas = self._merge_schemas(query.tables)
         for k in result.columns:
-            if merged_schemas[k] == VariantType():
+            if merged_schemas.get(k) == VariantType():
                 result[k] = result[k].apply(
                     lambda x: json.loads(x) if isinstance(x, str) else x
                 )
@@ -382,3 +400,8 @@ class SnowflakeDataBackend(BaseDataBackend):
         for r in results:
             out.append(r.as_dict())
         return out
+
+
+def quote_identifier(identifier: str) -> str:
+    """Snowflake-safe identifier quoting."""
+    return '"' + identifier.replace('"', '""') + '"'

@@ -37,7 +37,8 @@ def map_superduper_query_to_snowpark_query(session, query, primary_id: str = 'id
                     args[i] = primary_id
             args = [f'"{a}"' for a in args]
 
-            q = q.select(*args)
+            if args:
+                q = q.select(*args)
 
             continue
 
@@ -67,11 +68,14 @@ def map_superduper_query_to_snowpark_query(session, query, primary_id: str = 'id
                 t = session.table(f'"{CFG.output_prefix + arg}"')
                 cols = [c for c in t.columns if c != '"id"']
                 t = t.select(*cols)
-                output_tables.append(t)
+                t = t.with_column_renamed('"_source"', f'"_source_{arg}"')
+                output_tables.append((arg, t))
 
-            for i, table in enumerate(output_tables):
+            for arg, table in output_tables:
                 q = q.join(
-                    table, q[f'"{primary_id}"'] == table['"_source"'], join_type="left"
+                    table,
+                    q[f'"{primary_id}"'] == table[f'"_source_{arg}"'],
+                    join_type="left",
                 )
             continue
 

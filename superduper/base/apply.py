@@ -71,6 +71,7 @@ def apply(
         job_events={},
         global_diff=diff,
         non_breaking_changes={},
+        context_db_load={},
     )
 
     if not jobs:
@@ -174,8 +175,9 @@ def _apply(
     job_events: t.Dict[str, 'Job'] | None = None,
     parent: t.Optional[t.List] = None,
     global_diff: t.Dict | None = None,
+    context_db_load: t.Dict | None = None,
 ):
-
+    context_db_load = context_db_load or {}
     if context is None:
         context = object.uuid
 
@@ -204,6 +206,7 @@ def _apply(
             parent=[object.component, object.identifier, object.uuid],
             global_diff=global_diff,
             non_breaking_changes=non_breaking_changes,
+            context_db_load=context_db_load,
         )
 
         job_events.update(j)
@@ -212,7 +215,17 @@ def _apply(
         return f'&:component:{child.huuid}'
 
     try:
-        current = db.load(object.__class__.__name__, object.identifier)
+        # During a single apply, each component should query the database only once;
+        # if the component doesn’t exist, it should not query again afterward.
+        key = object.__class__.__name__, object.identifier
+        if key in context_db_load:
+            current = context_db_load[key]
+            if current is None:
+                raise NonExistentMetadataError("Component not found in database.")
+        else:
+            current = db.load(*key)
+            context_db_load[key] = current
+
         if current.hash == object.hash:
             apply_status = 'same'
             object.version = current.version
@@ -227,9 +240,11 @@ def _apply(
     except NonExistentMetadataError:
         apply_status = 'new'
         object.version = 0
+        context_db_load[key] = None
 
     if apply_status in {'update', 'breaking'}:
 
+        assert current is not None
         diff = object.diff(current)
 
         if global_diff is not None:

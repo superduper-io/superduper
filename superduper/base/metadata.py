@@ -252,7 +252,7 @@ class MetaDataStore:
             ).encode(),
             ('Table', 'ArtifactRelations'): Table(
                 identifier='ArtifactRelations',
-                primary_id='uuid',
+                primary_id='relation_id',
                 is_component=True,
                 path='superduper.base.metadata.ArtifactRelations',
             ).encode(),

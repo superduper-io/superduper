@@ -34,13 +34,15 @@ class Datalayer:
     :param databackend: Object containing connection to Datastore.
     :param artifact_store: Object containing connection to Artifactstore.
     :param cluster: Cluster object containing connections to infrastructure.
+    :param metadata: Object containing connection to Metadatastore.
     """
 
     def __init__(
         self,
         databackend: BaseDataBackend,
         artifact_store: ArtifactStore,
-        cluster: Cluster,
+        cluster: Cluster | None,
+        metadata: BaseDataBackend | None,
     ):
         """
         Initialize Datalayer.
@@ -55,17 +57,21 @@ class Datalayer:
         self.artifact_store = artifact_store
         self.artifact_store.db = self
 
-        self.databackend = databackend
+        self.databackend: BaseDataBackend = databackend
         self.databackend.db = self
 
         self.cluster = cluster
-        self.cluster.db = self
+        if self.cluster:
+            self.cluster.db = self
 
         self._cfg = s.CFG
         self.startup_cache: t.Dict[str, t.Any] = {}
 
-        self.metadata = MetaDataStore(self, cache=self.cluster.cache)
-        self.metadata.init()
+        if metadata:
+            self.metadata = MetaDataStore(metadata, parent_db=self)  # type: ignore[arg-type]
+            self.metadata.init()
+        else:
+            self.metadata = MetaDataStore(self, parent_db=self)
 
         self._component_cache: t.Dict[t.Tuple[str, str], Component] = {}
 
@@ -73,6 +79,11 @@ class Datalayer:
 
     def __getitem__(self, item):
         return Query(table=item, parts=(), db=self)
+
+    def initialize(self):
+        """Initialize the Datalayer."""
+        if self.cluster:
+            self.cluster.initialize()
 
     def insert(self, items: t.List[Base]):
         """
@@ -113,10 +124,13 @@ class Datalayer:
             logging.warn("Aborting...")
 
         # drop the cache, vector-indexes, triggers, queues
-        self.cluster.drop(force=True)
+        if self.cluster:
+            self.cluster.drop(force=True)
 
         self.databackend.drop(force=True)
-        self.artifact_store.drop(force=True)
+        if self.artifact_store:
+            self.artifact_store.drop(force=True)
+        self.metadata.drop(force=True)
 
     def wait(
         self,
@@ -205,7 +219,7 @@ class Datalayer:
 
         if component is None:
             nt = namedtuple('nt', ('component', 'identifier'))
-            out = self.metadata.show_components(use_cache=False)
+            out = self.metadata.show_components()
             out = sorted(list(set([nt(**x) for x in out])))
             out = [x._asdict() for x in out]
             return out
@@ -213,7 +227,7 @@ class Datalayer:
         if identifier is None:
             try:
                 out = self.metadata.show_components(
-                    component=component, use_cache=False
+                    component=component,
                 )
             except NonExistentMetadataError:
                 return []
@@ -260,6 +274,7 @@ class Datalayer:
             CFG.output_prefix
         ):
             logging.info(f'CDC for {table} is enabled')
+            assert self.cluster is not None
             self.cluster.cdc.handle_event(event_type=type_, table=table, ids=ids)
 
     def _auto_create_table(self, table_name, documents):
@@ -294,6 +309,7 @@ class Datalayer:
             events.append(event)
         logging.info(f'Created {len(events)} events for {event_type} on [{table}]')
         logging.info(f'Publishing {len(events)} events')
+        assert self.cluster is not None
         return self.cluster.scheduler.publish(events)  # type: ignore[arg-type]
 
     def create(self, object: t.Type[Base]):

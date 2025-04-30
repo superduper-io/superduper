@@ -153,7 +153,10 @@ class Schema(BaseDataType):
                     and not CFG.json_native
                 ):
                     assert isinstance(value, str), msg
-                    value = json.loads(value)
+                    try:
+                        value = json.loads(value)
+                    except json.JSONDecodeError:
+                        pass
 
                 decoded[k] = field.decode_data(value, builds=builds, db=db)
 

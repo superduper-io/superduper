@@ -45,14 +45,23 @@ class Table(Component):
     def cleanup(self):
         """Cleanup the table, on removal of the component."""
         self.db.databackend.drop_table(self.identifier)
+        if self.db.cluster.cache is not None:
+            from superduper import logging
+
+            logging.info(f'Deleting schema for table {self.identifier}')
+            del self.db.cluster.cache[f'Table/{self.identifier}/schema']
+            logging.info(f'Deleting schema for table {self.identifier}... DONE')
 
     def on_create(self):
         """Create the table, on creation of the component."""
         assert self.schema is not None, "Schema must be set"
 
         try:
-            self.db.databackend.create_table_and_schema(
-                self.identifier, self.schema, self.primary_id
+            self.db.metadata.create_table_and_schema(
+                self.identifier, 
+                schema=self.schema, 
+                primary_id=self.primary_id,
+                is_component=self.is_component,
             )
         except Exception as e:
             if 'already exists' in str(e):

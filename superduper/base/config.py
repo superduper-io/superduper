@@ -160,9 +160,9 @@ class Config(BaseConfig):
     secrets_volume: str = os.path.join(".superduper", "/session/secrets")
     data_backend: str = "mongodb://localhost:27017/test_db"
 
-    # TODO drop the "filesystem://" prefix
     artifact_store: str = 'filesystem://./artifact_store'
-    metadata_store: t.Optional[str] = None
+    metadata_store: str = 'inmemory://'
+
     cache: str | None = None
     vector_search_engine: str = 'local'
     cluster_engine: str = 'local'

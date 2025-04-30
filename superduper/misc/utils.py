@@ -3,11 +3,13 @@ import inspect
 import typing as t
 
 
-def str_shape(shape: t.Sequence[int]) -> str:
+def str_shape(shape: t.Sequence[int] | int) -> str:
     """Convert a shape to a string.
 
     :param shape: The shape to convert.
     """
+    if isinstance(shape, int):
+        return str(shape)
     if not shape:
         raise ValueError('Shape was empty')
     return 'x'.join(str(x) for x in shape)

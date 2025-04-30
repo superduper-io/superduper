@@ -4,15 +4,16 @@ import time
 import typing as t
 import uuid
 
+import click
+
 from superduper import logging
-from superduper.backends.base.cache import Cache
 from superduper.base.base import Base
 from superduper.base.exceptions import DatabackendError
 from superduper.base.schema import Schema
 from superduper.components.cdc import CDC
 from superduper.components.component import Component
 from superduper.components.table import Table
-from superduper.misc.importing import import_object
+from superduper.misc.importing import import_object, isreallyinstance
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
@@ -39,6 +40,7 @@ class Job(Base):
     """
 
     queue: t.ClassVar[str] = '_apply'
+    primary_id: t.ClassVar[str] = 'job_id'
 
     context: str
     component: str
@@ -173,58 +175,85 @@ class MetaDataStore:
     """
     Abstraction for storing meta-data separately from primary data.
 
-    :param db: Datalayer instance.
-    :param cache: Cache instance.
+    :param db: Datalayer instance for saving components.
+    :param parent_db: Parent Datalayer instance for saving primary data.
     """
 
-    def __init__(self, db, cache: Cache | None = None):
+    def __init__(self, db: 'Datalayer', parent_db: 'Datalayer'):
         self.db = db
-        self.cache = cache
+        self.parent_db = parent_db
 
-        self.preset_components = {
-            ('Table', 'Table'): Table(
+    def __getitem__(self, item: str):
+        return self.db[item]
+
+    def init(self):
+        """Initialize the metadata store."""
+        self.db.databackend.create_table_and_schema(
+            'Table',
+            Table.class_schema,
+            primary_id='uuid',
+        )
+
+        try:
+            r = self.db['Table'].get(identifier='Table')
+        except NonExistentMetadataError:
+            r = None
+
+        if r is None:
+            r = Table(
                 identifier='Table',
                 primary_id='uuid',
                 is_component=True,
                 path='superduper.components.table.Table',
-            ).encode(),
-            ('Table', 'ParentChildAssociations'): Table(
-                identifier='ParentChildAssociations',
-                primary_id='uuid',
-                is_component=True,
-                path='superduper.base.metadata.ParentChildAssociations',
-            ).encode(),
-            ('Table', 'ArtifactRelations'): Table(
-                identifier='ArtifactRelations',
-                primary_id='relation_id',
-                is_component=True,
-                path='superduper.base.metadata.ArtifactRelations',
-            ).encode(),
-            ('Table', 'Job'): Table(
-                identifier='Job',
-                primary_id='job_id',
-                is_component=True,
-                path='superduper.base.metadata.Job',
-            ).encode(),
-        }
+            ).encode()
+            r['version'] = 0
 
-        for v in self.preset_components.values():
-            v['_path'] = 'superduper.components.table.Table'
-            v['version'] = 0
+            self.db.databackend.insert('Table', [r])
 
-        self.preset_uuids = {}
-        for info in self.preset_components.values():
-            self.preset_uuids[info['uuid']] = info
+        r = self.get_component('Table', 'Table')
 
-    def init(self):
-        """Initialize the metadata store."""
-        for cls in metaclasses.values():
-            preset = self.preset_components.get(('Table', cls.__name__))
+        assert r is not None, 'Something went wrong in initializing the metadata store'
+
+        self.create(ParentChildAssociations)
+        self.create(ArtifactRelations)
+        self.create(Job)
+
+    def create_table_and_schema(
+        self, identifier: str, schema: 'Schema', primary_id: str, is_component: bool,
+    ):
+        """Create a table and schema in the metadata store.
+
+        :param identifier: table name
+        :param schema: schema of the table
+        :param primary_id: primary id of the table
+        """
+        if is_component:
             self.db.databackend.create_table_and_schema(
-                cls.__name__,
-                cls.class_schema,
-                primary_id=preset['primary_id'],
+                identifier, schema, primary_id=primary_id
             )
+        else:
+            self.parent_db.databackend.create_table_and_schema(
+                identifier, schema, primary_id=primary_id
+            )
+
+    def drop(self, force: bool = False):
+        """Drop the metadata store.
+
+        :param force: whether to force drop the metadata store.
+        """
+        if not force and not click.confirm(
+            'Are you sure you want to drop the metadata store?'
+        ):
+            logging.warn('Aborting drop of metadata store')
+        self.db.databackend.drop(force=force)
+        self.db.artifact_store.drop(force=force)
+
+    def is_component(self, table: str):
+        """Check if a table is a component.
+
+        :param table: table name.
+        """
+        return self.get_component('Table', table)
 
     def get_schema(self, table: str):
         """Get the schema of a table.
@@ -234,20 +263,15 @@ class MetaDataStore:
         if table in metaclasses:
             return metaclasses[table].class_schema
 
-        r = self.db['Table'].get(identifier=table)
-        try:
-            r = r.unpack()
-            if r['path'] is not None:
-                return import_object(r['path']).class_schema
-            return Schema.build(**r['fields'])
-        except AttributeError as e:
-            if 'unpack' in str(e) and 'NoneType' in str(e):
-                raise NonExistentMetadataError(f'{table} does not exist in metadata')
-            raise e
-        except TypeError as e:
-            if 'NoneType' in str(e):
-                raise NonExistentMetadataError(f'{table} does not exist in metadata')
-            raise e
+        r = self.get_component('Table', table)
+        fields = r['fields']
+
+        # TODO this seems to be to do with json_native
+        if isinstance(fields, str):
+            import json
+
+            fields = json.loads(fields)
+        return Schema.build(**fields)
 
     def create(self, cls: t.Type[Base]):
         """
@@ -256,33 +280,27 @@ class MetaDataStore:
         :param cls: class to create
         """
         try:
-            r = self.db['Table'].get(identifier=cls.__name__)
-        except DatabackendError as e:
-            if 'not found' in str(e):
-                self.db.databackend.create_table_and_schema(
-                    'Table', Table.class_schema, 'uuid'
-                )
-                t = Table(
-                    'Table',
-                    path='superduper.components.table.Table',
-                    primary_id='uuid',
-                    is_component=True,
-                )
-                r = self.db['Table'].insert(
-                    [{**t.dict(), 'version': 0, 'uuid': t.uuid}],
-                )
-            else:
-                raise e
+            r = self.get_component('Table', cls.__name__)
+            if r is not None:
+                return
+        except NonExistentMetadataError:
+            pass
 
-        if r:
-            raise UniqueConstraintError(
-                f'{cls.__name__} already exists in metadata with data: {r}'
+        pid = self.db.databackend.id_field
+        if issubclass(cls, Component):
+            pid = 'uuid'
+        elif getattr(cls, 'primary_id', None) is not None:
+            pid = getattr(cls, 'primary_id', None)
+
+        if issubclass(cls, Component) or cls.__name__ in metaclasses:
+            self.db.databackend.create_table_and_schema(
+                cls.__name__, cls.class_schema, primary_id=pid
+            )
+        else:
+            self.parent_db.databackend.create_table_and_schema(
+                cls.__name__, cls.class_schema, primary_id=pid
             )
 
-        pid = 'uuid' if issubclass(cls, Component) else self.db.databackend.id_field
-        self.db.databackend.create_table_and_schema(
-            cls.__name__, cls.class_schema, primary_id=pid
-        )
         t = Table(
             identifier=cls.__name__,
             path=f'{cls.__module__}.{cls.__name__}',
@@ -296,9 +314,6 @@ class MetaDataStore:
         except KeyError:
             pass
         r = {**r, 'version': 0, 'uuid': t.uuid}
-
-        if self.cache:
-            self.cache['Table', cls.__name__, r["uuid"]] = r
 
         self.db['Table'].insert([r])
 
@@ -344,9 +359,6 @@ class MetaDataStore:
         if '_path' in info:
             del info['_path']
 
-        if self.cache:
-            self.cache[component, info["identifier"], info["uuid"]] = info
-
         self.db[component].insert([info], raw=raw)
 
     def create_parent_child(
@@ -368,18 +380,16 @@ class MetaDataStore:
         :param child_identifier: child component identifier
         :param child_uuid: child component uuid
         """
-        self.db['ParentChildAssociations'].insert(
-            [
-                {
-                    'parent_component': parent_component,
-                    'parent_identifier': parent_identifier,
-                    'parent_uuid': parent_uuid,
-                    'child_component': child_component,
-                    'child_identifier': child_identifier,
-                    'child_uuid': child_uuid,
-                }
-            ]
-        )
+        r = {
+            'parent_component': parent_component,
+            'parent_identifier': parent_identifier,
+            'parent_uuid': parent_uuid,
+            'child_component': child_component,
+            'child_identifier': child_identifier,
+            'child_uuid': child_uuid,
+        }
+
+        self.db['ParentChildAssociations'].insert([r])
 
     def create_artifact_relation(self, component, identifier, uuid, artifact_ids):
         """
@@ -405,6 +415,7 @@ class MetaDataStore:
             )
 
         if data:
+
             self.db['ArtifactRelations'].insert(data, raw=True)
 
     def delete_artifact_relation(
@@ -420,6 +431,7 @@ class MetaDataStore:
         artifact_ids = (
             [artifact_ids] if not isinstance(artifact_ids, list) else artifact_ids
         )
+
         for artifact_id in artifact_ids:
             self.db['ArtifactRelations'].delete(
                 {
@@ -516,42 +528,25 @@ class MetaDataStore:
 
         return self.db['Job'].filter(*filters).distinct('job_id')
 
-    def show_components(self, component: str | None = None, use_cache=True):
+    def show_components(self, component: str | None = None):
         """
         Show all components in the metadata store.
 
         :param component: type of component
-        :param use_cache: whether to use cache
         """
         if component is None:
             out = []
 
-            if self.cache and use_cache:
-                metadata = self.cache.get_with_component('Table')
-                components = [r['identifier'] for r in metadata if r['is_component']]
-            else:
-                t = self.db['Table']
-                components = t.filter(t['is_component'] == True).distinct(  # noqa: E712
-                    'identifier'
-                )
+            t = self.db['Table']
+            components = t.filter(t['is_component'] == True).distinct(  # noqa: E712
+                'identifier'
+            )
 
             for component in components:
                 if component in metaclasses.keys():
                     continue
 
-                if self.cache:
-                    identifiers = sorted(
-                        list(
-                            set(
-                                [
-                                    r['identifier']
-                                    for r in self.cache.get_with_component(component)
-                                ]
-                            )
-                        )
-                    )
-                else:
-                    identifiers = self.db[component].distinct('identifier')
+                identifiers = self.db[component].distinct('identifier')
 
                 try:
                     out.extend(
@@ -560,48 +555,18 @@ class MetaDataStore:
                 except ModuleNotFoundError as e:
                     logging.error(f'Component type not found: {component}; ', e)
 
-            if self.cache and use_cache:
-                identifiers = sorted(
-                    list(
-                        set(
-                            [
-                                r['identifier']
-                                for r in self.cache.get_with_component('Table')
-                            ]
-                        )
-                    )
-                )
-            else:
-                identifiers = self.db['Table'].distinct('identifier')
+            identifiers = self.db['Table'].distinct('identifier')
 
             out.extend([{'component': 'Table', 'identifier': x} for x in identifiers])
             return out
 
-        if self.cache and use_cache:
-            return sorted(
-                list(
-                    set(
-                        [
-                            r['identifier']
-                            for r in self.cache.get_with_component(component)
-                        ]
-                    )
-                )
-            )
-        else:
-            return self.db[component].distinct('identifier')
+        return self.db[component].distinct('identifier')
 
     def show_cdc_tables(self):
         """List the tables used for CDC."""
         from superduper.base.document import Document
 
-        metadata = []
-
-        if self.cache:
-            metadata = self.cache.get_with_component('Table')
-            metadata = [Document(r) for r in metadata]
-        else:
-            metadata = self.db['Table'].execute()
+        metadata = self.db['Table'].execute()
 
         cdc_classes = []
         for r in metadata:
@@ -625,10 +590,7 @@ class MetaDataStore:
         """
         cdc_classes = []
 
-        if self.cache:
-            metadata = self.cache.get_with_component('Table')
-        else:
-            metadata = self.db['Table'].execute()
+        metadata = self.db['Table'].execute()
 
         for r in metadata:
             if r['path'] is None:
@@ -662,14 +624,6 @@ class MetaDataStore:
         :param component: type of component
         :param identifier: identifier of component
         """
-        if self.cache:
-            t = self.db[component]
-            uuids = t.filter(t['identifier'] == identifier).distinct('uuid')
-            for uuid in uuids:
-                try:
-                    del self.cache[component, identifier, uuid]
-                except KeyError:
-                    pass
         self.db[component].delete({'identifier': identifier})
 
     def get_uuid(self, component: str, identifier: str, version: int):
@@ -680,13 +634,6 @@ class MetaDataStore:
         :param identifier: identifier of component
         :param version: version of component
         """
-        if self.cache:
-            r = self.cache.get_with_component_identifier_version(
-                component, identifier, version
-            )
-            if r is not None:
-                assert isinstance(r, dict)
-                return r['uuid']
         t = self.db[component]
         r = (
             t.filter(t['identifier'] == identifier, t['version'] == version)
@@ -723,6 +670,7 @@ class MetaDataStore:
         :param allow_hidden: whether to allow hidden components
         """
         t = self.db[component]
+
         versions = t.filter(t['identifier'] == identifier).distinct('version')
 
         if not versions:
@@ -737,16 +685,7 @@ class MetaDataStore:
         :param component: type of component
         :param uuid: UUID of component
         """
-        if uuid in self.preset_uuids:
-            return self.preset_uuids[uuid]
-
         r = None
-        if self.cache:
-            try:
-                r = self.cache.get_with_uuid(uuid)
-            except KeyError:
-                pass
-
         if r is None:
             r = self.db[component].get(uuid=uuid, raw=True)
 
@@ -755,21 +694,11 @@ class MetaDataStore:
                 f'Object {uuid} does not exist in metadata for {component}'
             )
 
-        if self.cache:
-            self.cache[component, r['identifier'], r['uuid']] = r
-
         # TODO replace database query with cache query
-        try:
-            metadata = self.preset_components[('Table', component)]
-        except KeyError:
-            metadata = None
-            if self.cache:
-                metadata = self.cache.get_with_component_identifier('Table', component)
-            if metadata is None:
-                metadata = self.db['Table'].get(identifier=component)
+        metadata = self.db['Table'].get(identifier=component)
 
-            if metadata is None:
-                raise NonExistentMetadataError(f'No such Table: {component}')
+        if metadata is None:
+            raise NonExistentMetadataError(f'No such Table: {component}')
 
         path = metadata['path']
         r['_path'] = path
@@ -797,45 +726,20 @@ class MetaDataStore:
         :param identifier: identifier of component
         :param version: version of component
         """
-        if (component, identifier) in self.preset_components:
-            return self.preset_components[(component, identifier)]
+        if version is None:
+            version = self.get_latest_version(
+                component=component,
+                identifier=identifier,
+            )
 
-        r = None
-        if self.cache:
-            try:
-                if version is None:
-                    r = self.cache.get_with_component_identifier(component, identifier)
-                else:
-                    r = self.cache.get_with_component_identifier_version(
-                        component, identifier, version
-                    )
-            except KeyError:
-                pass
-
-        if r is None:
-            if version is None:
-                version = self.get_latest_version(
-                    component=component,
-                    identifier=identifier,
-                )
-            r = self.db[component].get(identifier=identifier, version=version, raw=True)
+        metadata = self.db['Table'].get(identifier=component)
+        r = self.db[component].get(identifier=identifier, version=version, raw=True)
+        r['_path'] = metadata['path']
 
         if r is None:
             raise NonExistentMetadataError(
                 f'Object {identifier} does not exist in metadata for {component}'
             )
-
-        if self.cache:
-            self.cache[component, identifier, r["uuid"]] = r
-
-        # TODO Does it have path or not? Let's pin it down please.
-        if '_path' not in r:
-            metadata = self.preset_components.get(('Table', component))
-            if metadata is None and self.cache:
-                metadata = self.cache.get_with_component_identifier('Table', component)
-            if metadata is None:
-                metadata = self.db['Table'].get(identifier=component)
-            r['_path'] = metadata['path']
 
         return r
 
@@ -847,8 +751,6 @@ class MetaDataStore:
         :param uuid: unique identifier of the object.
         :param info: dictionary containing information about the object.
         """
-        if self.cache:
-            self.cache[component, info["identifier"], uuid] = info
         self.db[component].replace({'uuid': uuid}, info)
 
     def get_component_parents(self, component: str, identifier: str):

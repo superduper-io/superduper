@@ -1,11 +1,14 @@
 import functools
 import hashlib
+import os
 import typing as t
+import uuid
 from abc import ABC, abstractmethod
 
 from superduper import CFG, logging
 from superduper.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES
 from superduper.base.document import Document
+from superduper.base.metadata import NonExistentMetadataError
 from superduper.base.query import Query
 
 if t.TYPE_CHECKING:
@@ -425,3 +428,405 @@ class DataBackendProxy:
         if callable(attr):
             return self._try_execute(attr)
         return attr
+
+
+class KeyedDatabackend(BaseDataBackend):
+    """Keyed databackend for the database.
+
+    :param uri: URI to the databackend database.
+    :param plugin: Plugin implementing the databackend.
+    :param flavour: Flavour of the databackend.
+    """
+
+    @abstractmethod
+    def __getitem__(self, key: t.Tuple[str, str, str]) -> t.Dict:
+        pass
+
+    @abstractmethod
+    def __setitem__(self, key: t.Tuple[str, str, str], value: t.Any):
+        pass
+
+    def get_many(self, *pattern: t.Sequence[str]):
+        """Get many items from the database.
+
+        :param pattern: The pattern to match.
+        """
+        keys = self.keys(*pattern)
+        if not keys:
+            return []
+        else:
+            return [self[key] for key in keys]
+
+    def check_output_dest(self, predict_id):
+        """Check if the output destination exists.
+
+        :param predict_id: The identifier of the output destination.
+        """
+        raise NotImplementedError
+
+    def create_table_and_schema(self, identifier: str, schema: 'Schema', primary_id: str):
+        """Create a schema in the data-backend.
+
+        :param identifier: The identifier of the schema.
+        :param schema: The schema to create.
+        :param primary_id: The primary id of the schema.
+        """
+        pass
+
+    def delete(self, table, condition):
+        """
+        Delete data from the database.
+
+        :param table: The table to delete from.
+        :param condition: The condition to delete.
+        """
+        r_table = self._get_with_component_identifier('Table', table)
+
+        if not r_table['is_component']:
+            pid = r_table['primary_id']
+            if pid in condition:
+                docs = self.get_many(table, condition[pid])
+            else:
+                docs = self.get_many(table, '*')
+            docs = self._do_filter(docs, condition)
+            for r in docs:
+                del self[table, r[pid]]
+        else:
+            if 'uuid' in condition:
+                docs = self.get_many(table, '*', condition['uuid'])
+            elif 'identifier' in condition:
+                docs = self.get_many(table, condition['identifier'], '*')
+                docs = self._do_filter(docs, condition)
+            else:
+                docs = self.get_many(table, '*', '*')
+                docs = self._do_filter(docs, condition)
+            for r in docs:
+                del self[table, r['identifier'], r['uuid']]
+
+    def drop_table(self, table):
+        """Drop data from table.
+
+        :param table: The table to drop.
+        """
+        for k in self.keys(table, '*', '*'):
+            del self[k]
+
+    def execute_native(self, query):
+        """Execute a native query provided as a str.
+
+        (Not implemented in this class)
+
+        :param query: The query to execute
+        """
+        raise NotImplementedError
+
+    def get_table(self, identifier):
+        """Get a table or collection from the database.
+
+        (Not implemented in this class)
+
+        :param identifier: The identifier of the table or collection.
+        """
+        raise NotImplementedError
+
+    def list_tables(self):
+        """List all tables in the database."""
+        keys = self.keys('*', '*', '*') + self.keys('*', '*')
+        return sorted(list(set(k[0] for k in keys)))
+
+    def missing_outputs(self, query, predict_id):
+        """Get missing outputs from an outputs query.
+
+        (Not implemented in this class)
+
+        :param query: The query to perform.
+        :param predict_id: The predict id.
+        """
+        raise NotImplementedError
+
+    def random_id(self):
+        """Generate a random id."""
+        return str(uuid.uuid4())[:16]
+
+    def _do_filter(self, docs, condition):
+        if not condition:
+            return docs
+
+        def do_test(r):
+            for k, v in condition.items():
+                if r.get(k) != v:
+                    return False
+            return True
+
+        return [r for r in docs if do_test(r)]
+
+    def replace(self, table, condition, r):
+        """Replace data.
+
+        :param table: The table to insert into.
+        :param condition: The condition to update.
+        :param r: The document to replace.
+        """
+        r_table = self._get_with_component_identifier('Table', table)
+
+        if not r_table['is_component']:
+            pid = r_table['primary_id']
+            docs = self.get_many(table, condition[pid])
+            docs = self._do_filter(docs, condition)
+        else:
+            if 'uuid' in condition:
+                s = self.get_many(table, '*', condition['uuid'])[0]
+                self[table, s['identifier'], condition['uuid']] = r
+            elif 'identifier' in condition:
+                docs = self.get_many(table, condition['identifier'], '*')
+                docs = self._do_filter(docs, condition)
+                for s in docs:
+                    self[table, s['identifier'], s['uuid']] = r
+            else:
+                docs = self.get_many(table, '*', '*')
+                docs = self._do_filter(docs, condition)
+                for s in docs:
+                    self[table, s['identifier'], s['uuid']] = r
+
+    def update(self, table, condition, key, value):
+        """Update data in the database.
+
+        :param table: The table to update.
+        :param condition: The condition to update.
+        :param key: The key to update.
+        :param value: The value to update.
+        """
+        r_table = self._get_with_component_identifier('Table', table)
+
+        if not r_table['is_component']:
+            pid = r_table['primary_id']
+            docs = self.get_many(table, condition[pid])
+            docs = self._do_filter(docs, condition)
+        else:
+            if 'uuid' in condition:
+                s = self.get_many(table, '*', condition['uuid'])[0]
+                s[key] = value
+                self[table, s['identifier'], condition['uuid']] = s
+            elif 'identifier' in condition:
+                docs = self.get_many(table, condition['identifier'], '*')
+                docs = self._do_filter(docs, condition)
+                for s in docs:
+                    s[key] = value
+                    self[table, s['identifier'], s['uuid']] = s
+            else:
+                docs = self.get_many(table, '*', '*')
+                docs = self._do_filter(docs, condition)
+                for s in docs:
+                    s[key] = value
+                    self[table, s['identifier'], s['uuid']] = s
+
+    @abstractmethod
+    def keys(self, *pattern) -> t.List[t.Tuple[str, str, str]]:
+        """Get the keys from the cache.
+
+        :param pattern: The pattern to match.
+
+        >>> cache.keys('*', '*', '*')
+        >>> cache.keys('*', '*')
+        >>> cache.keys('Model', '*', '*')
+        >>> cache.keys('my_table', '*')
+        >>> cache.keys('Model', 'my_model', '*')
+        >>> cache.keys('*', '*', '1234567890')
+        """
+
+    def _get_with_component(self, component: str):
+        """Get all components from the cache of a certain type.
+
+        :param component: The component to get.
+        """
+        keys = self.keys(component, '*', '*')
+        return [self[k] for k in keys]
+
+    def _get_all_with_component_identifier(self, component: str, identifier: str):
+        """Get a component from the cache with a specific identifier.
+
+        :param component: The component to get.
+        :param identifier: The identifier of the component to
+        """
+        keys = self.keys(component, identifier, '*')
+        out = [self[k] for k in keys]
+        if not out:
+            return []
+        return out
+
+    def _get_with_component_identifier(self, component: str, identifier: str):
+        """Get a component from the cache with a specific identifier.
+
+        :param component: The component to get.
+        :param identifier: The identifier of the component to
+        """
+        keys = self.keys(component, identifier, '*')
+        out = [self[k] for k in keys]
+        if not out:
+            return None
+
+        out = max(out, key=lambda x: x['version'])  # type: ignore[arg-type,call-overload]
+        return out
+
+    def _get_with_component_identifier_version(
+        self, component: str, identifier: str, version: int
+    ):
+        """Get a component from the cache with a specific version.
+
+        :param component: The component to get.
+        :param identifier: The identifier of the component to get.
+        :param version: The version of the component to get.
+        """
+        keys = self.keys(component, identifier, '*')
+        out = [self[k] for k in keys]
+        try:
+            return next(r for r in out if r['version'] == version)
+        except StopIteration:
+            return
+
+    @abstractmethod
+    def __delitem__(self, key: t.Tuple[str, str, str]):
+        pass
+
+    def primary_id(self, query):
+        """Get the primary id of a query.
+
+        :param query: The query to get the primary id of.
+        """
+        r = max(self.get_many('Table', query.table, '*'), key=lambda x: x['version'])
+        if r is None:
+            raise NonExistentMetadataError(f'Table "{query.table}" does not exist.')
+        return r['primary_id']
+
+    def insert(self, table, documents):
+        """Insert data into the database.
+
+        :param table: The table to insert into.
+        :param documents: The documents to insert.
+        """
+        ids = []
+        if 'uuid' in documents[0]:
+            for r in documents:
+                self[table, r['identifier'], r['uuid']] = r
+                ids.append(r['uuid'])
+        else:
+            pid = self.primary_id(self.db[table])
+            for r in documents:
+                if pid not in r:
+                    r[pid] = self.random_id()
+                self[table, r[pid]] = r
+                ids.append(r[pid])
+        return ids
+
+    def select(self, query):
+        """Select data from the database.
+
+        :param query: The query to perform.
+        """
+        if query.decomposition.outputs:
+            raise NotImplementedError(
+                "KeyedDatabackend does not support outputs queries."
+            )
+
+        ops = {
+            '==': lambda x, y: x == y,
+            'in': lambda x, y: x in y,
+            '!=': lambda x, y: x != y,
+        }
+
+        filter_kwargs = {}
+
+        def do_test(r):
+            return True
+
+        if query.decomposition.filter:
+
+            filters = query.decomposition.filter.args
+            for f in filters:
+                col, op = f.parts
+                assert (
+                    op.symbol in ops
+                ), f"KeyedDatabackend only supports these filters {list(ops.keys())}."
+                value = op.args[0]
+                filter_kwargs[col] = {
+                    'value': value,
+                    'op': op.symbol,
+                }
+
+            def do_test(r):
+                for k, v in filter_kwargs.items():
+                    if k not in r:
+                        return False
+
+                    op = ops[v['op']]
+                    v = v['value']
+
+                    if not op(r[k], v):
+                        return False
+                return True
+
+        try:
+            is_component = max(
+                self.get_many('Table', query.table, '*'), key=lambda x: x['version']
+            )['is_component']
+        except ValueError:
+            raise NonExistentMetadataError(f'Table "{query.table}" does not exist.')
+
+        if not is_component:
+            pid = self.primary_id(query)
+            if pid in filter_kwargs:
+                keys = self.keys((query.table, filter_kwargs[pid]))
+                del filter_kwargs[pid]
+            else:
+                keys = self.keys(query.table, '*')
+
+            docs = [self[k] for k in keys]
+            docs = [r for r in docs if do_test(r)]
+        else:
+
+            if not filter_kwargs:
+                keys = self.keys(query.table, '*', '*')
+                docs = [self[k] for k in keys]
+            elif set(filter_kwargs.keys()) == {'uuid'}:
+                keys = self.keys(query.table, '*', filter_kwargs['uuid']['value'])
+                docs = [self[k] for k in keys]
+            elif set(filter_kwargs.keys()) == {'identifier'}:
+                assert filter_kwargs['identifier']['op'] == '=='
+
+                keys = self.keys(query.table, filter_kwargs['identifier']['value'], '*')
+                docs = [self[k] for k in keys]
+            elif set(filter_kwargs.keys()) == {'identifier', 'uuid'}:
+                assert filter_kwargs['identifier']['op'] == '=='
+                assert filter_kwargs['uuid']['op'] == '=='
+
+                r = self[
+                    query.table,
+                    filter_kwargs['identifier']['value'],
+                    filter_kwargs['uuid']['value'],
+                ]
+                if r is None:
+                    docs = []
+                else:
+                    docs = [r]
+            elif set(filter_kwargs.keys()) == {'identifier', 'version'}:
+                assert filter_kwargs['identifier']['op'] == '=='
+                assert filter_kwargs['version']['op'] == '=='
+
+                keys = self.keys(query.table, filter_kwargs['identifier']['value'], '*')
+                docs = [self[k] for k in keys]
+                docs = [
+                    r for r in docs if r['version'] == filter_kwargs['version']['value']
+                ]
+            else:
+                keys = self.keys(query.table, '*', '*')
+                docs = [self[k] for k in keys]
+                docs = [r for r in docs if do_test(r)]
+
+        if filter_kwargs:
+            docs = [r for r in docs if do_test(r)]
+
+        if query.decomposition.select:
+            cols = query.decomposition.select.args
+            for i, r in enumerate(docs):
+                docs[i] = {k: v for k, v in r.items() if k in cols}
+        return docs

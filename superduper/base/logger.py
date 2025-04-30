@@ -15,6 +15,7 @@ __all__ = ('Logging',)
 class Logging:
     """Logging class to handle logging for the superduper.io # noqa."""
 
+    # TODO remove Loki support
     if CFG.logging_type == LogType.LOKI:  # Send logs to Loki
         custom_handler = LokiLoggerHandler(
             url=os.environ["LOKI_URI"],
@@ -42,14 +43,14 @@ class Logging:
                 "<green>{time:YYYY-MMM-DD HH:mm:ss.SS}</green>"
                 "| <level>{level: <8}</level> "
                 "| <cyan>{extra[hostname]: <8}</cyan>"
-                "| <cyan>{name}</cyan>:<cyan>{line: <4}</cyan> "
+                "| <cyan>{file.path}</cyan>:<cyan>{line}</cyan>"
                 "| <level>{message}</level>"
             )
         else:
             fmt = (
                 "{time:YYYY-MMM-DD HH:mm:ss.SS}"
                 "| {level: <8} "
-                "| {name}:{line: <4} "
+                "| {file.path}:{line} "
                 "| {message}"
             )
         # DEBUG until WARNING are sent to stdout.

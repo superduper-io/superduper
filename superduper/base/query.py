@@ -298,7 +298,7 @@ def limit(self, n: int):
     return self + QueryPart('limit', (n,), {})
 
 
-def insert(self, documents, raw: bool = False):
+def insert(self: 'Query', documents, raw: bool = False):
     """Insert documents into the table.
 
     # noqa
@@ -616,7 +616,7 @@ class Query(_BaseQuery):
 
     def __post_init__(self, db=None):
 
-        self.db = db
+        self.db: t.Union['Datalayer', None] = db
 
         if not self.parts:
             for method in self.mapping:
@@ -973,9 +973,12 @@ class Query(_BaseQuery):
 
         :param raw: Whether to return raw results.
         """
+        db = self.db
+        if self.table in db.metadata.db.databackend.list_tables():
+            db = db.metadata.db
         if self.parts and self.parts[0] == 'primary_id':
-            return self.db.databackend.primary_id(self)
-        results = self.db.databackend.execute(self, raw=raw)
+            return db.databackend.primary_id(self)
+        results = db.databackend.execute(self, raw=raw)
         return results
 
 

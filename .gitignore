@@ -200,3 +200,4 @@ test/sleep.json
 .cache
 /templates/*/artifact_store
 /test/configs/snowflake.yaml
+/artifact_store

@@ -136,6 +136,7 @@ def _consume_event_type(event_type, ids, table, db: 'Datalayer'):
     for job in jobs:
         job.execute(db)
 
+    assert db.cluster is not None
     db.cluster.compute.release_futures(context)
 
 

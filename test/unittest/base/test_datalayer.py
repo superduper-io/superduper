@@ -383,6 +383,7 @@ def test_delete_component_with_same_artifact(db):
     db.apply(model2)
 
     db.remove('ObjectModel', 'model1', force=True)
+
     model2 = db.load('ObjectModel', 'model2')
     model2.setup()
     assert model2.predict(1) == 2

@@ -3,6 +3,7 @@ import datetime
 import time
 import typing as t
 import uuid
+from traceback import format_exc
 
 from superduper import logging
 from superduper.backends.base.cache import Cache
@@ -10,12 +11,14 @@ from superduper.base.base import Base
 from superduper.base.exceptions import DatabackendError
 from superduper.base.schema import Schema
 from superduper.components.cdc import CDC
-from superduper.components.component import Component
+from superduper.components.component import Component, init_status
 from superduper.components.table import Table
 from superduper.misc.importing import import_object
+from superduper.misc.utils import merge_dicts
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
+    from superduper.components.component import Status
 
 
 class NonExistentMetadataError(Exception):
@@ -49,7 +52,7 @@ class Job(Base):
     time: str = dc.field(default_factory=lambda: str(datetime.datetime.now))
     job_id: t.Optional[str] = dc.field(default_factory=lambda: str(uuid.uuid4()))
     method: str
-    status: str = 'pending'
+    status: t.Dict = dc.field(default_factory=init_status)
     dependencies: t.List[str] = dc.field(default_factory=list)
 
     def get_status(self, db):
@@ -57,7 +60,7 @@ class Job(Base):
 
         :param db: Datalayer instance
         """
-        return db['Job'].get(job_id=self.job_id)['status']
+        return db['Job'].get(job_id=self.job_id)['status']['phase']
 
     def wait(self, db: 'Datalayer', heartbeat: float = 1, timeout: int = 60):
         """Wait for the job to finish.
@@ -113,6 +116,44 @@ class Job(Base):
                 kwargs[k] = v
         kwargs['dependencies'] = dependencies
         return args, kwargs
+
+    def run(self, db: 'Datalayer'):
+        """Run the job.
+
+        :param db: Datalayer instance
+        """
+        try:
+            logging.info(f'Running job {self.huuid}')
+            logging.info(
+                f'Loading component {self.component}:{self.identifier}:{self.uuid}...'
+            )
+            component = db.load(component=self.component, uuid=self.uuid)
+            component.setup()
+            logging.info(
+                'Loading component '
+                f'{self.component}:{self.identifier}:{self.uuid}... DONE'
+            )
+            method = getattr(component, self.method)
+            out = method(*self.args, **self.kwargs)
+        except Exception as e:
+            logging.error(f'Error running job {self.huuid}: {e}')
+            db.metadata.set_job_status(
+                self.job_id,
+                {
+                    "phase": "failed",
+                    "reason": f"job failed: {str(e)}",
+                    "message": format_exc(),
+                },
+            )
+            raise e
+        logging.info(f'Running job {self.huuid}... DONE')
+        logging.info('Updating job status')
+        db.metadata.set_job_status(
+            self.job_id,
+            {"phase": "success", "reason": "job succeeded"},
+        )
+        logging.info('Updating job status... DONE')
+        return out
 
     def execute(
         self,
@@ -452,15 +493,72 @@ class MetaDataStore:
         t = self.db['ArtifactRelations']
         return t.filter(t['artifact_id'].isin(artifact_ids)).execute()
 
-    def set_component_status(self, component: str, uuid: str, status: str):
+    def set_job_status(self, job_id: str, status_update: t.Dict):
+        """
+        Set the status of a job.
+
+        :param job_id: job identifier
+        :param status_update: status to set
+        """
+        r = self.db['Job'].get(job_id=job_id)
+        status = merge_dicts(r['status'], status_update)
+        self.db['Job'].update({'job_id': job_id}, 'status', status)
+
+        if status['children'] and any(
+            v['phase'] == 'failed' for v in status['children'].values()
+        ):
+            status['phase'] = 'failed'
+            n_failed = len(
+                [v for v in status['children'].values() if v['phase'] == 'failed']
+            )
+            status['reason'] = '{} {} failed'.format(
+                n_failed, 'child' if n_failed == 1 else 'children'
+            )
+
+        self.db['Job'].update({'job_id': job_id}, 'status', status)
+
+        if status['phase'] == 'failed':
+            parent = (r['component'], r['uuid'])
+            key = f'Job/{r["component"]}/{r["identifier"]}/{r["uuid"]}.{r["method"]}'
+            self.set_component_status(parent[0], parent[1], {'children': {key: status}})
+
+    def set_component_status(self, component: str, uuid: str, status_update: t.Dict):
         """
         Set the status of a component.
 
         :param component: type of component
         :param uuid: ``Component.uuid``
-        :param status: ``Status`` to set
+        :param status_update: Status document to set
         """
-        self.db[component].update({'uuid': uuid}, key='status', value=status)
+        r = self.db[component].get(uuid=uuid)
+        status = merge_dicts(r['status'], status_update)
+
+        if status['children'] and any(
+            v['phase'] == 'failed' for v in status['children'].values()
+        ):
+            status['phase'] = 'failed'
+            n_failed = len(
+                [v for v in status['children'].values() if v['phase'] == 'failed']
+            )
+            status['reason'] = '{} {} failed'.format(
+                n_failed, 'child' if n_failed == 1 else 'children'
+            )
+
+        self.db[component].update({'uuid': uuid}, 'status', status)
+
+        if status['phase'] == 'failed':
+
+            parents = self.get_component_version_parents(uuid)
+            for parent in parents:
+                self.set_component_status(
+                    parent[0],
+                    parent[1],
+                    {
+                        'children': {
+                            f'{component}/{r["identifier"]}/{uuid}': status,
+                        }
+                    },
+                )
 
     def get_component_status(self, component: str, uuid: str):
         """

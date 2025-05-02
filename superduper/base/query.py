@@ -19,6 +19,7 @@ from types import MethodType
 from superduper import CFG, logging
 from superduper.base.base import Base
 from superduper.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES, KEY_PATH
+from superduper.base.datatype import BaseDataType
 from superduper.base.document import Document, _unpack
 from superduper.base.metadata import NonExistentMetadataError
 from superduper.base.schema import Schema
@@ -320,6 +321,11 @@ def update(self, condition: t.Dict, key: str, value: t.Any):
 
     # noqa
     """
+    s = self.db.metadata.get_schema(self.table)
+    if isinstance(s[key], BaseDataType):
+        value = s[key].encode_data(value, None)
+        if s[key].dtype == 'json' and not CFG.json_native:
+            value = json.dumps(value)
     out = self.db.databackend.update(self.table, condition, key=key, value=value)
     self.db._post_query(self.table, ids=out, type_='update')
     return out
@@ -335,7 +341,7 @@ def delete(self, condition: t.Dict):
     return out
 
 
-def replace(self, condition: t.Dict, r: t.Dict):
+def replace(self, condition: t.Dict, r: t.Dict | Document):
     """Update documents in the table.
 
     # noqa
@@ -356,6 +362,11 @@ def replace(self, condition: t.Dict, r: t.Dict):
         r.pop(KEY_PATH)
     except KeyError:
         pass
+
+    if isinstance(r, Document):
+        s = self.db.metadata.get_schema(self.table)
+        r = s.encode_data(r)
+
     out = self.db.databackend.replace(self.table, condition, r)
     self.db._post_query(self.table, ids=out, type_='update')
     return out

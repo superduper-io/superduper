@@ -1,19 +1,20 @@
+import json
 import time
 import typing as t
 
 import click
 from rich.console import Console
 
-from superduper import Component, logging
+from superduper import CFG, Component, logging
 from superduper.base.document import Document
 from superduper.base.event import Create, Signal, Update
 from superduper.base.metadata import NonExistentMetadataError
-from superduper.components.component import Status
+from superduper.components.component import ready_status
 from superduper.misc.tree import dict_to_tree
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
-    from superduper.base.event import Job
+    from superduper.base.metadata import Job
 
 _WAIT_TIMEOUT = 60
 
@@ -215,7 +216,7 @@ def _apply(
         if current.hash == object.hash:
             apply_status = 'same'
             object.version = current.version
-            object.status = Status.ready
+            object.status = ready_status()
         elif current.uuid == object.uuid:
             apply_status = 'update'
             object.version = current.version
@@ -305,9 +306,14 @@ def _apply(
 
     # If nothing needs to be done, then don't
     # require the status to be "initializing"
+
     if not these_job_events:
-        metadata_event.data['status'] = Status.ready
-        object.status = Status.ready
+        if not CFG.json_native:
+            metadata_event.data['status'] = json.dumps(ready_status())
+        else:
+            metadata_event.data['status'] = ready_status()
+
+        object.status = ready_status()
 
     create_events[metadata_event.huuid] = metadata_event
     job_events.update({jj.huuid: jj for jj in these_job_events})

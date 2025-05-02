@@ -128,6 +128,8 @@ class MongoDBDataBackend(BaseDataBackend):
         :param condition: The condition to replace.
         :param r: The data to replace.
         """
+        if '_id' in r:
+            del r['_id']
         self._database[table].replace_one(condition, r, upsert=True)
 
     def insert(self, table, documents):

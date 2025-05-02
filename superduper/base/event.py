@@ -1,4 +1,5 @@
 import typing as t
+from traceback import format_exc
 
 import numpy
 import pandas
@@ -88,36 +89,49 @@ class Create(Base):
 
         :param db: Datalayer instance.
         """
-        # TODO decide where to assign version
         logging.info(
             f'Creating {self.path.split("/")[-1]}:'
             f'{self.data["identifier"]}:{self.data["uuid"]}'
         )
 
-        artifact_ids, _ = db._find_artifacts(self.data)
-
-        db.metadata.create_artifact_relation(
-            component=self.component,
-            identifier=self.data['identifier'],
-            uuid=self.data['uuid'],
-            artifact_ids=artifact_ids,
-        )
-
         db.metadata.create_component(self.data, path=self.path)
-        component = db.load(component=self.component, uuid=self.data['uuid'])
 
-        if self.children:
-            for child in self.children:
-                db.metadata.create_parent_child(
-                    child_component=child[0],
-                    child_identifier=child[1],
-                    child_uuid=child[2],
-                    parent_component=self.component,
-                    parent_identifier=component.identifier,
-                    parent_uuid=component.uuid,
-                )
+        try:
+            artifact_ids, _ = db._find_artifacts(self.data)
 
-        component.on_create()
+            db.metadata.create_artifact_relation(
+                component=self.component,
+                identifier=self.data['identifier'],
+                uuid=self.data['uuid'],
+                artifact_ids=artifact_ids,
+            )
+
+            component = db.load(component=self.component, uuid=self.data['uuid'])
+
+            if self.children:
+                for child in self.children:
+                    db.metadata.create_parent_child(
+                        child_component=child[0],
+                        child_identifier=child[1],
+                        child_uuid=child[2],
+                        parent_component=self.component,
+                        parent_identifier=component.identifier,
+                        parent_uuid=component.uuid,
+                    )
+
+            component.on_create()
+
+        except Exception as e:
+            db.metadata.set_component_status(
+                component=self.component,
+                uuid=self.data['uuid'],
+                status_update={
+                    'phase': 'failed',
+                    'reason': f'Failed to create: {str(e)}',
+                    'message': format_exc(),
+                },
+            )
+            raise e
 
     @property
     def huuid(self):
@@ -148,34 +162,47 @@ class Delete(Base):
 
         :param db: Datalayer instance.
         """
-        object = db.load(component=self.component, identifier=self.identifier)
+        try:
+            object = db.load(component=self.component, identifier=self.identifier)
 
-        db.metadata.delete_component(self.component, self.identifier)
-        artifact_ids = db.metadata.get_artifact_relations_for_component(
-            self.component, self.identifier
-        )
-
-        if artifact_ids:
-            parents_to_artifacts = db.metadata.get_artifact_relations_for_artifacts(
-                artifact_ids
+            db.metadata.delete_component(self.component, self.identifier)
+            artifact_ids = db.metadata.get_artifact_relations_for_component(
+                self.component, self.identifier
             )
-            df = pandas.DataFrame(parents_to_artifacts)
-            if not df.empty:
-                condition = numpy.logical_or(
-                    df['component'] != self.component,
-                    df['identifier'] != self.identifier,
+
+            if artifact_ids:
+                parents_to_artifacts = db.metadata.get_artifact_relations_for_artifacts(
+                    artifact_ids
                 )
-                other_relations = df[condition]
-                to_exclude = other_relations['artifact_id'].tolist()
-                artifact_ids = sorted(list(set(artifact_ids) - set(to_exclude)))
-            db.artifact_store.delete_artifact(artifact_ids)
+                df = pandas.DataFrame(parents_to_artifacts)
+                if not df.empty:
+                    condition = numpy.logical_or(
+                        df['component'] != self.component,
+                        df['identifier'] != self.identifier,
+                    )
+                    other_relations = df[condition]
+                    to_exclude = other_relations['artifact_id'].tolist()
+                    artifact_ids = sorted(list(set(artifact_ids) - set(to_exclude)))
+                db.artifact_store.delete_artifact(artifact_ids)
 
-        db.metadata.delete_parent_child_relationships(
-            parent_component=self.component,
-            parent_identifier=self.identifier,
-        )
+            db.metadata.delete_parent_child_relationships(
+                parent_component=self.component,
+                parent_identifier=self.identifier,
+            )
 
-        object.cleanup()
+            object.cleanup()
+
+        except Exception as e:
+            db.metadata.set_component_status(
+                component=self.component,
+                uuid=self.identifier,
+                status_update={
+                    'phase': 'failed',
+                    'reason': f'Failed to delete: {str(e)}',
+                    'message': format_exc(),
+                },
+            )
+            raise e
 
 
 class Update(Base):
@@ -203,16 +230,28 @@ class Update(Base):
 
         :param db: Datalayer instance.
         """
-        artifact_ids, _ = db._find_artifacts(self.data)
-        db.metadata.create_artifact_relation(
-            component=self.component,
-            identifier=self.data['identifier'],
-            uuid=self.data['uuid'],
-            artifact_ids=artifact_ids,
-        )
-        db.metadata.replace_object(
-            self.component, uuid=self.data['uuid'], info=self.data
-        )
+        try:
+            artifact_ids, _ = db._find_artifacts(self.data)
+            db.metadata.create_artifact_relation(
+                component=self.component,
+                identifier=self.data['identifier'],
+                uuid=self.data['uuid'],
+                artifact_ids=artifact_ids,
+            )
+            db.metadata.replace_object(
+                self.component, uuid=self.data['uuid'], info=self.data
+            )
+        except Exception as e:
+            db.metadata.set_component_status(
+                component=self.component,
+                uuid=self.data['uuid'],
+                status_update={
+                    'phase': 'failed',
+                    'reason': f'Failed to update: {str(e)}',
+                    'message': format_exc(),
+                },
+            )
+            raise e
 
     @property
     def huuid(self):

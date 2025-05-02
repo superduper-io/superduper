@@ -6,8 +6,10 @@ import os
 import shutil
 import typing as t
 from collections import OrderedDict, defaultdict
+from datetime import datetime
 from enum import Enum
 from functools import wraps
+from traceback import format_exc
 
 import networkx
 
@@ -24,18 +26,26 @@ if t.TYPE_CHECKING:
     from superduper.base.metadata import Job
 
 
-class Status(str, Enum):
-    """Status enum.
+def init_status():
+    """Initialize the status of the component."""
+    return {
+        'phase': 'uninitialized',
+        'reason': 'waiting for initialization',
+        'message': None,
+        'last_change_time': str(datetime.now()),
+        'children': {},
+    }
 
-    # noqa
-    """
 
-    initializing = 'initializing'
-    ready = 'ready'
-    failed = 'failed'
-
-    def __str__(self):
-        return self.value
+def ready_status():
+    """The status of the component as ready."""
+    return {
+        'phase': 'ready',
+        'reason': 'the component is ready to use',
+        'message': None,
+        'last_change_time': str(datetime.now()),
+        'children': {},
+    }
 
 
 def _build_info_from_path(path: str):
@@ -75,20 +85,6 @@ def _build_info_from_path(path: str):
         config_object[KEY_FILES] = files
 
     return config_object
-
-
-def _is_optional_callable(annotation) -> bool:
-    """Tell if an annotation is t.Optional[t.Callable].
-
-    >>> is_optional_callable(t.Optional[t.Callable])
-    True
-    """
-    # Check if the annotation is of the form Optional[...]
-    if t.get_origin(annotation) is t.Union:
-        # Get the type inside Optional and check if it is Callable
-        inner_type = t.get_args(annotation)[0]  # Optional[X] means X is at index 0
-        return inner_type is t.Callable
-    return False
 
 
 class ComponentMeta(BaseMeta):
@@ -144,9 +140,9 @@ class Component(Base, metaclass=ComponentMeta):
     db: dc.InitVar[t.Optional['Datalayer']] = None
 
     def __post_init__(self, db: t.Optional['Datalayer'] = None):
-        self.db = db
+        self.db: Datalayer = db
         self.version: t.Optional[int] = None
-        self.status: t.Optional[str] = None
+        self.status: t.Dict = init_status()
         self.postinit()
 
     @property
@@ -210,7 +206,7 @@ class Component(Base, metaclass=ComponentMeta):
 
         s = get_schema(cls)[0]
         s['version'] = 'int'
-        s['status'] = 'str'
+        s['status'] = 'json'
         return s
 
     @staticmethod
@@ -265,7 +261,7 @@ class Component(Base, metaclass=ComponentMeta):
             if isinstance(r, list):
                 return sum([_find_refs(x) for x in r], [])
             if isinstance(r, Component):
-                if only_initializing and r.status != Status.initializing:
+                if only_initializing and r.status.phase != 'initializing':
                     return []
                 else:
                     return [r.huuid]
@@ -332,14 +328,31 @@ class Component(Base, metaclass=ComponentMeta):
             ]
         return triggers
 
+    def propagate_failure(self, exc: Exception):
+        """Propagate the status of the component to its children.
+
+        :param exc: The exception to propagate.
+        """
+        self.db.metadata.set_component_status(
+            component=self.component,
+            uuid=self.uuid,
+            status_update={
+                'phase': 'failed',
+                'reason': str(exc),
+                'message': format_exc(),
+                'last_change_time': str(datetime.now()),
+                'children': {},
+            },
+        )
+
     @trigger('apply')
-    def set_status(self, status: Status):
+    def set_status(self):
         """Set the status of the component.
 
         :param status: The status to set the component to.
         """
         return self.db.metadata.set_component_status(
-            self.__class__.__name__, self.uuid, str(status)
+            self.__class__.__name__, self.uuid, status_update=ready_status()
         )
 
     def create_jobs(
@@ -446,9 +459,7 @@ class Component(Base, metaclass=ComponentMeta):
                 break
 
         if event_type == 'apply' and local_jobs:
-            status_update: 'Job' = self.set_status(
-                status=Status.ready, job=True, context=context
-            )
+            status_update: 'Job' = self.set_status(job=True, context=context)
             status_update.dependencies = [j.job_id for j in local_jobs]
             local_jobs.append(status_update)
         return local_jobs
@@ -647,7 +658,7 @@ class Component(Base, metaclass=ComponentMeta):
         """Get the dictionary representation of the component."""
         r = self._dict()
         r['version'] = self.version
-        r['status'] = str(self.status).split('.')[-1] if self.status else None
+        r['status'] = self.status
         r['uuid'] = self.uuid
         r['_path'] = self.__module__ + '.' + self.__class__.__name__
         return r

@@ -457,13 +457,11 @@ class JSON(BaseDataType):
         :param item: The object/instance to encode.
         :param context: A context object containing caches.
         """
-        if self.dtype == 'json':
-            try:
-                json.dumps(item)
-            except Exception:
-                raise TypeError(f'Item {item} is not json-able')
-            return item
-        return json.dumps(item)
+        try:
+            json.dumps(item)
+        except Exception:
+            raise TypeError(f'Item {item} is not json-able')
+        return item
 
     def decode_data(self, item, builds, db):
         """Decode the item from string form.
@@ -472,9 +470,7 @@ class JSON(BaseDataType):
         :param builds: The build cache.
         :param db: The Datalayer.
         """
-        if self.dtype == 'json':
-            return item
-        return json.loads(item)
+        return item
 
     @classmethod
     def hash(cls, item):

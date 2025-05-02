@@ -290,3 +290,32 @@ def test_rehash(db):
     )
 
     assert m6.hash == reloaded.hash
+
+
+def test_propagate_failure(db):
+
+    m = ObjectModel(
+        identifier='model',
+        object=my_func,
+    )
+
+    listener = Listener(
+        model=m,
+        key='x',
+        identifier='test',
+        select=db['documents'],
+        upstream=[Table('documents', fields={'x': 'str'})],
+    )
+
+    db.apply(listener, force=True)
+
+    try:
+        raise Exception("Test exception")
+    except Exception as e:
+        m.propagate_failure(e)
+
+    status_model = db.load('ObjectModel', 'model').status
+    status_listener = db.load('Listener', 'test').status
+
+    assert status_model['phase'] == 'failed'
+    assert status_listener['phase'] == 'failed'

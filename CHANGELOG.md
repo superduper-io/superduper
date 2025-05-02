@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add redis cache inside `db.metadata` for quick multi-process loading
 - Add redis plugin
 - Add pydantic schema support
+- Add recursive error propagation
 
 #### Bug Fixes
 

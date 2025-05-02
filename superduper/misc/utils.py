@@ -1,5 +1,4 @@
 import hashlib
-import inspect
 import typing as t
 
 
@@ -11,6 +10,25 @@ def str_shape(shape: t.Sequence[int]) -> str:
     if not shape:
         raise ValueError('Shape was empty')
     return 'x'.join(str(x) for x in shape)
+
+
+def merge_dicts(r: t.Dict, s: t.Dict) -> dict:
+    """Merge two dictionaries recursively.
+
+    :param r: The first dictionary.
+    :param s: The second dictionary.
+
+    >>> r = {'foo': {'bar': 1, 'baz': 2}, 'qux': 3}
+    >>> s = {'foo': {'bar': 4, 'quux': 5}, 'quux': 6}
+    >>> merge_dicts(r, s)
+    {'foo': {'bar': 4, 'baz': 2, 'quux': 5}, 'qux': 3, 'quux': 6}
+    """
+    for k, v in s.items():
+        if isinstance(v, dict) and k in r:
+            r[k] = merge_dicts(r[k], v)
+        else:
+            r[k] = v
+    return r
 
 
 # TODO move to plugins

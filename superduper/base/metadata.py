@@ -136,6 +136,10 @@ class Job(Base):
         """
         try:
             logging.info(f'Running job {self.huuid}')
+            db.metadata.set_job_status(
+                self.job_id,
+                {"phase": "running", "reason": "job started on compute"},
+            )
             logging.info(
                 f'Loading component {self.component}:{self.identifier}:{self.uuid}...'
             )

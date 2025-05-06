@@ -159,12 +159,15 @@ class Datalayer:
             return sorted(out)
 
         if version is None:
-            out = sorted(
-                self.metadata.show_component_versions(
-                    component=component, identifier=identifier
+            try:
+                out = sorted(
+                    self.metadata.show_component_versions(
+                        component=component, identifier=identifier
+                    )
                 )
-            )
-            return out
+                return out
+            except NonExistentMetadataError:
+                return []
 
         if version == -1:
             return self.metadata.get_component(

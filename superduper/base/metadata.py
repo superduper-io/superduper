@@ -35,6 +35,17 @@ class UniqueConstraintError(Exception):
     """
 
 
+class Pending(Base):
+    """Pending table.
+
+    #noqa
+    """
+
+    component: str
+    identifier: str
+    status: t.Dict = dc.field(default_factory=init_status)
+
+
 class Job(Base):
     """Job table.
 
@@ -60,7 +71,7 @@ class Job(Base):
 
         :param db: Datalayer instance
         """
-        return db['Job'].get(job_id=self.job_id)['status']['phase']
+        return db['Job'].get(job_id=self.job_id)['status']
 
     def wait(self, db: 'Datalayer', heartbeat: float = 1, timeout: int = 60):
         """Wait for the job to finish.
@@ -70,21 +81,22 @@ class Job(Base):
         :param timeout: timeout in seconds
         """
         start = time.time()
-        status = 'pending'
-        while (status := self.get_status(db)) in {
-            'pending',
-            'running',
-        } and time.time() - start < timeout:
-            if status == 'pending':
-                logging.info(f'Job {self.job_id} is pending')
-            elif status == 'running':
+        while True:
+            status = self.get_status(db)
+            if time.time() - start > timeout:
+                logging.error(f'Job {self.job_id} timed out')
+                break
+            if status['phase'] == 'uninitialized':
+                logging.info(f'Job {self.job_id} is uninitialized')
+            elif status['phase'] == 'running':
                 logging.info(f'Job {self.job_id} is running')
             else:
                 break
-
             time.sleep(heartbeat)
 
         logging.info(f'Job {self.job_id} finished with status: {status}')
+        if status['phase'] == 'failed':
+            raise Exception(f'Job {self.job_id} failed: {status}')
         return status
 
     @property
@@ -147,7 +159,6 @@ class Job(Base):
             )
             raise e
         logging.info(f'Running job {self.huuid}... DONE')
-        logging.info('Updating job status')
         db.metadata.set_job_status(
             self.job_id,
             {"phase": "success", "reason": "job succeeded"},
@@ -554,9 +565,10 @@ class MetaDataStore:
                     parent[0],
                     parent[1],
                     {
+                        'phase': 'failed',
                         'children': {
                             f'{component}/{r["identifier"]}/{uuid}': status,
-                        }
+                        },
                     },
                 )
 

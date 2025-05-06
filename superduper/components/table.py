@@ -58,8 +58,8 @@ class Table(Component):
 
         try:
             self.db.metadata.create_table_and_schema(
-                self.identifier, 
-                schema=self.schema, 
+                self.identifier,
+                schema=self.schema,
                 primary_id=self.primary_id,
                 is_component=self.is_component,
             )

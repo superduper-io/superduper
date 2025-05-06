@@ -1,8 +1,8 @@
+import time
 import typing as t
 from collections import namedtuple
 
 import click
-import pandas
 
 import superduper as s
 from superduper import CFG, logging
@@ -117,6 +117,61 @@ class Datalayer:
 
         self.databackend.drop(force=True)
         self.artifact_store.drop(force=True)
+
+    def wait(
+        self,
+        component: str,
+        identifier: str | None = None,
+        uuid: str | None = None,
+        heartbeat: float = 1.0,
+        timeout: int = 30,
+    ):
+        """
+        Wait for a component to be ready.
+
+        :param component: Component to wait for.
+        :param identifier: Identifier of the component.
+        :param uuid: UUID of the component (optional).
+        :param heartbeat: Time to refresh status.
+        :param timeout: Time to timeout of operation.
+        """
+        start = time.time()
+        while True:
+            try:
+                if uuid is None:
+                    assert isinstance(identifier, str)
+                    r = self.metadata.get_component(
+                        component=component,
+                        identifier=identifier,
+                    )
+                else:
+                    assert isinstance(uuid, str)
+                    r = self.metadata.get_component_by_uuid(
+                        component=component,
+                        uuid=uuid,
+                    )
+                if r['status']['phase'] == 'ready':
+                    logging.info(f"{component}:{identifier} is ready")
+                    break
+                elif r['status']['phase'] == 'failed':
+                    logging.info(
+                        f"{component}:{identifier} failed with status {r['status']}"
+                    )
+                    raise Exception(
+                        f"{component}:{identifier} failed with status {r['status']};"
+                    )
+                else:
+                    logging.info(
+                        f"{component}:{identifier} is not ready yet with status "
+                        f"{r['status']}"
+                    )
+                    time.sleep(heartbeat)
+            except NonExistentMetadataError:
+                logging.info(f"Waiting for {component}:{identifier} to be ready...")
+                time.sleep(heartbeat)
+
+            if time.time() - start > timeout:
+                raise TimeoutError('Timed out waiting for component to be ready')
 
     def show(
         self,

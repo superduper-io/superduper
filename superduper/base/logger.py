@@ -11,6 +11,24 @@ from superduper.base.configs import CFG
 
 __all__ = ('Logging',)
 
+PROJECT_ROOT = os.getcwd()
+
+
+def patcher(record):
+    """Patch the logger to add the relative path of the file.
+
+    :param record: The log record.
+    """
+    abs_path = record["file"].path
+    if abs_path.startswith(PROJECT_ROOT):
+        rel_path = os.path.relpath(abs_path, PROJECT_ROOT)
+    else:
+        rel_path = os.path.basename(abs_path)
+    record["extra"]["relpath"] = rel_path
+
+
+logger = logger.patch(patcher)
+
 
 class Logging:
     """Logging class to handle logging for the superduper.io # noqa."""
@@ -42,15 +60,22 @@ class Logging:
             fmt = (
                 "<green>{time:YYYY-MMM-DD HH:mm:ss.SS}</green>"
                 "| <level>{level: <8}</level> "
-                "| <cyan>{extra[hostname]: <8}</cyan>"
-                "| <cyan>{file.path}</cyan>:<cyan>{line}</cyan>"
+                "{hostname}"
+                "| <cyan>{extra[relpath]}</cyan>:<cyan>{line}</cyan>"
                 "| <level>{message}</level>"
             )
+            if CFG.log_hostname:
+                fmt = fmt.replace(
+                    "{hostname}",
+                    "| <cyan>{extra[hostname]: <8}</cyan>",
+                )
+            else:
+                fmt = fmt.replace("{hostname}", "")
         else:
             fmt = (
                 "{time:YYYY-MMM-DD HH:mm:ss.SS}"
                 "| {level: <8} "
-                "| {file.path}:{line} "
+                "| {extra[relpath]}:{line} "
                 "| {message}"
             )
         # DEBUG until WARNING are sent to stdout.

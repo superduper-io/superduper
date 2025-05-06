@@ -146,6 +146,7 @@ class Config(BaseConfig):
     :param downloads: Settings for downloading files
     :param log_level: The severity level of the logs
     :param logging_type: The type of logging to use
+    :param log_hostname: Whether to include the hostname in the logs
     :param force_apply: Whether to force apply the configuration
     :param datatype_presets: Presets to be applied for default types of data
     :param json_native: Whether the databackend supports json natively or not.
@@ -173,6 +174,7 @@ class Config(BaseConfig):
     log_level: LogLevel = LogLevel.INFO
     logging_type: LogType = LogType.SYSTEM
     log_colorize: bool = True
+    log_hostname: bool = True
     bytes_encoding: str = 'bytes'
 
     force_apply: bool = False

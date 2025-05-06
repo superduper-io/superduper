@@ -58,6 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix the snowflake plugin
 - Fix the bug where an empty variable was added to the vector.
 - Fix the primary_id of ArtifactRelations
+- Fix the snowflake and KeyedDatabackend
 
 ## [0.5.0](https://github.com/superduper-io/superduper/compare/0.5.0...0.4.0])    (2024-Nov-02)
 

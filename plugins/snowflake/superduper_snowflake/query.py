@@ -38,6 +38,18 @@ def map_superduper_query_to_snowpark_query(session, query, primary_id: str = 'id
             args = [f'"{a}"' for a in args]
 
             if args:
+                predict_ids = (
+                    query.decomposition.outputs.args
+                    if query.decomposition.outputs
+                    else []
+                )
+                args.extend(
+                    [
+                        f'"{CFG.output_prefix}{pid}"'
+                        for pid in predict_ids
+                        if f'"{CFG.output_prefix}{pid}"' not in args
+                    ]
+                )
                 q = q.select(*args)
 
             continue

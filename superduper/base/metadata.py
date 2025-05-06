@@ -63,7 +63,7 @@ class Job(Base):
     uuid: str
     args: t.List = dc.field(default_factory=list)
     kwargs: t.Dict = dc.field(default_factory=dict)
-    time: str = dc.field(default_factory=lambda: str(datetime.datetime.now))
+    time: str = dc.field(default_factory=lambda: str(datetime.datetime.now()))
     job_id: t.Optional[str] = dc.field(default_factory=lambda: str(uuid.uuid4()))
     method: str
     status: t.Dict = dc.field(default_factory=init_status)
@@ -239,6 +239,7 @@ class MetaDataStore:
     def __init__(self, db: 'Datalayer', parent_db: 'Datalayer'):
         self.db = db
         self.parent_db = parent_db
+        self._schema_cache: t.Dict[str, Schema] = {}
 
     def __getitem__(self, item: str):
         return self.db[item]
@@ -276,13 +277,18 @@ class MetaDataStore:
         self.create(Job)
 
     def create_table_and_schema(
-        self, identifier: str, schema: 'Schema', primary_id: str, is_component: bool,
+        self,
+        identifier: str,
+        schema: 'Schema',
+        primary_id: str,
+        is_component: bool,
     ):
         """Create a table and schema in the metadata store.
 
         :param identifier: table name
         :param schema: schema of the table
         :param primary_id: primary id of the table
+        :param is_component: whether the table is a component
         """
         if is_component:
             self.db.databackend.create_table_and_schema(
@@ -320,6 +326,9 @@ class MetaDataStore:
         if table in metaclasses:
             return metaclasses[table].class_schema
 
+        if table in self._schema_cache:
+            return self._schema_cache[table]
+
         r = self.get_component('Table', table)
         fields = r['fields']
 
@@ -328,7 +337,9 @@ class MetaDataStore:
             import json
 
             fields = json.loads(fields)
-        return Schema.build(**fields)
+        schema = Schema.build(**fields)
+        self._schema_cache[table] = schema
+        return schema
 
     def create(self, cls: t.Type[Base]):
         """

@@ -464,7 +464,9 @@ class KeyedDatabackend(BaseDataBackend):
         """
         raise NotImplementedError
 
-    def create_table_and_schema(self, identifier: str, schema: 'Schema', primary_id: str):
+    def create_table_and_schema(
+        self, identifier: str, schema: 'Schema', primary_id: str
+    ):
         """Create a schema in the data-backend.
 
         :param identifier: The identifier of the schema.
@@ -573,6 +575,9 @@ class KeyedDatabackend(BaseDataBackend):
             pid = r_table['primary_id']
             docs = self.get_many(table, condition[pid])
             docs = self._do_filter(docs, condition)
+            for s in docs:
+                r[pid] = s[pid]
+                self[table, s[pid]] = r
         else:
             if 'uuid' in condition:
                 s = self.get_many(table, '*', condition['uuid'])[0]
@@ -602,6 +607,9 @@ class KeyedDatabackend(BaseDataBackend):
             pid = r_table['primary_id']
             docs = self.get_many(table, condition[pid])
             docs = self._do_filter(docs, condition)
+            for s in docs:
+                s[key] = value
+                self[table, s[pid]] = s
         else:
             if 'uuid' in condition:
                 s = self.get_many(table, '*', condition['uuid'])[0]
@@ -693,7 +701,11 @@ class KeyedDatabackend(BaseDataBackend):
 
         :param query: The query to get the primary id of.
         """
-        r = max(self.get_many('Table', query.table, '*'), key=lambda x: x['version'])
+        r = max(
+            self.get_many('Table', query.table, '*'),
+            key=lambda x: x['version'],
+            default=None,
+        )
         if r is None:
             raise NonExistentMetadataError(f'Table "{query.table}" does not exist.')
         return r['primary_id']
@@ -705,17 +717,26 @@ class KeyedDatabackend(BaseDataBackend):
         :param documents: The documents to insert.
         """
         ids = []
-        if 'uuid' in documents[0]:
+        try:
+            pid = self.primary_id(self.db[table])
+        except NonExistentMetadataError:
+            pid = None
+
+        if ('uuid' == pid or not pid) and "uuid" in documents[0]:
             for r in documents:
                 self[table, r['identifier'], r['uuid']] = r
                 ids.append(r['uuid'])
-        else:
+        elif pid:
             pid = self.primary_id(self.db[table])
             for r in documents:
                 if pid not in r:
                     r[pid] = self.random_id()
                 self[table, r[pid]] = r
                 ids.append(r[pid])
+        else:
+            raise NonExistentMetadataError(
+                f'Table "{table}" does not exist or has no primary id.'
+            )
         return ids
 
     def select(self, query):
@@ -775,7 +796,7 @@ class KeyedDatabackend(BaseDataBackend):
         if not is_component:
             pid = self.primary_id(query)
             if pid in filter_kwargs:
-                keys = self.keys((query.table, filter_kwargs[pid]))
+                keys = self.keys(query.table, filter_kwargs[pid]['value'])
                 del filter_kwargs[pid]
             else:
                 keys = self.keys(query.table, '*')

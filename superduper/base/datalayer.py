@@ -150,20 +150,26 @@ class Datalayer:
                         component=component,
                         uuid=uuid,
                     )
-                if r['status']['phase'] == 'ready':
+                if not CFG.json_native:
+                    import json
+
+                    status = json.loads(r['status'])
+                else:
+                    status = r['status']
+                if status['phase'] == 'ready':
                     logging.info(f"{component}:{identifier} is ready")
                     break
-                elif r['status']['phase'] == 'failed':
+                elif status['phase'] == 'failed':
                     logging.info(
-                        f"{component}:{identifier} failed with status {r['status']}"
+                        f"{component}:{identifier} failed with status {status}"
                     )
                     raise Exception(
-                        f"{component}:{identifier} failed with status {r['status']};"
+                        f"{component}:{identifier} failed with status {status};"
                     )
                 else:
                     logging.info(
                         f"{component}:{identifier} is not ready yet with status "
-                        f"{r['status']}"
+                        f"{status}"
                     )
                     time.sleep(heartbeat)
             except NonExistentMetadataError:

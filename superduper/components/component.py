@@ -329,7 +329,7 @@ class Component(Base, metaclass=ComponentMeta):
         return triggers
 
     def propagate_failure(self, exc: Exception):
-        """Propagate the status of the component to its children.
+        """Propagate the status of the component to its parents.
 
         :param exc: The exception to propagate.
         """
@@ -341,7 +341,6 @@ class Component(Base, metaclass=ComponentMeta):
                 'reason': str(exc),
                 'message': format_exc(),
                 'last_change_time': str(datetime.now()),
-                'children': {},
             },
         )
 

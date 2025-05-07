@@ -334,7 +334,7 @@ def test_propagate_failure(db):
         method='predict',
     )
 
-    db.insert([job])
+    db.metadata.create_job(job.dict())
 
     db.metadata.set_job_status(
         job_id='my-job-id',

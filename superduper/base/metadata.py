@@ -14,9 +14,8 @@ from superduper.base.schema import Schema
 from superduper.components.cdc import CDC
 from superduper.components.component import Component, init_status
 from superduper.components.table import Table
-from superduper.misc.importing import import_object
-from superduper.misc.utils import merge_dicts
 from superduper.misc.importing import import_object, isreallyinstance
+from superduper.misc.utils import merge_dicts
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer

@@ -119,11 +119,11 @@ class Create(Base):
                         parent_uuid=component.uuid,
                     )
 
-        component.on_create()
-        logging.info(
-            f'Created {self.path.split("/")[-1]}:'
-            f'{self.data["identifier"]}:{self.data["uuid"]}'
-        )
+            component.on_create()
+            logging.info(
+                f'Created {self.path.split("/")[-1]}:'
+                f'{self.data["identifier"]}:{self.data["uuid"]}'
+            )
 
         except Exception as e:
             db.metadata.set_component_status(

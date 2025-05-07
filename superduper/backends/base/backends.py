@@ -25,12 +25,10 @@ class Bookkeeping(ABC):
 
         This method is executed when a cluster is initialized.
         """
-        components = self.db.load_all('Table')
-        for component in components:
-            if isreallyinstance(component, self.cls):
-                for identifier in self.db.show(component):
-                    component = self.db.load(component, identifier=identifier)
-                    self.put_component(component)
+        for info in self.db.show():
+            obj = self.db.load(**info)
+            if isreallyinstance(obj, self.cls):
+                self.put_component(obj)
 
     def build_tool(self, component: 'Component'):
         """Build a tool from a component.

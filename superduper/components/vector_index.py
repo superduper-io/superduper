@@ -240,6 +240,7 @@ class VectorIndex(CDC):
         )[0]
 
         return self.db.cluster.vector_search.find_nearest_from_array(
+            component=self.component,
             vector_index=self.identifier,
             h=h,
             n=n,

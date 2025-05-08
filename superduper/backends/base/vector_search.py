@@ -152,6 +152,7 @@ class BaseVectorSearcher(VectorSearcherInterface):
     :param identifier: Unique string identifier of index.
     :param dimensions: Number of dimensions of the vectors.
     :param measure: Measure type of the vectors.
+    :param component: Component class name.
     """
 
     native_service: t.ClassVar[bool] = True
@@ -162,6 +163,7 @@ class BaseVectorSearcher(VectorSearcherInterface):
         identifier: str,
         dimensions: int,
         measure: str,
+        component: str = 'VectorIndex',
     ):
         pass
 
@@ -180,7 +182,10 @@ class BaseVectorSearcher(VectorSearcherInterface):
         :param vi: ``VectorIndex`` instance
         """
         return cls(
-            identifier=index.uuid, dimensions=index.dimensions, measure=index.measure
+            component=index.component,
+            identifier=index.uuid,
+            dimensions=index.dimensions,
+            measure=index.measure,
         )
 
     @abstractmethod

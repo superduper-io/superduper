@@ -47,7 +47,7 @@ def test_vector_index(db: "Datalayer"):
     # TODO - this is not triggering the update of the component
     add_data(db, 100, 200)
 
-    assert len(db.cluster.vector_search[vector_index]) == 200
+    assert len(db.cluster.vector_search['VectorIndex', vector_index]) == 200
 
     out = table.like({"x": 150}, vector_index=vector_index, n=1).select().execute()
     result = out[0]

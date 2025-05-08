@@ -19,6 +19,14 @@ class DatabackendError(Exception):
     """
 
 
+class ComponentLifecycleError(Exception):
+    """Exception raised when a component lifecycle error occurs.
+
+    :param args: *args for Exception
+    :param kwargs: **kwargs for Exception
+    """
+
+
 class BaseException(Exception):
     """BaseException which logs a message after exception.
 

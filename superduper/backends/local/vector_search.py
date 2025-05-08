@@ -43,35 +43,45 @@ class LocalVectorSearchBackend(VectorSearchBackend):
 
     def initialize(self):
         """Initialize the vector search."""
-        try:
-            for identifier in self.db.show('VectorIndex'):
-                try:
-                    vector_index: VectorIndex = self.db.load(
-                        'VectorIndex', identifier=identifier
-                    )
-                    self.put_component(vector_index)
-                    vectors = vector_index.get_vectors()
-                    vectors = [VectorItem(**vector) for vector in vectors]
-                    self.get_tool(vector_index.uuid).add(vectors)
+        components = []
+        from superduper import VectorIndex
 
-                except FileNotFoundError:
-                    logging.error(
-                        f'Could not load vector index: {identifier} '
-                        'Is the artifact store correctly configured?'
-                    )
-                    continue
-                except TypeError as e:
-                    import traceback
+        for cls in self.db.show('Table'):
+            t = self.db.load('Table', identifier=cls)
+            if t.is_component and t.cls is not None:
+                if issubclass(t.cls, VectorIndex):
+                    components.append(t.identifier)
+        for component in components:
+            try:
+                for identifier in self.db.show(component):
+                    try:
+                        vector_index = self.db.load(component, identifier=identifier)
+                        self.put_component(vector_index)
+                        vectors = vector_index.get_vectors()
+                        vectors = [VectorItem(**vector) for vector in vectors]
+                        self.get_tool(vector_index.uuid).add(vectors)
 
-                    logging.error(f'Could not load vector index: {identifier} ' f'{e}')
-                    logging.error(traceback.format_exc())
-                    continue
-        except NonExistentMetadataError:
-            pass
+                    except FileNotFoundError:
+                        logging.error(
+                            f'Could not load vector index: {identifier} '
+                            'Is the artifact store correctly configured?'
+                        )
+                        continue
+                    except TypeError as e:
+                        import traceback
+
+                        logging.error(
+                            f'Could not load vector index: {identifier} ' f'{e}'
+                        )
+                        logging.error(traceback.format_exc())
+                        continue
+            except NonExistentMetadataError:
+                pass
 
     def find_nearest_from_array(
         self,
         h: numpy.typing.ArrayLike,
+        component: str,
         vector_index: str,
         n: int = 100,
         within_ids: t.Sequence[str] = (),
@@ -84,11 +94,14 @@ class LocalVectorSearchBackend(VectorSearchBackend):
         :param n: number of nearest vectors to return
         :param within_ids: list of ids to search within
         """
-        return self[vector_index].find_nearest_from_array(h, n=n, within_ids=within_ids)
+        return self[component, vector_index].find_nearest_from_array(
+            h, n=n, within_ids=within_ids
+        )
 
     def find_nearest_from_id(
         self,
         id: str,
+        component: str,
         vector_index: str,
         n: int = 100,
         within_ids: t.Sequence[str] = (),
@@ -101,10 +114,12 @@ class LocalVectorSearchBackend(VectorSearchBackend):
         :param n: number of nearest vectors to return
         :param within_ids: list of ids to search within
         """
-        return self[vector_index].find_nearest_from_id(id, n=n, within_ids=within_ids)
+        return self[component, vector_index].find_nearest_from_id(
+            id, n=n, within_ids=within_ids
+        )
 
-    def __getitem__(self, identifier):
-        c = self.db.load('VectorIndex', identifier=identifier)
+    def __getitem__(self, item):
+        c = self.db.load(*item)
         if c.uuid not in self.uuid_tool_mapping:
             self.put_component(c)
         return self.get_tool(c.uuid)
@@ -124,9 +139,11 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
         identifier: str,
         dimensions: int,
         measure: str = 'cosine',
+        component: str = 'VectorIndex',
     ):
         self.identifier = identifier
         self.dimensions = dimensions
+        self.component = component
 
         self._cache: t.Sequence[VectorItem] = []
         self._CACHE_SIZE = 10000
@@ -215,7 +232,7 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
 
         :param vector_index: Vector index to initialize
         """
-        c: VectorIndex = self.db.load('VectorIndex', uuid=self.identifier)
+        c: VectorIndex = self.db.load(self.component, uuid=self.identifier)
         vectors = c.get_vectors()
         vectors = [
             VectorItem(id=vector['id'], vector=vector['vector']) for vector in vectors

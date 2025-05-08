@@ -163,7 +163,7 @@ class Datalayer:
                     logging.info(
                         f"{component}:{identifier} failed with status {status}"
                     )
-                    raise Exception(
+                    raise exceptions.ComponentLifecycleError(
                         f"{component}:{identifier} failed with status {status};"
                     )
                 else:

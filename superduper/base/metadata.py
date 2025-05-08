@@ -859,12 +859,12 @@ class MetaDataStore:
 
         metadata = self.db['Table'].get(identifier=component)
         r = self.db[component].get(identifier=identifier, version=version, raw=True)
-        r['_path'] = metadata['path']
 
         if r is None:
             raise NonExistentMetadataError(
                 f'Object {identifier} does not exist in metadata for {component}'
             )
+        r['_path'] = metadata['path']
 
         return r
 

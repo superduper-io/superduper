@@ -70,7 +70,10 @@ def map_superduper_query_to_snowpark_query(session, query, primary_id: str = 'id
                         session, v, primary_id
                     )
 
-            q = getattr(q, part.name)(*args, **kwargs)
+            condition = args[0]
+            for next_condition in args[1:]:
+                condition = condition & next_condition
+            q = getattr(q, part.name)(condition, **kwargs)
 
             continue
 

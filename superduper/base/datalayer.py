@@ -279,7 +279,7 @@ class Datalayer:
             return self.metadata.create(type(items[0]))
 
     def _post_query(self, table: str, ids: t.Sequence[str], type_: str):
-        if table in metaclasses:
+        if table in metaclasses or self.metadata.is_component(table):
             return
         if table in self.metadata.show_cdc_tables() and not table.startswith(
             CFG.output_prefix

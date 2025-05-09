@@ -368,7 +368,9 @@ class Datalayer:
         )
 
         if failed and not force:
-            raise exceptions.Conflict(component, identifier, f"the following components are in use: {failed}")
+            raise exceptions.Conflict(
+                component, identifier, f"the following components are in use: {failed}"
+            )
 
         for i, e in enumerate(events):
             logging.info(

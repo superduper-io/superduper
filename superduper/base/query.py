@@ -306,9 +306,10 @@ def insert(self: 'Query', documents, raw: bool = False):
         _ = self.db.load('Table', self.table)
     except exceptions.NotFound as e:
         raise exceptions.InternalServerError(
+            e,
             f'You tried to insert into a table that does not exist: {self.table}. '
-            f'To generate inline use `db.insert` instead.'
-        ) from e
+            f'To generate inline use `db.insert` instead.',
+        )
 
     out = self.db.databackend._do_insert(self.table, documents, raw=raw)
     self.db._post_query(self.table, ids=out, type_='insert')

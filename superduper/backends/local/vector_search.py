@@ -9,6 +9,7 @@ from superduper.backends.base.vector_search import (
     VectorSearchBackend,
     measures,
 )
+from superduper.base import exceptions
 
 if t.TYPE_CHECKING:
     from superduper import VectorIndex

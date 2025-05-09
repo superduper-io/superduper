@@ -706,7 +706,7 @@ class KeyedDatabackend(BaseDataBackend):
             default=None,
         )
         if r is None:
-            raise  exceptions.NotFound("Table", query.table)
+            raise exceptions.NotFound("Table", query.table)
         return r['primary_id']
 
     def insert(self, table, documents):

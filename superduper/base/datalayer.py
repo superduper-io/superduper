@@ -20,6 +20,7 @@ from superduper.base.metadata import (
     JOB_PHASE_FAILED,
     JOB_PHASE_RUNNING,
     MetaDataStore,
+    metaclasses,
 )
 from superduper.base.query import Query
 from superduper.components.component import Component
@@ -68,13 +69,14 @@ class Datalayer:
         self._cfg = s.CFG
         self.startup_cache: t.Dict[str, t.Any] = {}
         self._component_cache: t.Dict[t.Tuple[str, str], Component] = {}
+        self._uuid_component_cache: t.Dict[str, Component] = {}
 
         if metadata:
             self.metadata = MetaDataStore(metadata, parent_db=self)  # type: ignore[arg-type]
         else:
             self.metadata = MetaDataStore(self, parent_db=self)
-        self.metadata.init()
 
+        self.metadata.init()
         logging.info("Data Layer built")
 
     def __getitem__(self, item):
@@ -277,6 +279,8 @@ class Datalayer:
             return self.metadata.create(type(items[0]))
 
     def _post_query(self, table: str, ids: t.Sequence[str], type_: str):
+        if table in metaclasses:
+            return
         if table in self.metadata.show_cdc_tables() and not table.startswith(
             CFG.output_prefix
         ):
@@ -508,12 +512,18 @@ class Datalayer:
                         f'Found {component, identifier} '
                         'in cache but UUID does not match...'
                     )
+                    del self._uuid_component_cache[
+                        self._component_cache[(component, identifier)].uuid
+                    ]
                     del self._component_cache[(component, identifier)]
 
         if huuid is not None:
             uuid = huuid.split(':')[-1]
 
         if uuid is not None:
+            if uuid in self._uuid_component_cache and component_cache:
+                logging.debug(f'Found {component, uuid} in cache...')
+                return self._uuid_component_cache[uuid]
             info = self.metadata.get_component_by_uuid(
                 component=component,
                 uuid=uuid,
@@ -550,6 +560,7 @@ class Datalayer:
 
         if getattr(c, 'component_cache', False):
             self._component_cache[(c.component, c.identifier)] = c
+            self._uuid_component_cache[c.uuid] = c
         return c
 
     def _save_artifact(self, info: t.Dict):

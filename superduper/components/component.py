@@ -17,35 +17,15 @@ from superduper import logging
 from superduper.base.annotations import trigger
 from superduper.base.base import Base, BaseMeta
 from superduper.base.constant import KEY_BLOBS, KEY_FILES, LENGTH_UUID
+from superduper.base.status import init_status, JOB_PHASE_PENDING, JOB_PHASE_FAILED, running_status, JOB_PHASE_RUNNING
 from superduper.misc.annotations import lazy_classproperty
 from superduper.misc.importing import isreallyinstance
 from superduper.misc.utils import hash_item
 
+
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
     from superduper.base.metadata import Job
-
-
-def init_status():
-    """Initialize the status of the component."""
-    return {
-        'phase': 'uninitialized',
-        'reason': 'waiting for initialization',
-        'message': None,
-        'last_change_time': str(datetime.now()),
-        'children': {},
-    }
-
-
-def ready_status():
-    """The status of the component as ready."""
-    return {
-        'phase': 'ready',
-        'reason': 'the component is ready to use',
-        'message': None,
-        'last_change_time': str(datetime.now()),
-        'children': {},
-    }
 
 
 def _build_info_from_path(path: str):
@@ -261,7 +241,7 @@ class Component(Base, metaclass=ComponentMeta):
             if isinstance(r, list):
                 return sum([_find_refs(x) for x in r], [])
             if isinstance(r, Component):
-                if only_initializing and r.status.phase != 'initializing':
+                if only_initializing and r.status.phase != JOB_PHASE_PENDING:
                     return []
                 else:
                     return [r.huuid]
@@ -337,7 +317,7 @@ class Component(Base, metaclass=ComponentMeta):
             component=self.component,
             uuid=self.uuid,
             status_update={
-                'phase': 'failed',
+                'phase': JOB_PHASE_FAILED,
                 'reason': str(exc),
                 'message': format_exc(),
                 'last_change_time': str(datetime.now()),
@@ -351,7 +331,7 @@ class Component(Base, metaclass=ComponentMeta):
         :param status: The status to set the component to.
         """
         return self.db.metadata.set_component_status(
-            self.__class__.__name__, self.uuid, status_update=ready_status()
+            self.__class__.__name__, self.uuid, status_update=running_status()
         )
 
     def create_jobs(
@@ -412,12 +392,12 @@ class Component(Base, metaclass=ComponentMeta):
                         class_name = r['_path'].split('.')[-1]
                         huuid = f'{class_name}:{r["identifier"]}:{r["uuid"]}'
                         if event_type == 'apply':
-                            if r['status'] == 'initializing':
+                            if r['status'] == JOB_PHASE_PENDING:
                                 raise Exception(
                                     f'Component required component '
                                     f'{huuid} still initializing'
                                 )
-                            elif r['status'] == 'ready':
+                            elif r['status'] == JOB_PHASE_RUNNING:
                                 logging.info(
                                     f'Detected a ready component ' f'dependency {huuid}'
                                 )

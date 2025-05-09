@@ -18,6 +18,8 @@ from superduper.base.document import Document
 from superduper.base.event import Delete
 from superduper.base.metadata import (
     MetaDataStore,
+    NonExistentMetadataError,
+    UniqueConstraintError, JOB_PHASE_RUNNING, JOB_PHASE_FAILED,
 )
 from superduper.base.query import Query
 from superduper.components.component import Component
@@ -172,10 +174,10 @@ class Datalayer:
                     status = json.loads(status)
 
                 # Check component phase
-                if status['phase'] == "ready":
+                if status['phase'] == JOB_PHASE_RUNNING:
                     logging.info(f"{component}:{identifier} is running")
                     return
-                elif status['phase'] == "failed":
+                elif status['phase'] == JOB_PHASE_FAILED:
 
                     err_msg = f"{component_id} failed with status {status}"
                     raise exceptions.InternalServerError(err_msg, None)
@@ -189,7 +191,7 @@ class Datalayer:
 
             # Check for timeout
             if time.time() - start > timeout:
-                raise TimeoutError('Timed out waiting for component to be ready')
+                raise TimeoutError(f'Timed out waiting for component to become {JOB_PHASE_RUNNING}')
 
             time.sleep(heartbeat)
 

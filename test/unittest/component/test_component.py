@@ -14,7 +14,7 @@ from superduper.base.datatype import (
     _Artifact,
     dill_serializer,
 )
-from superduper.base.metadata import Job
+from superduper.base.metadata import Job, JOB_PHASE_FAILED
 from superduper.components.component import Component
 from superduper.components.listener import Listener
 
@@ -318,8 +318,8 @@ def test_propagate_failure(db):
     status_model = db.load('ObjectModel', 'model').status
     status_listener = db.load('Listener', 'test').status
 
-    assert status_model['phase'] == 'failed'
-    assert status_listener['phase'] == 'failed'
+    assert status_model['phase'] == JOB_PHASE_FAILED
+    assert status_listener['phase'] == JOB_PHASE_FAILED
     import datetime
 
     job = Job(
@@ -338,12 +338,12 @@ def test_propagate_failure(db):
 
     db.metadata.set_job_status(
         job_id='my-job-id',
-        status_update={'phase': 'failed', 'reason': 'Test exception'},
+        status_update={'phase': JOB_PHASE_FAILED, 'reason': 'Test exception'},
     )
 
     j = db['Job'].get(job_id='my-job-id')
 
-    assert j['status']['phase'] == 'failed'
+    assert j['status']['phase'] == JOB_PHASE_FAILED
     assert j['status']['reason'] == 'Test exception'
 
     list = db.load('Listener', 'test')

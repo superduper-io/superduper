@@ -6,6 +6,7 @@ import pandas
 
 from superduper import logging
 from superduper.base import Base
+from superduper.base.metadata import JOB_PHASE_FAILED
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
@@ -130,7 +131,7 @@ class Create(Base):
                 component=self.component,
                 uuid=self.data['uuid'],
                 status_update={
-                    'phase': 'failed',
+                    'phase': JOB_PHASE_FAILED,
                     'reason': f'Failed to create: {str(e)}',
                     'message': format_exc(),
                 },
@@ -201,7 +202,7 @@ class Delete(Base):
                 component=self.component,
                 uuid=self.identifier,
                 status_update={
-                    'phase': 'failed',
+                    'phase': JOB_PHASE_FAILED,
                     'reason': f'Failed to delete: {str(e)}',
                     'message': format_exc(),
                 },
@@ -250,7 +251,7 @@ class Update(Base):
                 component=self.component,
                 uuid=self.data['uuid'],
                 status_update={
-                    'phase': 'failed',
+                    'phase': JOB_PHASE_FAILED,
                     'reason': f'Failed to update: {str(e)}',
                     'message': format_exc(),
                 },

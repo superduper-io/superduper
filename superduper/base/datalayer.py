@@ -553,9 +553,10 @@ class Datalayer:
                 'Must provide either `uuid` or `component` and `identifier`'
             )
 
-        if getattr(c, 'component_cache', False):
-            self._component_cache[(c.component, c.identifier)] = c
-            self._uuid_component_cache[c.uuid] = c
+        # TODO: Need to discuss this
+        # if getattr(c, 'component_cache', False):
+        self._component_cache[(c.component, c.identifier)] = c
+        self._uuid_component_cache[c.uuid] = c
         return c
 
     def _save_artifact(self, info: t.Dict):

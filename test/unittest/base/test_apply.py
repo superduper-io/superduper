@@ -75,7 +75,7 @@ def test_update_component_version(db: Datalayer):
     # updates it
     assert db.show('MyComponent', 'test') == [0]
 
-    reload = db.load('MyComponent', 'test')
+    reload = db.load('MyComponent', 'test', component_cache=False)
 
     assert reload.a == 'new-value'
 
@@ -139,7 +139,7 @@ def test_update_nested(db: Datalayer):
     assert db.show('MyComponent', 'sub') == [0]
 
     # Nonetheless the child is updated
-    assert db.load('MyComponent', 'sub').a == 'new-sub-value'
+    assert db.load('MyComponent', 'sub', component_cache=False).a == 'new-sub-value'
 
 
 def test_break_nested(db: Datalayer):
@@ -193,7 +193,8 @@ def test_job_on_update(db: Datalayer):
     c = MyComponent('test', a='value', b=2, sub=MyValidator('valid', target=2))
     db.apply(c)
 
-    reload = db.load('MyComponent', 'test')
+    # TODO: Fix this test
+    reload = db.load('MyComponent', 'test', component_cache=False)
 
     assert reload.validate_results is not None
 

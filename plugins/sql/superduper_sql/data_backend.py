@@ -169,7 +169,7 @@ class IbisDataBackend(BaseDataBackend):
                 )
                 time.sleep(1)
 
-            raise exceptions.TableNotFoundError(f"Failed to create table {table_name}")
+            raise exceptions.NotFound("table", table_name)
 
     def drop(self, force: bool = False):
         """Drop tables or collections in the database.
@@ -194,9 +194,7 @@ class IbisDataBackend(BaseDataBackend):
             try:
                 return conn.table(identifier)
             except ibis.common.exceptions.IbisError:
-                raise exceptions.TableNotFoundError(
-                    f"Table {identifier} not found in database"
-                )
+                raise exceptions.NotFound("table", identifier)
 
     def disconnect(self):
         """Disconnect the client."""
@@ -268,10 +266,10 @@ class IbisDataBackend(BaseDataBackend):
     def _build_native_query(self, conn, query):
         try:
             q = conn.table(query.table)
-        except ibis.IbisError as e:
-            if "not found" in str(e):
-                raise exceptions.DatabackendError(f"Table {query.table} not found")
-            raise e
+        except TableNotFound:
+            raise exceptions.NotFound("table", query.table)
+
+
         pid = None
         predict_ids = (
             query.decomposition.outputs.args if query.decomposition.outputs else []

@@ -17,8 +17,6 @@ from superduper.base.document import Document
 from superduper.base.event import Delete
 from superduper.base.metadata import (
     MetaDataStore,
-    NonExistentMetadataError,
-    UniqueConstraintError,
 )
 from superduper.base.query import Query
 from superduper.components.component import Component
@@ -186,7 +184,7 @@ class Datalayer:
                         f"{status}"
                     )
                     time.sleep(heartbeat)
-            except NonExistentMetadataError:
+            except exceptions.NotFound:
                 logging.info(f"Waiting for {component}:{identifier} to be ready...")
                 time.sleep(heartbeat)
 
@@ -229,7 +227,7 @@ class Datalayer:
                 out = self.metadata.show_components(
                     component=component,
                 )
-            except NonExistentMetadataError:
+            except exceptions.NotFound:
                 return []
             return sorted(out)
 
@@ -241,7 +239,7 @@ class Datalayer:
                     )
                 )
                 return out
-            except NonExistentMetadataError:
+            except exceptions.NotFound:
                 return []
 
         if version == -1:
@@ -265,7 +263,7 @@ class Datalayer:
         try:
             table = self.load('Table', table)
             return table
-        except NonExistentMetadataError:
+        except exceptions.NotFound:
             assert isreallyinstance(items[0], Base)
             return self.metadata.create(type(items[0]))
 
@@ -319,7 +317,7 @@ class Datalayer:
         """
         try:
             self.metadata.create(object)
-        except UniqueConstraintError:
+        except exceptions.AlreadyExists:
             logging.debug(f'{object} already exists, skipping...')
 
     def apply(
@@ -370,11 +368,7 @@ class Datalayer:
         )
 
         if failed and not force:
-            raise exceptions.ComponentInUseError(
-                f'Failed to remove {component}:{identifier} because the'
-                ' following components are in use:\n'
-                '\n'.join(failed) + '\n'
-            )
+            raise exceptions.Conflict(component, identifier, f"the following components are in use: {failed}")
 
         for i, e in enumerate(events):
             logging.info(
@@ -446,7 +440,7 @@ class Datalayer:
                         break
                 if applies:
                     out.append(c)
-            except NonExistentMetadataError:
+            except exceptions.NotFound:
                 continue
         return out
 

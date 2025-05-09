@@ -6,9 +6,9 @@ import click
 from rich.console import Console
 
 from superduper import CFG, Component, logging
+from superduper.base import exceptions
 from superduper.base.document import Document
 from superduper.base.event import Create, Signal, Update
-from superduper.base.metadata import NonExistentMetadataError
 from superduper.components.component import ready_status
 from superduper.misc.tree import dict_to_tree
 
@@ -153,7 +153,7 @@ def _wait_on_events(db, events):
             version = event.data['version']
             try:
                 db.load(component=component, identifier=identifier, version=version)
-            except NonExistentMetadataError:
+            except exceptions.NotFound:
                 pass
             else:
                 remaining -= 1
@@ -225,7 +225,7 @@ def _apply(
             apply_status = 'breaking'
             assert current.version is not None
             object.version = current.version + 1
-    except NonExistentMetadataError:
+    except exceptions.NotFound:
         apply_status = 'new'
         object.version = 0
 

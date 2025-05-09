@@ -4,9 +4,7 @@ import numpy as np
 
 from superduper.base.datalayer import Datalayer
 from superduper.base.datatype import Array
-
 # ruff: noqa: E402
-from superduper.base.metadata import NonExistentMetadataError
 from superduper.components.dataset import Dataset
 from superduper.components.listener import Listener
 from superduper.components.model import ObjectModel
@@ -136,7 +134,7 @@ def add_vector_index(
     try:
         i_list = db.load("Listener", "vector-x")
         c_list = db.load("Listener", "vector-y")
-    except NonExistentMetadataError:
+    except exceptions.NotFound:
         i_list, c_list, _ = add_listeners(db)
 
         db.apply(i_list)

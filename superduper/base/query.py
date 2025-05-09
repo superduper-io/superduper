@@ -303,14 +303,15 @@ def insert(self: 'Query', documents, raw: bool = False):
 
     # noqa
     """
-    try:
-        _ = self.db.load('Table', self.table)
-    except NonExistentMetadataError as e:
-        raise NonExistentMetadataError(
-            f'You tried to insert into a table that does not exist: {self.table}. '
-            f'To generate inline use `db.insert` instead.'
-        ) from e
-
+    # This is where the performance bottleneck occurs.
+    # try:
+    #     _ = self.db.load('Table', self.table)
+    # except NonExistentMetadataError as e:
+    #     raise NonExistentMetadataError(
+    #         f'You tried to insert into a table that does not exist: {self.table}. '
+    #         f'To generate inline use `db.insert` instead.'
+    #     ) from e
+    #
     out = self.db.databackend._do_insert(self.table, documents, raw=raw)
     self.db._post_query(self.table, ids=out, type_='insert')
     return out

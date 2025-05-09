@@ -2,8 +2,10 @@ import random
 
 import numpy as np
 
+from superduper.base import exceptions
 from superduper.base.datalayer import Datalayer
 from superduper.base.datatype import Array
+
 # ruff: noqa: E402
 from superduper.components.dataset import Dataset
 from superduper.components.listener import Listener

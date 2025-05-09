@@ -269,7 +269,6 @@ class IbisDataBackend(BaseDataBackend):
         except TableNotFound:
             raise exceptions.NotFound("table", query.table)
 
-
         pid = None
         predict_ids = (
             query.decomposition.outputs.args if query.decomposition.outputs else []

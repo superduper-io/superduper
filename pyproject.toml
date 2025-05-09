@@ -139,6 +139,7 @@ ignore = [
   "D102",
   "E402",
   "F403",
+  "E501", # Line too long
   "F401", # Removing lines of code
 ]
 exclude = ["templates", "superduper/templates"]

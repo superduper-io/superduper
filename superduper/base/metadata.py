@@ -22,7 +22,6 @@ if t.TYPE_CHECKING:
     from superduper.components.component import Status
 
 
-
 class Job(Base):
     """Job table.
 
@@ -666,7 +665,6 @@ class MetaDataStore:
 
     def show_cdc_tables(self):
         """List the tables used for CDC."""
-
         metadata = self.db['Table'].execute()
 
         cdc_classes = []

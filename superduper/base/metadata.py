@@ -8,43 +8,19 @@ from traceback import format_exc
 import click
 
 from superduper import logging
+from superduper.base import exceptions
 from superduper.base.base import Base
-from superduper.base.exceptions import DatabackendError
 from superduper.base.schema import Schema
 from superduper.components.cdc import CDC
 from superduper.components.component import Component, init_status
 from superduper.components.table import Table
-from superduper.misc.importing import import_object, isreallyinstance
+from superduper.misc.importing import import_object
 from superduper.misc.utils import merge_dicts
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
     from superduper.components.component import Status
 
-
-class NonExistentMetadataError(Exception):
-    """Error to raise when a component type doesn't exist.
-
-    # noqa
-    """
-
-
-class UniqueConstraintError(Exception):
-    """Unique constraint error to raise when a component exists.
-
-    # noqa
-    """
-
-
-class Pending(Base):
-    """Pending table.
-
-    #noqa
-    """
-
-    component: str
-    identifier: str
-    status: t.Dict = dc.field(default_factory=init_status)
 
 
 class Job(Base):
@@ -253,7 +229,7 @@ class MetaDataStore:
 
         try:
             r = self.db['Table'].get(identifier='Table')
-        except NonExistentMetadataError:
+        except exceptions.NotFound:
             r = None
 
         if r is None:
@@ -350,7 +326,7 @@ class MetaDataStore:
             r = self.get_component('Table', cls.__name__)
             if r is not None:
                 return
-        except NonExistentMetadataError:
+        except exceptions.NotFound:
             pass
 
         pid = self.db.databackend.id_field
@@ -416,9 +392,10 @@ class MetaDataStore:
             msg = f'Component {component} with different path {path} already exists'
             r = self.get_component('Table', component)
             if r is None:
-                raise NonExistentMetadataError
+                raise exceptions.NotFound(component, path)
+
             assert r['path'] == path, msg
-        except NonExistentMetadataError:
+        except exceptions.NotFound:
             assert path is not None
             cls = import_object(path)
             self.create(cls)
@@ -689,7 +666,6 @@ class MetaDataStore:
 
     def show_cdc_tables(self):
         """List the tables used for CDC."""
-        from superduper.base.document import Document
 
         metadata = self.db['Table'].execute()
 
@@ -766,9 +742,8 @@ class MetaDataStore:
             .get()
         )
         if r is None:
-            raise NonExistentMetadataError(
-                f'{identifier} does not exist in metadata for {component}'
-            )
+            raise exceptions.NotFound(component, identifier)
+
         return r['uuid']
 
     def component_version_has_parents(
@@ -799,9 +774,7 @@ class MetaDataStore:
         versions = t.filter(t['identifier'] == identifier).distinct('version')
 
         if not versions:
-            raise NonExistentMetadataError(
-                f'{identifier} does not exist in metadata for {component}'
-            )
+            raise exceptions.NotFound(component, identifier)
         return max(versions)
 
     def get_component_by_uuid(self, component: str, uuid: str):
@@ -815,15 +788,13 @@ class MetaDataStore:
             r = self.db[component].get(uuid=uuid, raw=True)
 
         if r is None:
-            raise NonExistentMetadataError(
-                f'Object {uuid} does not exist in metadata for {component}'
-            )
+            raise exceptions.NotFound(component, uuid)
 
         # TODO replace database query with cache query
         metadata = self.db['Table'].get(identifier=component)
 
         if metadata is None:
-            raise NonExistentMetadataError(f'No such Table: {component}')
+            raise exceptions.NotFound(component, uuid)
 
         path = metadata['path']
         r['_path'] = path
@@ -861,9 +832,8 @@ class MetaDataStore:
         r = self.db[component].get(identifier=identifier, version=version, raw=True)
 
         if r is None:
-            raise NonExistentMetadataError(
-                f'Object {identifier} does not exist in metadata for {component}'
-            )
+            raise exceptions.NotFound(component, identifier)
+
         r['_path'] = metadata['path']
 
         return r

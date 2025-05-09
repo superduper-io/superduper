@@ -1,14 +1,13 @@
 import functools
 import hashlib
-import os
 import typing as t
 import uuid
 from abc import ABC, abstractmethod
 
 from superduper import CFG, logging
+from superduper.base import exceptions
 from superduper.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES
 from superduper.base.document import Document
-from superduper.base.metadata import NonExistentMetadataError
 from superduper.base.query import Query
 
 if t.TYPE_CHECKING:
@@ -707,7 +706,7 @@ class KeyedDatabackend(BaseDataBackend):
             default=None,
         )
         if r is None:
-            raise NonExistentMetadataError(f'Table "{query.table}" does not exist.')
+            raise  exceptions.NotFound("Table", query.table)
         return r['primary_id']
 
     def insert(self, table, documents):
@@ -719,7 +718,7 @@ class KeyedDatabackend(BaseDataBackend):
         ids = []
         try:
             pid = self.primary_id(self.db[table])
-        except NonExistentMetadataError:
+        except exceptions.NotFound:
             pid = None
 
         if ('uuid' == pid or not pid) and "uuid" in documents[0]:
@@ -734,9 +733,7 @@ class KeyedDatabackend(BaseDataBackend):
                 self[table, r[pid]] = r
                 ids.append(r[pid])
         else:
-            raise NonExistentMetadataError(
-                f'Table "{table}" does not exist or has no primary id.'
-            )
+            raise exceptions.NotFound("Table", table)
         return ids
 
     def select(self, query):
@@ -786,12 +783,11 @@ class KeyedDatabackend(BaseDataBackend):
                         return False
                 return True
 
-        try:
-            is_component = max(
-                self.get_many('Table', query.table, '*'), key=lambda x: x['version']
-            )['is_component']
-        except ValueError:
-            raise NonExistentMetadataError(f'Table "{query.table}" does not exist.')
+        tables = self.get_many('Table', query.table, '*')
+        if not tables:
+            raise exceptions.NotFound("Table", query.table)
+
+        is_component = max(tables, key=lambda x: x['version'])['is_component']
 
         if not is_component:
             pid = self.primary_id(query)

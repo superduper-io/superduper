@@ -17,12 +17,11 @@ import uuid
 from types import MethodType
 
 from superduper import CFG, logging
+from superduper.base import exceptions
 from superduper.base.base import Base
 from superduper.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES, KEY_PATH
 from superduper.base.datatype import BaseDataType
 from superduper.base.document import Document, _unpack
-from superduper.base.metadata import NonExistentMetadataError
-from superduper.base.schema import Schema
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
@@ -305,8 +304,8 @@ def insert(self: 'Query', documents, raw: bool = False):
     """
     try:
         _ = self.db.load('Table', self.table)
-    except NonExistentMetadataError as e:
-        raise NonExistentMetadataError(
+    except exceptions.NotFound as e:
+        raise exceptions.InternalServerError(
             f'You tried to insert into a table that does not exist: {self.table}. '
             f'To generate inline use `db.insert` instead.'
         ) from e

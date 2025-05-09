@@ -58,7 +58,7 @@ class _OpenAI(APIBaseModel):
 
         super().postinit()
 
-    @safe_retry(exceptions.MissingSecretsException, verbose=0)
+    @safe_retry(exceptions.NotFound, verbose=0)
     def setup(self):
         """Initialize the model.
 
@@ -70,16 +70,14 @@ class _OpenAI(APIBaseModel):
         if 'OPENAI_API_KEY' not in os.environ or (
             'api_key' not in self.client_kwargs.keys() and self.client_kwargs
         ):
-            raise exceptions.MissingSecretsException(
-                'OPENAI_API_KEY not available neither in environment vars '
-                'nor in `client_kwargs`'
-            )
+            raise exceptions.NotFound("secret", "OPENAI_API_KEY")
 
         if self.model not in (
             mo := _available_models(json.dumps(self.client_kwargs))
         ) and self.model not in ('dall-e'):
             msg = f'model {self.model} not in OpenAI available models, {mo}'
             raise ValueError(msg)
+
         self.syncClient = SyncOpenAI(**self.client_kwargs)
 
 

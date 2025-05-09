@@ -111,6 +111,7 @@ class Data(Component):
     """
 
     raw_data: t.Any
+    component_cache: t.ClassVar[bool] = True
 
     @property
     def data(self):

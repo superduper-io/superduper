@@ -29,6 +29,7 @@ class Table(Component):
     data: Component | None = None
     path: str | None = None
     is_component: bool = False
+    component_cache: t.ClassVar[bool] = True
 
     def postinit(self):
         """Post initialization method."""

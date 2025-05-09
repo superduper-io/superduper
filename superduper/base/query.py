@@ -968,7 +968,7 @@ class Query(_BaseQuery):
         :param raw: Whether to return raw results.
         """
         db = self.db
-        if self.table in db.metadata.db.databackend.list_tables():
+        if db.metadata.check_table_in_metadata(self.table):
             db = db.metadata.db
         if self.parts and self.parts[0] == 'primary_id':
             return db.databackend.primary_id(self.table)

@@ -2,7 +2,7 @@ import hashlib
 import json
 import os
 
-from superduper.base.exceptions import MissingSecretsException
+from superduper.base import exceptions
 
 
 class UpdatingSecretException(Exception):
@@ -21,7 +21,7 @@ def check_secret_updates(db):
     updating = []
     for k in lookup:
         if k not in os.environ:
-            raise MissingSecretsException(f'Secret {k} is missing')
+            raise exceptions.NotFound("secret", k)
 
         value = os.environ[k]
         target = hashlib.sha256(value.encode()).hexdigest()

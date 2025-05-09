@@ -3,14 +3,13 @@ import typing as t
 import numpy
 
 from superduper import logging
-from superduper.backends.base.backends import Bookkeeping
 from superduper.backends.base.vector_search import (
     BaseVectorSearcher,
     VectorItem,
     VectorSearchBackend,
     measures,
 )
-from superduper.base.metadata import NonExistentMetadataError
+from superduper.base import exceptions
 
 if t.TYPE_CHECKING:
     from superduper import VectorIndex
@@ -75,7 +74,7 @@ class LocalVectorSearchBackend(VectorSearchBackend):
                         )
                         logging.error(traceback.format_exc())
                         continue
-            except NonExistentMetadataError:
+            except exceptions.NotFound:
                 pass
 
     def find_nearest_from_array(

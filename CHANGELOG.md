@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Disable ability to remove components verion-by-version
 - Add load cache checking for latest `uuid`
 - Add temporary caching for db.load of components during apply.
+- Replace adhoc exceptions with well-defined counterparts
 
 #### New Features & Functionality
 

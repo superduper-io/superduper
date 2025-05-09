@@ -3,6 +3,7 @@ import datetime
 import time
 import typing as t
 import uuid
+from copy import deepcopy
 from traceback import format_exc
 
 import click
@@ -238,7 +239,7 @@ class MetaDataStore:
     def __init__(self, db: 'Datalayer', parent_db: 'Datalayer'):
         self.db = db
         self.parent_db = parent_db
-        self._schema_cache: t.Dict[str, Schema] = {}
+        self._registered_components: t.Dict[str, dict] = {}
 
     def __getitem__(self, item: str):
         return self.db[item]
@@ -274,6 +275,26 @@ class MetaDataStore:
         self.create(ParentChildAssociations)
         self.create(ArtifactRelations)
         self.create(Job)
+
+    def _get_component_class_info(self, component):
+        if component in self._registered_components:
+            return self._registered_components[component].copy()
+
+        info = self.get_component('Table', component)
+        if info:
+            self._registered_components[component] = info.copy()
+
+        return info
+
+    def check_table_in_metadata(self, table: str):
+        """Check if a table exists in the metadata store.
+
+        :param table: table name.
+        """
+        if table in metaclasses:
+            return True
+
+        return table in self.db.databackend.list_tables()
 
     def create_table_and_schema(
         self,
@@ -315,7 +336,7 @@ class MetaDataStore:
 
         :param table: table name.
         """
-        return self.get_component('Table', table)
+        return self._get_component_class_info(table).get('is_component', False)
 
     def get_schema(self, table: str):
         """Get the schema of a table.
@@ -325,10 +346,7 @@ class MetaDataStore:
         if table in metaclasses:
             return metaclasses[table].class_schema
 
-        if table in self._schema_cache:
-            return self._schema_cache[table]
-
-        r = self.get_component('Table', table)
+        r = self._get_component_class_info(table)
         fields = r['fields']
 
         # TODO this seems to be to do with json_native
@@ -337,7 +355,6 @@ class MetaDataStore:
 
             fields = json.loads(fields)
         schema = Schema.build(**fields)
-        self._schema_cache[table] = schema
         return schema
 
     def create(self, cls: t.Type[Base]):
@@ -347,7 +364,7 @@ class MetaDataStore:
         :param cls: class to create
         """
         try:
-            r = self.get_component('Table', cls.__name__)
+            r = self._get_component_class_info(cls.__name__)
             if r is not None:
                 return
         except NonExistentMetadataError:
@@ -414,7 +431,7 @@ class MetaDataStore:
 
         try:
             msg = f'Component {component} with different path {path} already exists'
-            r = self.get_component('Table', component)
+            r = self._get_component_class_info(component)
             if r is None:
                 raise NonExistentMetadataError
             assert r['path'] == path, msg
@@ -820,7 +837,7 @@ class MetaDataStore:
             )
 
         # TODO replace database query with cache query
-        metadata = self.db['Table'].get(identifier=component)
+        metadata = self._get_component_class_info(component)
 
         if metadata is None:
             raise NonExistentMetadataError(f'No such Table: {component}')

@@ -64,6 +64,7 @@ def apply(
     # This holds a record of the changes
     diff: t.Dict = {}
     # context allows us to track the origin of the component creation
+    logging.info(f'Applying component {object.huuid}')
     create_events, job_events = _apply(
         db=db,
         object=object,
@@ -72,8 +73,11 @@ def apply(
         global_diff=diff,
         non_breaking_changes={},
     )
+    logging.info(f'Found {len(create_events)} create events to apply')
+    logging.info(f'Found {len(job_events)} jobs to apply')
 
     if not jobs:
+        logging.info('Skipping job execution because of the --no-jobs flag')
         job_events = {}
 
     # this flags that the context is not needed anymore
@@ -175,12 +179,14 @@ def _apply(
     job_events: t.Dict[str, 'Job'] | None = None,
     parent: t.Optional[t.List] = None,
     global_diff: t.Dict | None = None,
+    processed_components: t.Optional[t.Set] = None,
 ):
 
+    processed_components = processed_components or set()
     if context is None:
         context = object.uuid
 
-    if job_events and any(x.startswith(object.huuid) for x in job_events):
+    if job_events and object.huuid in processed_components:
         return [], []
 
     if job_events is None:
@@ -205,6 +211,7 @@ def _apply(
             parent=[object.component, object.identifier, object.uuid],
             global_diff=global_diff,
             non_breaking_changes=non_breaking_changes,
+            processed_components=processed_components,
         )
 
         job_events.update(j)
@@ -318,4 +325,5 @@ def _apply(
 
     create_events[metadata_event.huuid] = metadata_event
     job_events.update({jj.huuid: jj for jj in these_job_events})
+    processed_components.add(object.huuid)
     return create_events, job_events

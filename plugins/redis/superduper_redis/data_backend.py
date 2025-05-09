@@ -35,8 +35,8 @@ class RedisDataBackend(KeyedDatabackend):
 
         :param pattern: Pattern to match the keys.
         """
-        matches = self.conn.keys('/'.join(pattern))
-        return [tuple(x.split('/')) for x in matches]
+        matches = self.conn.keys(':'.join(pattern))
+        return [tuple(x.split(':')) for x in matches]
 
     def reconnect(self):
         """Reconnect to the in-memory store."""
@@ -46,10 +46,10 @@ class RedisDataBackend(KeyedDatabackend):
         )
 
     def __delitem__(self, key):
-        self.conn.delete('/'.join(key))
+        self.conn.delete(':'.join(key))
 
     def __setitem__(self, key, value):
-        self.conn.set('/'.join(key), json.dumps(value))
+        self.conn.set(':'.join(key), json.dumps(value))
 
     def __getitem__(self, key):
-        return json.loads(self.conn.get('/'.join(key)))
+        return json.loads(self.conn.get(':'.join(key)))

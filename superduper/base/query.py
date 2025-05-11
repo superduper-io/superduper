@@ -302,15 +302,7 @@ def insert(self: 'Query', documents, raw: bool = False):
 
     # noqa
     """
-    try:
-        _ = self.db.load('Table', self.table)
-    except exceptions.NotFound as e:
-        raise exceptions.InternalServerError(
-            e,
-            f'You tried to insert into a table that does not exist: {self.table}. '
-            f'To generate inline use `db.insert` instead.',
-        )
-
+    # FIXME: Access to a protected member _do_insert of a class
     out = self.db.databackend._do_insert(self.table, documents, raw=raw)
     self.db._post_query(self.table, ids=out, type_='insert')
     return out
@@ -327,6 +319,8 @@ def update(self, condition: t.Dict, key: str, value: t.Any):
         if s[key].dtype == 'json' and not CFG.json_native:
             value = json.dumps(value)
     out = self.db.databackend.update(self.table, condition, key=key, value=value)
+
+    # FIXME: Access to a protected member _post_query of a class
     self.db._post_query(self.table, ids=out, type_='update')
     return out
 

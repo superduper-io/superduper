@@ -1,3 +1,4 @@
+import json
 import time
 import typing as t
 from collections import namedtuple
@@ -133,63 +134,64 @@ class Datalayer:
     def wait(
         self,
         component: str,
-        identifier: str | None = None,
+        identifier: str,
         uuid: str | None = None,
         heartbeat: float = 1.0,
         timeout: int = 30,
-    ):
+    ) -> None:
         """
         Wait for a component to be ready.
 
         :param component: Component to wait for.
         :param identifier: Identifier of the component.
         :param uuid: UUID of the component (optional).
-        :param heartbeat: Time to refresh status.
-        :param timeout: Time to timeout of operation.
+        :param heartbeat: Time between status checks in seconds
+        :param timeout: Maximum wait time in seconds
+
+        :raises TimeoutError: If the component doesn't become ready within the timeout period.
+        :raises InternalServerError: If the component enters a 'failed' state.
         """
         start = time.time()
+        component_id = f"{component}:{identifier}"
+
         while True:
             try:
-                if uuid is None:
-                    assert isinstance(identifier, str)
-                    r = self.metadata.get_component(
-                        component=component,
-                        identifier=identifier,
-                    )
-                else:
-                    assert isinstance(uuid, str)
+                # Get component based on uuid or identifier
+                if uuid:
                     r = self.metadata.get_component_by_uuid(
-                        component=component,
-                        uuid=uuid,
+                        component=component, uuid=uuid
                     )
+                else:
+                    r = self.metadata.get_component(
+                        component=component, identifier=identifier
+                    )
+
+                # Parse status
+                status = r['status']
                 if not CFG.json_native:
-                    import json
+                    status = json.loads(status)
 
-                    status = json.loads(r['status'])
-                else:
-                    status = r['status']
-                if status['phase'] == 'ready':
-                    logging.info(f"{component}:{identifier} is ready")
-                    break
-                elif status['phase'] == 'failed':
-                    logging.info(
-                        f"{component}:{identifier} failed with status {status}"
-                    )
-                    raise exceptions.ComponentLifecycleError(
-                        f"{component}:{identifier} failed with status {status};"
-                    )
+                # Check component phase
+                if status['phase'] == "ready":
+                    logging.info(f"{component}:{identifier} is running")
+                    return
+                elif status['phase'] == "failed":
+
+                    err_msg = f"{component_id} failed with status {status}"
+                    raise exceptions.InternalServerError(err_msg, None)
                 else:
                     logging.info(
-                        f"{component}:{identifier} is not ready yet with status "
-                        f"{status}"
+                        f"{component_id} is not ready yet with status {status}"
                     )
-                    time.sleep(heartbeat)
+
             except exceptions.NotFound:
-                logging.info(f"Waiting for {component}:{identifier} to be ready...")
-                time.sleep(heartbeat)
+                logging.info(f"Component {component_id} cannot be found. Retry...")
 
+            # Check for timeout
             if time.time() - start > timeout:
                 raise TimeoutError('Timed out waiting for component to be ready')
+
+            time.sleep(heartbeat)
 
     def show(
         self,

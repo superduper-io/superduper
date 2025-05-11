@@ -157,6 +157,12 @@ class Datalayer:
         component_id = f"{component}:{identifier}"
 
         while True:
+            # Check for timeout at the beginning of each iteration
+            if time.time() - start > timeout:
+                raise exceptions.TimeoutError(
+                    f'Timed out waiting for component to become {JOB_PHASE_RUNNING}.'
+                )
+
             try:
                 # Get component based on uuid or identifier
                 if uuid:
@@ -173,28 +179,26 @@ class Datalayer:
                 if not CFG.json_native:
                     status = json.loads(status)
 
-                # Check component phase
+                # Check the phase of the object
                 if status['phase'] == JOB_PHASE_RUNNING:
+                    # object is running. return immediately.
                     logging.info(f"{component}:{identifier} is running")
                     return
                 elif status['phase'] == JOB_PHASE_FAILED:
-
+                    # object has failed. throw an error.
                     err_msg = f"{component_id} failed with status {status}"
                     raise exceptions.InternalError(err_msg, None)
                 else:
+                    # object found, but has not reached desired state.
                     logging.info(
                         f"{component_id} is not ready yet with status {status}"
                     )
 
+            # Object not found
             except exceptions.NotFound:
                 logging.info(f"Component {component_id} cannot be found. Retry...")
 
-            # Check for timeout
-            if time.time() - start > timeout:
-                raise TimeoutError(
-                    f'Timed out waiting for component to become {JOB_PHASE_RUNNING}'
-                )
-
+            # Wait before checking again, regardless of exception or status
             time.sleep(heartbeat)
 
     def show(

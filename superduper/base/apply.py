@@ -9,7 +9,6 @@ from superduper import CFG, Component, logging
 from superduper.base import exceptions
 from superduper.base.document import Document
 from superduper.base.event import Create, Signal, Update
-from superduper.base.metadata import NonExistentMetadataError
 from superduper.components.component import running_status
 from superduper.misc.tree import dict_to_tree
 

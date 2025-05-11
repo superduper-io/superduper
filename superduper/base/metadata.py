@@ -12,8 +12,13 @@ from superduper import logging
 from superduper.base import exceptions
 from superduper.base.base import Base
 from superduper.base.schema import Schema
-from superduper.base.status import JOB_PHASE_UNINITIALIZED, JOB_PHASE_PENDING, JOB_PHASE_RUNNING, JOB_PHASE_FAILED, \
-    JOB_PHASE_SUCCESS
+from superduper.base.status import (
+    JOB_PHASE_FAILED,
+    JOB_PHASE_PENDING,
+    JOB_PHASE_RUNNING,
+    JOB_PHASE_SUCCESS,
+    JOB_PHASE_UNINITIALIZED,
+)
 from superduper.components.cdc import CDC
 from superduper.components.component import Component, init_status
 from superduper.components.table import Table
@@ -72,11 +77,17 @@ class Job(Base):
 
             # Check if timeout has been exceeded
             if elapsed_time > timeout:
-                if status['phase'] == JOB_PHASE_UNINITIALIZED or status['phase'] == JOB_PHASE_PENDING:
-                    raise Exception(
-                        f'Job {self.job_id} remained in {status["phase"]} state for more than {timeout} seconds')
+                if (
+                    status['phase'] == JOB_PHASE_UNINITIALIZED
+                    or status['phase'] == JOB_PHASE_PENDING
+                ):
+                    # FIXME: should we even raise an error in this case, or just abort the job ?
+                    err_msg = f'Job {self.job_id} remained in {status["phase"]} state for more than {timeout} seconds'
+                    raise exceptions.TimeoutError(err_msg)
                 else:
-                    raise Exception(f'Job {self.job_id} timed out after {timeout} seconds')
+                    # FIXME: should we even raise an error in this case, or just abort the job ?
+                    err_msg = f'Job {self.job_id} timed out after {timeout} seconds'
+                    raise exceptions.TimeoutError(err_msg)
 
             if status['phase'] == JOB_PHASE_UNINITIALIZED:
                 logging.info(f'Job {self.job_id} is uninitialized')
@@ -90,7 +101,9 @@ class Job(Base):
 
         logging.info(f'Job {self.job_id} finished with status: {status}')
         if status['phase'] == JOB_PHASE_FAILED:
-            raise Exception(f'Job {self.job_id} failed: {status}')
+            # FIXME: should we even raise an error in this case, or just abort the job ?
+            err_msg = f'Job {self.job_id} failed: {status}'
+            raise exceptions.InternalError(err_msg)
 
         return status
 
@@ -129,17 +142,18 @@ class Job(Base):
 
         :param db: Datalayer instance
         """
-
-        db.metadata.set_job_status(self.job_id,
-                                   {
-                                       "phase": JOB_PHASE_RUNNING,
-                                       "reason": "RANDOM DOKIMI",
-                                   },
-                                   )
+        db.metadata.set_job_status(
+            self.job_id,
+            {
+                "phase": JOB_PHASE_RUNNING,
+                "reason": "RANDOM DOKIMI",
+            },
+        )
 
         try:
             logging.info(f'Running job {self.job_id}')
-            db.metadata.set_job_status(self.job_id,
+            db.metadata.set_job_status(
+                self.job_id,
                 {
                     "phase": JOB_PHASE_RUNNING,
                     "reason": "job started",
@@ -152,8 +166,11 @@ class Job(Base):
             method = getattr(component, self.method)
             method(*self.args, **self.kwargs)
         except Exception as e:
-            logging.error(f'Error running job {self.huuid}: {e}. Traceback: {traceback.format_exc()}')
-            db.metadata.set_job_status(self.job_id,
+            logging.error(
+                f'Error running job {self.huuid}: {e}. Traceback: {traceback.format_exc()}'
+            )
+            db.metadata.set_job_status(
+                self.job_id,
                 {
                     "phase": JOB_PHASE_FAILED,
                     "reason": f"job failed: {str(e)}",
@@ -548,19 +565,24 @@ class MetaDataStore:
         status = merge_dicts(job['status'], status_update)
 
         children = status.get('children', {})
-        failed_children = [v for v in children.values() if v.get('phase') == JOB_PHASE_FAILED]
+        failed_children = [
+            v for v in children.values() if v.get('phase') == JOB_PHASE_FAILED
+        ]
 
         if failed_children:
             status['phase'] = JOB_PHASE_FAILED
             n_failed = len(failed_children)
-            status['reason'] = f"{n_failed} {'child' if n_failed == 1 else 'children'} failed"
+            status['reason'] = (
+                f"{n_failed} {'child' if n_failed == 1 else 'children'} failed"
+            )
 
         self.db['Job'].update({'job_id': job_id}, 'status', status)
 
         if status['phase'] == JOB_PHASE_FAILED:
             key = f"Job/{job['component']}/{job['identifier']}/{job['uuid']}.{job['method']}"
-            self.set_component_status(job['component'], job['uuid'], {'children': {key: status}})
-
+            self.set_component_status(
+                job['component'], job['uuid'], {'children': {key: status}}
+            )
 
     def set_component_status(self, component: str, uuid: str, status_update: t.Dict):
         """
@@ -574,11 +596,15 @@ class MetaDataStore:
         status = merge_dicts(r['status'], status_update)
 
         if status['children'] and any(
-                v['phase'] == JOB_PHASE_FAILED for v in status['children'].values()
+            v['phase'] == JOB_PHASE_FAILED for v in status['children'].values()
         ):
             status['phase'] = JOB_PHASE_FAILED
             n_failed = len(
-                [v for v in status['children'].values() if v['phase'] == JOB_PHASE_FAILED]
+                [
+                    v
+                    for v in status['children'].values()
+                    if v['phase'] == JOB_PHASE_FAILED
+                ]
             )
             status['reason'] = '{} {} failed'.format(
                 n_failed, 'child' if n_failed == 1 else 'children'
@@ -691,7 +717,6 @@ class MetaDataStore:
 
     def show_cdc_tables(self):
         """List the tables used for CDC."""
-
         metadata = self.db['Table'].execute()
 
         cdc_classes = []

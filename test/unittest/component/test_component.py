@@ -14,7 +14,7 @@ from superduper.base.datatype import (
     _Artifact,
     dill_serializer,
 )
-from superduper.base.metadata import Job, JOB_PHASE_FAILED
+from superduper.base.metadata import JOB_PHASE_FAILED, Job
 from superduper.components.component import Component
 from superduper.components.listener import Listener
 

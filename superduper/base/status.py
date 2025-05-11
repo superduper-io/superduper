@@ -8,7 +8,6 @@ JOB_PHASE_FAILED = "failed"
 JOB_PHASE_SUCCESS = "success"
 
 
-
 def init_status():
     """Initialize the status of the component."""
     return {

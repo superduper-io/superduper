@@ -17,11 +17,16 @@ from superduper import logging
 from superduper.base.annotations import trigger
 from superduper.base.base import Base, BaseMeta
 from superduper.base.constant import KEY_BLOBS, KEY_FILES, LENGTH_UUID
-from superduper.base.status import init_status, JOB_PHASE_PENDING, JOB_PHASE_FAILED, running_status, JOB_PHASE_RUNNING
+from superduper.base.status import (
+    JOB_PHASE_FAILED,
+    JOB_PHASE_PENDING,
+    JOB_PHASE_RUNNING,
+    init_status,
+    running_status,
+)
 from superduper.misc.annotations import lazy_classproperty
 from superduper.misc.importing import isreallyinstance
 from superduper.misc.utils import hash_item
-
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer

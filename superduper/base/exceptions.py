@@ -246,7 +246,7 @@ class InternalError(AppException):
         )
 
         # Log the exception clearly
-        logging.warn(f"InternalServer Raised: {detailed_message}")
+        logging.error(f"InternalServer Raised: {detailed_message}")
 
         # TODO: Implement persistence logic here (e.g., send to monitoring, queue, or DB)
         # self._persist_exception(cause, message)

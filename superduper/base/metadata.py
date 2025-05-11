@@ -142,14 +142,6 @@ class Job(Base):
 
         :param db: Datalayer instance
         """
-        db.metadata.set_job_status(
-            self.job_id,
-            {
-                "phase": JOB_PHASE_RUNNING,
-                "reason": "RANDOM DOKIMI",
-            },
-        )
-
         try:
             logging.info(f'Running job {self.job_id}')
             db.metadata.set_job_status(
@@ -844,7 +836,7 @@ class MetaDataStore:
         metadata = self.db['Table'].get(identifier=component)
 
         if metadata is None:
-            raise exceptions.NotFound(component, uuid)
+            raise exceptions.NotFound("Table", component)
 
         path = metadata['path']
         r['_path'] = path

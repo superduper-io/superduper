@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add load cache checking for latest `uuid`
 - Add temporary caching for db.load of components during apply.
 - Replace adhoc exceptions with well-defined counterparts
+- Replace adhoc statuses with well-defined counterparts
 
 #### New Features & Functionality
 
@@ -60,6 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix the bug where an empty variable was added to the vector.
 - Fix the primary_id of ArtifactRelations
 - Fix the snowflake and KeyedDatabackend
+- Fix a bug where Ibis throws Ibis.TableError but the framework waits for MetadataNoExists
 
 ## [0.5.0](https://github.com/superduper-io/superduper/compare/0.5.0...0.4.0])    (2024-Nov-02)
 

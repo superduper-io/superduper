@@ -3,7 +3,8 @@ from collections import defaultdict
 
 from superduper import logging
 from superduper.backends.base.compute import ComputeBackend
-from superduper.base.metadata import Job
+from superduper.base.metadata import JOB_PHASE_FAILED, Job
+from superduper.base.status import JOB_PHASE_SUCCESS
 
 if t.TYPE_CHECKING:
     from superduper import Component
@@ -38,7 +39,7 @@ class LocalComputeBackend(ComputeBackend):
         except KeyError:
             logging.warn(f'Could not release futures for context {context}')
 
-    def submit(self, job: Job) -> str:
+    def submit(self, job: Job, JOB_PHASE_RUNNING=None) -> str:
         """
         Submits a function for local execution.
 
@@ -48,7 +49,7 @@ class LocalComputeBackend(ComputeBackend):
 
         assert job.job_id is not None
         component = self.db.load(component=job.component, uuid=job.uuid)
-        self.db.metadata.update_job(job.job_id, 'status', 'running')
+        self.db.metadata.update_job(job.job_id, 'status', JOB_PHASE_RUNNING)
 
         try:
             logging.debug(
@@ -57,10 +58,10 @@ class LocalComputeBackend(ComputeBackend):
             method = getattr(component, job.method)
             output = method(*args, **kwargs)
         except Exception as e:
-            self.db.metadata.update_job(job.job_id, 'status', 'failed')
+            self.db.metadata.update_job(job.job_id, 'status', JOB_PHASE_FAILED)
             raise e
 
-        self.db.metadata.update_job(job.job_id, 'status', 'success')
+        self.db.metadata.update_job(job.job_id, 'status', JOB_PHASE_SUCCESS)
         self.futures[job.context][job.job_id] = output
         assert job.job_id is not None
         return job.job_id

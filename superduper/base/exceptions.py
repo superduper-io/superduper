@@ -1,5 +1,7 @@
 from http import HTTPStatus
 
+from superduper import logging
+
 
 class AppException(Exception):
     """Generic exception for application-specific errors.
@@ -126,17 +128,30 @@ class InternalServerError(AppException):
     """
     The server encountered an unexpected condition that prevented it from fulfilling the request.
 
-    :param cause: the original exception
-    :param details: details about the situation
+    :param message: details about the situation
+    :param cause: the original exception (optional)
     """
 
-    def __init__(self, cause: Exception, details: str):
+    def __init__(self, message: str, cause: Exception | None):
+        detailed_message = f"Details: {message} | Cause: {cause}"
         AppException.__init__(
             self,
             code=HTTPStatus.INTERNAL_SERVER_ERROR,
             reason=HTTPStatus.INTERNAL_SERVER_ERROR.phrase,
-            message=f"Cause:{str(cause)} Details:{details} ",
+            message=detailed_message,
         )
+
+        # Log the exception clearly
+        logging.warning(f"InternalServerError occurred: {message}", exc_info=cause)
+
+        # TODO: Persist exception details for further inspection
+        # Example:
+        # self._persist_exception(cause, message)
+
+        # TODO: Because the InternalServerError is an exceptional case we need to be aware of,
+        # we also need to add some exception-saving logic, like pushing to a queue or
+        # store the exception message to a database
+        logging.warn(f"Exception Raised: Details:{message} Cause:{str(cause)} ")
 
 
 class UnprocessableContent(AppException):
@@ -213,11 +228,3 @@ class GenericServerResponse(AppException):
 #   https://github.com/kubernetes/apimachinery/blob/f7c43800319c674eecce7c80a6ac7521a9b50aa8/pkg/apis/meta/v1/types.go#L857C1-L1015C68
 #################################################################################
 #################################################################################
-
-
-class ComponentLifecycleError(Exception):
-    """Exception raised when a component lifecycle error occurs.
-
-    :param args: *args for Exception
-    :param kwargs: **kwargs for Exception
-    """

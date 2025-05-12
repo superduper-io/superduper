@@ -4,7 +4,7 @@ from collections import defaultdict
 from superduper import logging
 from superduper.backends.base.compute import ComputeBackend
 from superduper.base.metadata import JOB_PHASE_FAILED, Job
-from superduper.base.status import JOB_PHASE_SUCCESS
+from superduper.base.status import JOB_PHASE_RUNNING, JOB_PHASE_SUCCESS
 
 if t.TYPE_CHECKING:
     from superduper import Component
@@ -39,7 +39,7 @@ class LocalComputeBackend(ComputeBackend):
         except KeyError:
             logging.warn(f'Could not release futures for context {context}')
 
-    def submit(self, job: Job, JOB_PHASE_RUNNING=None) -> str:
+    def submit(self, job: Job) -> str:
         """
         Submits a function for local execution.
 

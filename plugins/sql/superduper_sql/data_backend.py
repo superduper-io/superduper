@@ -193,8 +193,8 @@ class IbisDataBackend(BaseDataBackend):
         with self.connection_manager.get_connection() as conn:
             try:
                 return conn.table(identifier)
-            except ibis.common.exceptions.IbisError:
-                raise exceptions.NotFound("table", identifier)
+            except ibis.common.exceptions.IbisError as e:
+                raise exceptions.NotFound("table", identifier) from e
 
     def disconnect(self):
         """Disconnect the client."""
@@ -266,8 +266,8 @@ class IbisDataBackend(BaseDataBackend):
     def _build_native_query(self, conn, query):
         try:
             q = conn.table(query.table)
-        except TableNotFound:
-            raise exceptions.NotFound("table", query.table)
+        except TableNotFound as e:
+            raise exceptions.NotFound("table", query.table) from e
 
         pid = None
         predict_ids = (

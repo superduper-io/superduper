@@ -237,8 +237,8 @@ class Base(metaclass=BaseMeta):
             builds=builds, blobs=blobs, files=files, leaves_to_keep=leaves_to_keep
         )
 
-    @staticmethod
-    def decode(r, db: t.Optional['Datalayer'] = None):
+    @classmethod
+    def decode(cls, r, db: t.Optional['Datalayer'] = None):
         """Decode a dictionary component into a `Component` instance.
 
         :param r: Object to be decoded.
@@ -252,7 +252,7 @@ class Base(metaclass=BaseMeta):
             cls = import_object(r['_path'])
 
         r = Document.decode(r, schema=cls.class_schema, db=db)
-        return cls.from_dict(r, db=None)
+        return cls.from_dict(r, db=db)
 
     def encode(
         self,

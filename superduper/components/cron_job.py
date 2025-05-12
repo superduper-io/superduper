@@ -18,6 +18,14 @@ class CronJob(Component):
         """Declare component."""
         self.db.cluster.crontab.put_component(self)
 
+    def run_and_propagate_failure(self):
+        """Run the job and propagate failure to the crontab service."""
+        try:
+            self.run()
+        except Exception as e:
+            self.propagate_failure(e)
+            raise e
+
     @ensure_setup
     def run(self):
         """Run the job."""

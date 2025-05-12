@@ -33,6 +33,23 @@ if t.TYPE_CHECKING:
     from superduper.base.metadata import Job
 
 
+def propagate_failure(f):
+    """Propagate failure decorator.
+
+    :param f: Function to decorate.
+    """
+
+    @wraps(f)
+    def decorated(self, *args, **kwargs):
+        try:
+            return f(self, *args, **kwargs)
+        except Exception as e:
+            self.propagate_failure(e)
+            raise e
+
+    return decorated
+
+
 def _build_info_from_path(path: str):
     if os.path.exists(os.path.join(path, "component.json")):
         config = os.path.join(path, "component.json")

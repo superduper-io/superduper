@@ -202,6 +202,7 @@ def _apply(
 
     def wrapper(child):
         nonlocal create_events
+        nonlocal processed_components
 
         c, j = _apply(
             db=db,
@@ -215,6 +216,7 @@ def _apply(
         )
 
         job_events.update(j)
+        processed_components |= {j_.rsplit('.')[0] for j_ in j}
         create_events.update(c)
         children.append((child.component, child.identifier, child.uuid))
         return f'&:component:{child.huuid}'
@@ -325,5 +327,5 @@ def _apply(
 
     create_events[metadata_event.huuid] = metadata_event
     job_events.update({jj.huuid: jj for jj in these_job_events})
-    processed_components.add(object.huuid)
+    processed_components |= {jj.huuid.rsplit('.')[0] for jj in these_job_events}
     return create_events, job_events

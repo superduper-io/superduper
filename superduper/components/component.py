@@ -134,6 +134,7 @@ class Component(Base, metaclass=ComponentMeta):
     verbosity: t.ClassVar[int] = 0
     breaks: t.ClassVar[t.Sequence] = ()
     triggers: t.ClassVar[t.List] = []
+    services: t.ClassVar[t.List] = ()
     set_post_init: t.ClassVar[t.Sequence] = ('version', 'status')
 
     identifier: str
@@ -356,6 +357,10 @@ class Component(Base, metaclass=ComponentMeta):
             self.__class__.__name__, self.uuid, status_update=running_status()
         )
 
+    def create_table_events(self):
+        """Create the table events for the component."""
+        return {}
+
     def create_jobs(
         self,
         context: str,
@@ -527,10 +532,6 @@ class Component(Base, metaclass=ComponentMeta):
             setattr(self, f.name, item)
 
         return self
-
-    def on_create(self):
-        """Declare the component to the cluster."""
-        assert self.db is not None
 
     def reload(self):
         """Reload the component from the datalayer."""

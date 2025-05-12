@@ -120,7 +120,7 @@ class LocalVectorSearchBackend(VectorSearchBackend):
     def __getitem__(self, item):
         c = self.db.load(*item)
         if c.uuid not in self.uuid_tool_mapping:
-            self.put_component(c)
+            self.put_component(c.component, c.uuid)
         return self.get_tool(c.uuid)
 
 

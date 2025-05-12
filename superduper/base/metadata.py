@@ -28,7 +28,7 @@ from superduper.misc.utils import merge_dicts
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
-    from superduper.components.component import Status
+    from superduper.base.event import Create, CreateTable
 
 
 class Job(Base):
@@ -329,6 +329,16 @@ class MetaDataStore:
             self.primary_ids[table] = pid
 
         return pid
+
+    def create_tables_and_schemas(self, events: t.List['CreateTable']):
+        """Create a table and schema in the metadata store.
+
+        :param events: list of create table events.
+        """
+        metadata_tables = [e for e in events if e.is_component]
+        main_tables = [e for e in events if not e.is_component]
+        self.db.databackend.create_tables_and_schemas(metadata_tables)
+        self.parent_db.databackend.create_tables_and_schemas(main_tables)
 
     def create_table_and_schema(
         self,

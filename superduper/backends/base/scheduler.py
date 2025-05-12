@@ -9,6 +9,7 @@ import networkx as nx
 from superduper import CFG, logging
 from superduper.backends.base.backends import BaseBackend
 from superduper.base.base import Base
+from superduper.base.event import Create, CreateTable, PutComponent, Update
 
 DependencyType = t.Union[t.Dict[str, str], t.Sequence[t.Dict[str, str]]]
 
@@ -140,19 +141,80 @@ def _consume_event_type(event_type, ids, table, db: 'Datalayer'):
     db.cluster.compute.release_futures(context)
 
 
-def consume_events(events: t.List[Base], table: str, db: 'Datalayer'):
+def cluster_events(
+    events: t.List[Base],
+):
+    """
+    Cluster events into table, create and job events.
+
+    :param events: List of events to be clustered.
+    :return: Tuple of table events, create events and job events.
+    """
+    from superduper.base.metadata import Job
+
+    table_events = []
+    create_events = []
+    job_events = []
+    put_events = []
+    for event in events:
+        if isinstance(event, CreateTable):
+            table_events.append(event)
+        elif isinstance(event, (Update, Create)):
+            create_events.append(event)
+        elif isinstance(event, Job):
+            job_events.append(event)
+        elif isinstance(event, PutComponent):
+            put_events.append(event)
+    return table_events, create_events, put_events, job_events
+
+
+def consume_events(
+    events: t.List[Base],
+    table: str,
+    db: 'Datalayer',
+    batch_size: int | None = None,
+):
     """
     Consume events from table queue.
 
     :param events: List of events to be consumed.
     :param table: Queue Table.
     :param db: Datalayer instance.
+    :param batch_size: Batch size for processing events.
     """
     if table != '_apply':
         logging.info(f'Consuming {len(events)} events on {table}.')
         consume_streaming_events(events=events, table=table, db=db)
     else:
-        logging.info(f'Consuming {len(events)} _apply events')
-        for event in events:
-            event.execute(db)
+        table_events, create_events, put_events, job_events = cluster_events(events)
+
+        if table_events:
+            logging.info(f'Consuming {len(events)} `CreateTable` events')
+            CreateTable.batch_execute(
+                events=table_events,
+                db=db,
+                batch_size=batch_size,
+            )
+
+        if create_events:
+            logging.info(f'Consuming {len(events)} `Create` events')
+            Create.batch_execute(
+                events=create_events,
+                db=db,
+                batch_size=batch_size,
+            )
+
+        if put_events:
+            logging.info(f'Consuming {len(events)} `PutComponent` events')
+            PutComponent.batch_execute(
+                events=put_events,
+                db=db,
+                batch_size=batch_size,
+            )
+
+        if job_events:
+            logging.info(f'Consuming {len(events)} jobs (`Job`)')
+            for job in job_events:
+                job.execute(db)
+
         return

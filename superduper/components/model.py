@@ -232,6 +232,7 @@ class Model(Component, metaclass=ModelMeta):
     """
 
     breaks: t.ClassVar[t.Sequence] = ('trainer',)
+    services: t.ClassVar[t.Sequence[str]] = ('compute',)
 
     datatype: str | None = None
     model_update_kwargs: t.Dict = dc.field(default_factory=dict)
@@ -295,11 +296,6 @@ class Model(Component, metaclass=ModelMeta):
         if self._signature is None:
             self._signature = self._infer_signature(self.predict)
         return self._signature
-
-    def on_create(self):
-        """Declare model on cluster."""
-        super().on_create()
-        self.db.cluster.compute.put_component(self)
 
     @abstractmethod
     def predict(self, *args, **kwargs) -> t.Any:
@@ -696,13 +692,6 @@ class SequentialModel(Model):
     @property
     def signature(self):
         return self.models[0].signature
-
-    def on_create(self):
-        """Post create hook."""
-        for p in self.models:
-            if isinstance(p, str):
-                continue
-            p.on_create()
 
     def predict(self, *args, **kwargs):
         """Predict on a single data point.

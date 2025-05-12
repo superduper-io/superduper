@@ -8,7 +8,7 @@ from rich.console import Console
 from superduper import CFG, Component, logging
 from superduper.base import exceptions
 from superduper.base.document import Document
-from superduper.base.event import Create, Signal, Update
+from superduper.base.event import Create, PutComponent, Signal, Update
 from superduper.components.component import running_status
 from superduper.misc.tree import dict_to_tree
 
@@ -63,9 +63,9 @@ def apply(
 
     # This holds a record of the changes
     diff: t.Dict = {}
+
     # context allows us to track the origin of the component creation
-    logging.info(f'Applying component {object.huuid}')
-    create_events, job_events = _apply(
+    table_events, create_events, put_events, job_events = _apply(
         db=db,
         object=object,
         context=object.uuid,
@@ -92,6 +92,16 @@ def apply(
     logging.info('Found these changes and/ or additions that need to be made:')
 
     logging.info('-' * 100)
+    logging.info('TABLE EVENTS:')
+    logging.info('-' * 100)
+    steps = {
+        table_event.huuid: str(i) for i, table_event in enumerate(table_events.values())
+    }
+
+    for i, table_event in enumerate(table_events.values()):
+        logging.info(f'[{i}]: {table_event.huuid}')
+
+    logging.info('-' * 100)
     logging.info('METADATA EVENTS:')
     logging.info('-' * 100)
 
@@ -107,6 +117,14 @@ def apply(
                 logging.info(f'[{i}]: {c.huuid}: {c.__class__.__name__}')
         else:
             logging.info(f'[{i}]: {c.huuid}: {c.__class__.__name__}')
+
+    logging.info('-' * 100)
+    logging.info('PUT EVENTS:')
+    logging.info('-' * 100)
+    steps = {p.huuid: str(i) for i, p in enumerate(put_events.values())}
+
+    for i, p in enumerate(put_events.values()):
+        logging.info(f'[{i}]: {p.huuid}')
 
     logging.info('-' * 100)
     logging.info('JOBS EVENTS:')
@@ -128,7 +146,9 @@ def apply(
     logging.info('-' * 100)
 
     events = [
+        *list(table_events.values()),
         *list(create_events.values()),
+        *list(put_events.values()),
         *list(job_events.values()),
         Signal(context=object.uuid, msg='done'),
     ]
@@ -198,13 +218,15 @@ def _apply(
     object.db = db
 
     create_events = {}
+    table_events = {}
+    put_events = {}
     children = []
 
     def wrapper(child):
         nonlocal create_events
         nonlocal processed_components
 
-        c, j = _apply(
+        t, c, p, j = _apply(
             db=db,
             object=child,
             context=context,
@@ -218,6 +240,8 @@ def _apply(
         job_events.update(j)
         processed_components |= {j_.rsplit('.')[0] for j_ in j}
         create_events.update(c)
+        table_events.update(t)
+        put_events.update(p)
         children.append((child.component, child.identifier, child.uuid))
         return f'&:component:{child.huuid}'
 
@@ -261,7 +285,7 @@ def _apply(
     serialized = db._save_artifact(serialized.encode())
 
     if apply_status == 'same':
-        return create_events, job_events
+        return table_events, create_events, put_events, job_events
 
     elif apply_status == 'new':
 
@@ -273,11 +297,23 @@ def _apply(
             children=children,
         )
 
+        table_events.update(object.create_table_events())
+
         these_job_events = object.create_jobs(
             event_type='apply',
             jobs=list(job_events.values()),
             context=context,
         )
+
+        for service in object.services:
+            put_events[f'{object.huuid}/{service}'] = PutComponent(
+                component=object.component,
+                identifier=object.identifier,
+                uuid=object.uuid,
+                context=context,
+                service=service,
+            )
+
     elif apply_status == 'breaking':
 
         metadata_event = Create(
@@ -288,11 +324,22 @@ def _apply(
             children=children,
         )
 
+        table_events.update(object.create_table_events())
+
         these_job_events = object.create_jobs(
             event_type='apply',
             jobs=list(job_events.values()),
             context=context,
         )
+
+        for service in object.services:
+            put_events[f'{object.huuid}/{service}'] = PutComponent(
+                component=object.component,
+                identifier=object.identifier,
+                uuid=object.uuid,
+                context=context,
+                service=service,
+            )
     else:
         assert apply_status == 'update'
 
@@ -327,5 +374,4 @@ def _apply(
 
     create_events[metadata_event.huuid] = metadata_event
     job_events.update({jj.huuid: jj for jj in these_job_events})
-    processed_components |= {jj.huuid.rsplit('.')[0] for jj in these_job_events}
-    return create_events, job_events
+    return table_events, create_events, put_events, job_events

@@ -7,9 +7,6 @@ from superduper.components.component import Component
 from superduper.misc import typing as st  # noqa: F401
 from superduper.misc.importing import import_object
 
-if t.TYPE_CHECKING:
-    from superduper.base.datalayer import Datalayer
-
 DEFAULT_PRIMARY_ID = 'id'
 
 
@@ -43,6 +40,19 @@ class Table(Component):
             self.fields = self.cls._new_fields
         super().postinit()
 
+    def create_table_events(self):
+        """Create the table events."""
+        from superduper.base.event import CreateTable
+
+        return {
+            self.identifier: CreateTable(
+                identifier=self.identifier,
+                primary_id=self.primary_id,
+                fields=self.fields,
+                is_component=self.is_component,
+            )
+        }
+
     def cleanup(self):
         """Cleanup the table, on removal of the component."""
         self.db.databackend.drop_table(self.identifier)
@@ -52,23 +62,6 @@ class Table(Component):
             logging.info(f'Deleting schema for table {self.identifier}')
             del self.db.cluster.cache[f'Table/{self.identifier}/schema']
             logging.info(f'Deleting schema for table {self.identifier}... DONE')
-
-    def on_create(self):
-        """Create the table, on creation of the component."""
-        assert self.schema is not None, "Schema must be set"
-
-        try:
-            self.db.metadata.create_table_and_schema(
-                self.identifier,
-                schema=self.schema,
-                primary_id=self.primary_id,
-                is_component=self.is_component,
-            )
-        except Exception as e:
-            if 'already exists' in str(e):
-                pass
-            else:
-                raise e
 
     @trigger('apply', requires='data')
     def add_data(self):

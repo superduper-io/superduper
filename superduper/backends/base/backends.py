@@ -45,12 +45,13 @@ class Bookkeeping(ABC):
         tool_id = self.uuid_tool_mapping[uuid]
         return self.tools[tool_id]
 
-    def put_component(self, component: 'Component', **kwargs):
+    def put_component(self, component: 'Component', uuid: str):
         """Put a component to the backend.
 
         :param component: Component to put.
-        :param kwargs: kwargs dictionary.
+        :param uuid: UUID of the component.
         """
+        component = self.db.load(component=component, uuid=uuid)
         logging.info(
             f'Putting component: {component.huuid} on to {self.__class__.__name__}'
         )
@@ -68,7 +69,7 @@ class Bookkeeping(ABC):
             return
         self.tool_uuid_mapping[tool.identifier].add(component.uuid)
         self.tools[tool.identifier] = tool
-        tool.initialize(**kwargs)
+        tool.initialize()
 
     def drop_component(self, component: str, identifier: str):
         """Drop the component from backend.

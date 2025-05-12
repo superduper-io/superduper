@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Replace adhoc exceptions with well-defined counterparts
 - Replace adhoc statuses with well-defined counterparts
 - Optimize performance during apply.
+- Add option of multiple `VectorIndex` implementations
 
 #### New Features & Functionality
 

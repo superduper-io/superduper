@@ -39,7 +39,7 @@ class JobWrapper:
         # check if job already exists
         if not self.scheduler.get_job(self.job.uuid):
             self.scheduler.add_job(
-                self.job.run,
+                self.job.run_and_propagate_failure,
                 "cron",
                 minute=minute,
                 hour=hour,

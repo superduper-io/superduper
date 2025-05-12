@@ -383,7 +383,7 @@ def outputs(self, *predict_ids):
     return d.to_query()
 
 
-def get(self, raw: bool = False, **kwargs):
+def get(self, raw: bool = False, decode: bool = False, **kwargs):
     """Get a single row of data.
 
     # noqa
@@ -397,6 +397,14 @@ def get(self, raw: bool = False, **kwargs):
         query = self.filter(*filters)
 
     result = query.db.databackend.get(query, raw=raw)
+
+    if result is None:
+        return
+
+    if decode:
+        cls = self.db.load('Table', self.table).cls
+        return cls.decode(result, db=self.db)
+
     return result
 
 

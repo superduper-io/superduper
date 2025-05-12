@@ -329,7 +329,7 @@ class SnowflakeDataBackend(BaseDataBackend):
         :param query: The query to get the missing outputs of.
         :param predict_id: The identifier of the output destination.
         """
-        pid = self.primary_id(query)
+        pid = self.primary_id(query.table)
         df = map_superduper_query_to_snowpark_query(self.session, query, pid)
         output_df = self.session.table(f'"{CFG.output_prefix + predict_id}"')
         columns = output_df.columns
@@ -348,18 +348,6 @@ class SnowflakeDataBackend(BaseDataBackend):
             .tolist()
         )
 
-    def primary_id(self, query: Query) -> str:
-        """Get the primary id of a query.
-
-        :param query: The query to get the primary id of.
-        """
-        return (
-            self.get_table(query.table)
-            .schema[0]
-            .name.removeprefix('"')
-            .removesuffix('"')
-        )
-
     def _build_schema(self, query: Query):
         """Build the schema of a query.
 
@@ -375,7 +363,7 @@ class SnowflakeDataBackend(BaseDataBackend):
         q = map_superduper_query_to_snowpark_query(
             self.session,
             query,
-            primary_id or self.primary_id(query),
+            primary_id or self.primary_id(query.table),
         )
         start = time.time()
         logging.info(f"Executing query: {query}")

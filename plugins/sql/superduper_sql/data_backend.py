@@ -224,7 +224,7 @@ class IbisDataBackend(BaseDataBackend):
 
     def insert(self, table, documents):
         """Insert data into the database."""
-        primary_id = self.primary_id(self.db[table])
+        primary_id = self.primary_id(table)
         for r in documents:
             if primary_id not in r:
                 r[primary_id] = str(uuid.uuid4())
@@ -244,18 +244,12 @@ class IbisDataBackend(BaseDataBackend):
     def missing_outputs(self, query, predict_id: str) -> t.List[str]:
         """Get missing outputs from the database."""
         with self.connection_manager.get_connection() as conn:
-            pid = self.primary_id(query)
+            pid = self.primary_id(query.table)
             query = self._build_native_query(conn, query)
             output_table = conn.table(f"{CFG.output_prefix}{predict_id}")
             q = query.anti_join(output_table, output_table["_source"] == query[pid])
             rows = q.execute().to_dict(orient="records")
             return [r[pid] for r in rows]
-
-    def primary_id(self, query):
-        """Get the primary ID of the query."""
-        return self.db.metadata.get_component(
-            component="Table", identifier=query.table
-        )["primary_id"]
 
     def select(self, query):
         """Select data from the database."""
@@ -279,7 +273,7 @@ class IbisDataBackend(BaseDataBackend):
                 args = []
                 for a in part.args:
                     if isinstance(a, Query) and str(a).endswith(".primary_id"):
-                        args.append(self.primary_id(query))
+                        args.append(self.primary_id(query.table))
                     elif isinstance(a, Query):
                         args.append(self._build_native_query(conn, a))
                     else:
@@ -288,7 +282,7 @@ class IbisDataBackend(BaseDataBackend):
                 kwargs = {}
                 for k, v in part.kwargs.items():
                     if isinstance(a, Query) and str(a).endswith(".primary_id"):
-                        args.append(self.primary_id(query))
+                        args.append(self.primary_id(query.table))
                     elif isinstance(v, Query):
                         kwargs[k] = self._build_native_query(conn, v)
                     else:
@@ -311,7 +305,7 @@ class IbisDataBackend(BaseDataBackend):
 
             elif isinstance(part, QueryPart) and part.name == "outputs":
                 if pid is None:
-                    pid = self.primary_id(query)
+                    pid = self.primary_id(query.table)
 
                 original_q = q
                 for predict_id in part.args:
@@ -323,7 +317,7 @@ class IbisDataBackend(BaseDataBackend):
             elif isinstance(part, str):
                 if part == "primary_id":
                     if pid is None:
-                        pid = self.primary_id(query)
+                        pid = self.primary_id(query.table)
                     part = pid
                 q = q[part]
             else:

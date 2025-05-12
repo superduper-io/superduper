@@ -67,14 +67,13 @@ class Datalayer:
 
         self._cfg = s.CFG
         self.startup_cache: t.Dict[str, t.Any] = {}
+        self._component_cache: t.Dict[t.Tuple[str, str], Component] = {}
 
         if metadata:
             self.metadata = MetaDataStore(metadata, parent_db=self)  # type: ignore[arg-type]
-            self.metadata.init()
         else:
             self.metadata = MetaDataStore(self, parent_db=self)
-
-        self._component_cache: t.Dict[t.Tuple[str, str], Component] = {}
+        self.metadata.init()
 
         logging.info("Data Layer built")
 

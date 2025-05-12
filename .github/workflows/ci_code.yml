@@ -74,8 +74,10 @@ jobs:
       run: |
         make unit_testing pytest_arguments="--cov=superduper --cov-report=xml" SUPERDUPER_CONFIG=test/configs/default.yaml
         make unit_testing pytest_arguments="--cov=superduper --cov-report=xml" SUPERDUPER_CONFIG=test/configs/sql.yaml
+        make unit_testing pytest_arguments="--cov=superduper --cov-report=xml" SUPERDUPER_CONFIG=test/configs/inmemory.yaml
 
     - name: Usecase Testing
       run: |
         make usecase_testing SUPERDUPER_CONFIG=test/configs/default.yaml
         make usecase_testing SUPERDUPER_CONFIG=test/configs/sql.yaml
+        make usecase_testing SUPERDUPER_CONFIG=test/configs/inmemory.yaml

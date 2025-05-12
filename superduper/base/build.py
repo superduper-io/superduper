@@ -100,18 +100,20 @@ def build_datalayer(
 
     artifact_store = _build_artifact_store()
 
-    metadata = _build_databackend(cfg.metadata_store or cfg.data_backend)
-
     backend = getattr(load_plugin(cfg.cluster_engine), 'Cluster')
 
     cluster = backend.build(cfg, compute=compute)
 
-    metadata = Datalayer(
-        databackend=metadata,
-        cluster=None,
-        artifact_store=artifact_store,
-        metadata=None,
-    )
+    if cfg.metadata_store:
+        metadata = _build_databackend(cfg.metadata_store)
+        metadata = Datalayer(
+            databackend=metadata,
+            cluster=cluster,
+            artifact_store=artifact_store,
+            metadata=None,
+        )
+    else:
+        metadata = None
 
     datalayer = Datalayer(
         databackend=databackend_obj,

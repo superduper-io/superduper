@@ -162,7 +162,7 @@ class Config(BaseConfig):
     data_backend: str = "mongodb://localhost:27017/test_db"
 
     artifact_store: str = 'filesystem://./artifact_store'
-    metadata_store: str = 'inmemory://'
+    metadata_store: str = ''
 
     cache: str | None = None
     vector_search_engine: str = 'local'

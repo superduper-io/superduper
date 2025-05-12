@@ -218,12 +218,15 @@ class ParentChildAssociations(Base):
 class ArtifactRelations(Base):
     """Artifact relations table.
 
+    :param relation_id: relation identifier
     :param component: component type
     :param identifier: identifier of component
     :param uuid: UUID of component version
     :param artifact_id: UUID of component version
     """
 
+    primary_id: t.ClassVar[str] = 'relation'
+    relation_id: str
     component: str
     identifier: str
     uuid: str
@@ -250,6 +253,12 @@ class MetaDataStore:
         self.db = db
         self.parent_db = parent_db
         self._schema_cache: t.Dict[str, Schema] = {}
+        self.primary_ids = {
+            "Table": "uuid",
+            "ParentChildAssociations": "uuid",
+            "ArtifactRelations": "relation_id",
+            "Job": "job_id",
+        }
 
     def __getitem__(self, item: str):
         return self.db[item]
@@ -285,6 +294,21 @@ class MetaDataStore:
         self.create(ParentChildAssociations)
         self.create(ArtifactRelations)
         self.create(Job)
+
+    def get_primary_id(self, table: str):
+        """Get the primary id of a table.
+
+        :param table: table name.
+        """
+        pid = self.primary_ids.get(table)
+
+        if pid is None:
+            pid = self.get_component(component="Table", identifier=table, version=0)[
+                "primary_id"
+            ]
+            self.primary_ids[table] = pid
+
+        return pid
 
     def create_table_and_schema(
         self,
@@ -870,12 +894,12 @@ class MetaDataStore:
                 identifier=identifier,
             )
 
-        metadata = self.db['Table'].get(identifier=component)
         r = self.db[component].get(identifier=identifier, version=version, raw=True)
 
         if r is None:
             raise exceptions.NotFound(component, identifier)
 
+        metadata = self.db['Table'].get(identifier=component)
         r['_path'] = metadata['path']
 
         return r

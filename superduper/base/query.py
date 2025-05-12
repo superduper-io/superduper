@@ -971,7 +971,7 @@ class Query(_BaseQuery):
         if self.table in db.metadata.db.databackend.list_tables():
             db = db.metadata.db
         if self.parts and self.parts[0] == 'primary_id':
-            return db.databackend.primary_id(self)
+            return db.databackend.primary_id(self.table)
         results = db.databackend.execute(self, raw=raw)
         return results
 

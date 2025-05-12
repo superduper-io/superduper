@@ -177,12 +177,12 @@ class BaseDataBackend(ABC):
         :param predict_id: The predict id.
         """
 
-    @abstractmethod
-    def primary_id(self, query: Query) -> str:
-        """Get the primary id of a query.
+    def primary_id(self, table: str) -> str:
+        """Get the primary id of a table.
 
-        :param query: The query to get the primary id of.
+        :param table: The table to get the primary id of.
         """
+        return self.db.metadata.get_primary_id(table)
 
     @abstractmethod
     def select(self, query: Query) -> t.List[t.Dict]:
@@ -222,7 +222,7 @@ class BaseDataBackend(ABC):
             return None
 
     def _wrap_results(self, query: Query, result, schema, raw: bool = False):
-        pid = self.primary_id(query)
+        pid = self.primary_id(query.table)
         for r in result:
             if pid in r:
                 r[pid] = str(r[pid])
@@ -326,7 +326,7 @@ class BaseDataBackend(ABC):
 
         results = new.execute(**kwargs)
 
-        pid = self.primary_id(query)
+        pid = self.primary_id(query.table)
         for r in results:
             r['score'] = lookup[r[pid]]
 
@@ -356,7 +356,7 @@ class BaseDataBackend(ABC):
 
         results = prepare_query.filter(t.primary_id.isin(ids)).execute(**kwargs)
 
-        pid = self.primary_id(query)
+        pid = self.primary_id(query.table)
 
         for r in results:
             r['score'] = lookup[r[pid]]
@@ -484,7 +484,7 @@ class KeyedDatabackend(BaseDataBackend):
         r_table = self._get_with_component_identifier('Table', table)
 
         if not r_table['is_component']:
-            pid = r_table['primary_id']
+            pid = self.primary_id(table)
             if pid in condition:
                 docs = self.get_many(table, condition[pid])
             else:
@@ -571,7 +571,7 @@ class KeyedDatabackend(BaseDataBackend):
         r_table = self._get_with_component_identifier('Table', table)
 
         if not r_table['is_component']:
-            pid = r_table['primary_id']
+            pid = self.primary_id(table)
             docs = self.get_many(table, condition[pid])
             docs = self._do_filter(docs, condition)
             for s in docs:
@@ -603,7 +603,7 @@ class KeyedDatabackend(BaseDataBackend):
         r_table = self._get_with_component_identifier('Table', table)
 
         if not r_table['is_component']:
-            pid = r_table['primary_id']
+            pid = self.primary_id(table)
             docs = self.get_many(table, condition[pid])
             docs = self._do_filter(docs, condition)
             for s in docs:
@@ -695,20 +695,6 @@ class KeyedDatabackend(BaseDataBackend):
     def __delitem__(self, key: t.Tuple[str, str, str]):
         pass
 
-    def primary_id(self, query):
-        """Get the primary id of a query.
-
-        :param query: The query to get the primary id of.
-        """
-        r = max(
-            self.get_many('Table', query.table, '*'),
-            key=lambda x: x['version'],
-            default=None,
-        )
-        if r is None:
-            raise exceptions.NotFound("Table", query.table)
-        return r['primary_id']
-
     def insert(self, table, documents):
         """Insert data into the database.
 
@@ -717,7 +703,7 @@ class KeyedDatabackend(BaseDataBackend):
         """
         ids = []
         try:
-            pid = self.primary_id(self.db[table])
+            pid = self.primary_id(table)
         except exceptions.NotFound:
             pid = None
 
@@ -726,7 +712,7 @@ class KeyedDatabackend(BaseDataBackend):
                 self[table, r['identifier'], r['uuid']] = r
                 ids.append(r['uuid'])
         elif pid:
-            pid = self.primary_id(self.db[table])
+            pid = self.primary_id(table)
             for r in documents:
                 if pid not in r:
                     r[pid] = self.random_id()
@@ -790,7 +776,7 @@ class KeyedDatabackend(BaseDataBackend):
         is_component = max(tables, key=lambda x: x['version'])['is_component']
 
         if not is_component:
-            pid = self.primary_id(query)
+            pid = self.primary_id(query.table)
             if pid in filter_kwargs:
                 keys = self.keys(query.table, filter_kwargs[pid]['value'])
                 del filter_kwargs[pid]

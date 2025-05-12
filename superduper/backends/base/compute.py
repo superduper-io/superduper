@@ -65,10 +65,11 @@ class ComputeBackend(BaseBackend):
                     self.put_component(m)
 
     @abstractmethod
-    def put_component(self, component: 'Component'):
+    def put_component(self, component: 'Component', uuid: str):
         """Create handler on component declare.
 
         :param component: Component to put.
+        :param uuid: UUID of the component.
         """
 
     @property

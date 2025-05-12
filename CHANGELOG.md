@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Replace adhoc statuses with well-defined counterparts
 - Optimize performance during apply.
 - Add option of multiple `VectorIndex` implementations
+- Batch create tables, put-components
 
 #### New Features & Functionality
 

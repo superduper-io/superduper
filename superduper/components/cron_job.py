@@ -13,10 +13,7 @@ class CronJob(Component):
     """
 
     schedule: str = '0 0 * * *'
-
-    def on_create(self):
-        """Declare component."""
-        self.db.cluster.crontab.put_component(self)
+    services: t.ClassVar[t.Sequence[str]] = ('crontab',)
 
     def run_and_propagate_failure(self):
         """Run the job and propagate failure to the crontab service."""

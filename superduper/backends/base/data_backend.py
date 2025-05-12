@@ -11,6 +11,7 @@ from superduper.base.document import Document
 from superduper.base.query import Query
 
 if t.TYPE_CHECKING:
+    from superduper.base.event import CreateTable
     from superduper.base.schema import Schema
 
 
@@ -84,6 +85,20 @@ class BaseDataBackend(ABC):
         :param value: The datalayer.
         """
         self._db = value
+
+    def create_tables_and_schemas(self, events: t.List['CreateTable']):
+        """Create a schema in the data-backend.
+
+        :param events: List of `CreateTable` events.
+        """
+        from superduper.base.schema import Schema
+
+        for event in events:
+            self.create_table_and_schema(
+                event.identifier,
+                schema=Schema.build(**event.fields),
+                primary_id=event.primary_id,
+            )
 
     @abstractmethod
     def create_table_and_schema(

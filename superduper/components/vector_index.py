@@ -49,6 +49,7 @@ class VectorIndex(CDC):
     """
 
     breaks: t.ClassVar[t.Sequence[str]] = ('indexing_listener',)
+    services: t.ClassVar[t.Sequence[str]] = ('vector_search',)
 
     indexing_listener: Listener
     compatible_listener: t.Optional[Listener] = None
@@ -78,11 +79,6 @@ class VectorIndex(CDC):
             )
 
         super().postinit()
-
-    def on_create(self):
-        """Declare the component to the cluster."""
-        super().on_create()
-        self.db.cluster.vector_search.put_component(self)
 
     def get_vectors(self, ids: t.Sequence[str] | None = None):
         """Get vectors from the vector index.

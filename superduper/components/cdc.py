@@ -16,6 +16,7 @@ class CDC(Component):
 
     triggers: t.ClassVar[t.Set] = set()
     cdc_table: str
+    services: t.ClassVar[t.Sequence[str]] = ('scheduler', 'cdc')
 
     def handle_update_or_same(self, other):
         """Handle the case in which the component is update without breaking changes.
@@ -24,12 +25,6 @@ class CDC(Component):
         """
         super().handle_update_or_same(other)
         other.cdc_table = self.cdc_table
-
-    def on_create(self):
-        """Declare the component to the cluster."""
-        super().on_create()
-        self.db.cluster.scheduler.put_component(self)
-        self.db.cluster.cdc.put_component(self)
 
     @property
     def dependencies(self):

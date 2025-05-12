@@ -103,6 +103,8 @@ def test_component_cache(db: 'Datalayer', capsys):
 
     db.apply(app, force=True)
 
+    db.load('Application', 'test')
+
     assert ('Application', 'test') in db._component_cache
 
     db.load('Application', 'test')

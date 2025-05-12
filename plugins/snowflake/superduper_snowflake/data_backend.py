@@ -12,6 +12,7 @@ from snowflake.snowpark.functions import col
 from snowflake.snowpark.types import BooleanType, StringType, VariantType
 from superduper import CFG, logging
 from superduper.backends.base.data_backend import BaseDataBackend
+from superduper.base.event import CreateTable
 from superduper.base.query import Query
 from superduper.base.schema import Schema
 from watchdog.events import FileSystemEventHandler
@@ -114,6 +115,36 @@ class SnowflakeDataBackend(BaseDataBackend):
         :param value: The datalayer.
         """
         self._db = value
+
+    def create_tables_and_schemas(self, events: t.List[CreateTable]):
+        """Create tables and schemas in the data-backend.
+
+        :param events: The events to create.
+        """
+        if not events:
+            return
+        events = [e for e in events if e.identifier not in self.list_tables()]
+        statements: list[str] = []
+
+        for ev in events:
+            schema_obj = Schema.build(**ev.fields)
+            column_definitions = ",\n    ".join(
+                superduper_to_snowflake_schema(schema_obj, ev.primary_id)
+            )
+            statements.append(
+                create_table.format(
+                    identifier=ev.identifier,
+                    schema=column_definitions,
+                )
+            )
+
+        sql_block = ";\n".join(statements) + ";"
+
+        with self.session._conn._conn.cursor() as cur:
+            # Tell the driver "this string has N statements"
+            # some kind of security feature to avoid SQL injection
+            # https://docs.snowflake.com/en/user-guide/python-connector-example.html#execute-multiple-statements
+            cur.execute(sql_block, num_statements=len(statements))
 
     def create_table_and_schema(self, identifier: str, schema: Schema, primary_id: str):
         """Create a schema in the data-backend.

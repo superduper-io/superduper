@@ -32,9 +32,8 @@ class LocalCDCBackend(CDCBackend):
         """List UUIDs of components."""
         return list(self._trigger_uuid_mapping.values())
 
-    def put_component(self, component):
-        assert isinstance(component, CDC)
-        self.triggers.add((component.component, component.identifier))
+    def put_component(self, component: str, uuid: str):
+        self.triggers.add((component, uuid))
 
     def drop_component(self, component, identifier):
         c = self.db.load(component=component, identifier=identifier)

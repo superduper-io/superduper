@@ -109,7 +109,7 @@ class CreateTable(Event):
     """
 
     queue: t.ClassVar[str] = '_apply'
-    max_batch_size: t.ClassVar[int] = 25
+    max_batch_size: t.ClassVar[int] = 100
 
     identifier: str
     primary_id: str

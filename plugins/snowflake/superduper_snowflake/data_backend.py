@@ -123,7 +123,8 @@ class SnowflakeDataBackend(BaseDataBackend):
         """
         if not events:
             return
-        events = [e for e in events if e.identifier not in self.list_tables()]
+        tables = set(self.list_tables())
+        events = [e for e in events if e.identifier not in tables]
         statements: list[str] = []
 
         for ev in events:

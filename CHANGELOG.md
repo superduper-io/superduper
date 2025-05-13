@@ -68,6 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix primary_id and add test cases for in-memory metadata store.
 - Fix the processed_components in_apply
 - Fix job execution
+- Fix performance issues in batch table creation for Snowflake.
 
 ## [0.5.0](https://github.com/superduper-io/superduper/compare/0.5.0...0.4.0])    (2024-Nov-02)
 

@@ -1,4 +1,5 @@
 import dataclasses as dc
+import time
 import typing as t
 import uuid
 from abc import abstractmethod
@@ -189,32 +190,49 @@ def consume_events(
         table_events, create_events, put_events, job_events = cluster_events(events)
 
         if table_events:
-            logging.info(f'Consuming {len(events)} `CreateTable` events')
+            start_time = time.time()
+            logging.info(f'Consuming {len(table_events)} `CreateTable` events')
             CreateTable.batch_execute(
                 events=table_events,
                 db=db,
                 batch_size=batch_size,
             )
+            logging.info(
+                f'Consumed {len(table_events)} `CreateTable` events in {time.time() - start_time:.2f}s'
+            )
 
         if create_events:
-            logging.info(f'Consuming {len(events)} `Create` events')
+            start_time = time.time()
+            logging.info(f'Consuming {len(create_events)} `Create` events')
             Create.batch_execute(
                 events=create_events,
                 db=db,
                 batch_size=batch_size,
             )
+            logging.info(
+                f'Consumed {len(create_events)} `Create` events in {time.time() - start_time:.2f}s'
+            )
 
         if put_events:
-            logging.info(f'Consuming {len(events)} `PutComponent` events')
+            start_time = time.time()
+            logging.info(f'Consuming {len(put_events)} `PutComponent` events')
             PutComponent.batch_execute(
                 events=put_events,
                 db=db,
                 batch_size=batch_size,
             )
+            logging.info(
+                f'Consumed {len(put_events)} `PutComponent` events in {time.time() - start_time:.2f}s'
+            )
 
         if job_events:
-            logging.info(f'Consuming {len(events)} jobs (`Job`)')
+            start_time = time.time()
+            logging.info(f'Consuming {len(job_events)} jobs (`Job`)')
             for job in job_events:
                 job.execute(db)
+
+            logging.info(
+                f'Consumed {len(job_events)} jobs (`Job`) in {time.time() - start_time:.2f}s'
+            )
 
         return

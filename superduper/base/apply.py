@@ -207,13 +207,13 @@ def _apply(
         context = object.uuid
 
     if job_events and object.huuid in processed_components:
-        return [], []
+        return {}, {}, {}, {}
 
     if job_events is None:
         job_events = {}
 
     if object.huuid in job_events:
-        return [], []
+        return {}, {}, {}, {}
 
     object.db = db
 

@@ -138,13 +138,13 @@ class Job(Base):
         kwargs['dependencies'] = dependencies
         return args, kwargs
 
-    def run(self, db: 'Datalayer') -> None:
+    def run(self, db: 'Datalayer'):
         """Run the job.
 
         :param db: Datalayer instance
         """
         try:
-            logging.info(f'Running job {self.job_id}')
+            logging.info(f'Running job {self.huuid} {self.job_id}')
             db.metadata.set_job_status(
                 self.job_id,
                 {
@@ -157,7 +157,7 @@ class Job(Base):
             component.setup()
             logging.info(f'Executing method for job {self.job_id}')
             method = getattr(component, self.method)
-            method(*self.args, **self.kwargs)
+            result = method(*self.args, **self.kwargs)
         except Exception as e:
             logging.error(
                 f'Error running job {self.huuid}: {e}. Traceback: {traceback.format_exc()}'
@@ -170,9 +170,7 @@ class Job(Base):
                     "message": format_exc(),
                 },
             )
-            # Since all the state management goes through the database, we don't need
-            # to raise the exception here.
-            return
+            raise e
 
         logging.info(f'Updating metadata for job {self.job_id}. Phase: Success')
         db.metadata.set_job_status(
@@ -183,6 +181,7 @@ class Job(Base):
             },
         )
         logging.success(f"Job {self.job_id} completed")
+        return result
 
     def execute(
         self,

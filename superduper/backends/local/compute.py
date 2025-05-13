@@ -45,23 +45,8 @@ class LocalComputeBackend(ComputeBackend):
 
         :param job: The `Job` to be executed.
         """
-        args, kwargs = job.get_args_kwargs(self.futures[job.context])
-
-        assert job.job_id is not None
-        component = self.db.load(component=job.component, uuid=job.uuid)
-        self.db.metadata.update_job(job.job_id, 'status', JOB_PHASE_RUNNING)
-
-        try:
-            logging.debug(
-                f'Running job {job.job_id}: {component.identifier}.{job.method}'
-            )
-            method = getattr(component, job.method)
-            output = method(*args, **kwargs)
-        except Exception as e:
-            self.db.metadata.update_job(job.job_id, 'status', JOB_PHASE_FAILED)
-            raise e
-
-        self.db.metadata.update_job(job.job_id, 'status', JOB_PHASE_SUCCESS)
+        job.args, job.kwargs = job.get_args_kwargs(self.futures[job.context])
+        output = job.run(db=self.db)
         self.futures[job.context][job.job_id] = output
         assert job.job_id is not None
         return job.job_id

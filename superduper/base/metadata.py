@@ -501,7 +501,6 @@ class MetaDataStore:
             r = self._get_component_class_info(component)
             if r is None:
                 raise exceptions.NotFound(component, path)
-
             assert r['path'] == path, msg
         except exceptions.NotFound:
             assert path is not None
@@ -889,8 +888,25 @@ class MetaDataStore:
         versions = t.filter(t['identifier'] == identifier).distinct('version')
 
         if not versions:
+            if identifier == 'd0e63b4e881cd9edd3':
+                import pdb
+
+                pdb.set_trace()
             raise exceptions.NotFound(component, identifier)
         return max(versions)
+
+    def get_latest_versions(self):
+        """Get the latest versions of a component."""
+        components = self.show_components()
+        out = []
+        for component in components:
+            t = self.db[component['component']]
+            q = t.filter(t['identifier'] == component['identifier']).select(
+                'version', 'uuid'
+            )
+            versions = q.execute()
+            out.append({**component, **max(versions, key=lambda x: x['version'])})
+        return out
 
     def get_component_by_uuid(self, component: str, uuid: str):
         """Get a component by UUID.

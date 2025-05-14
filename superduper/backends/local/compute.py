@@ -65,7 +65,7 @@ class LocalComputeBackend(ComputeBackend):
     def drop_component(self, component: str, identifier: str):
         """Drop a component from the compute."""
 
-    def put_component(self, component: 'Component', uuid: str):
+    def put_component(self, component: str, uuid: str):
         """Create a handler on compute."""
 
     def initialize(self):

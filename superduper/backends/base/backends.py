@@ -45,34 +45,40 @@ class Bookkeeping(ABC):
         tool_id = self.uuid_tool_mapping[uuid]
         return self.tools[tool_id]
 
-    def put_component(self, component: 'Component', uuid: str, **kwargs):
+    def put_component(self, component: str, uuid: str, **kwargs):
         """Put a component to the backend.
 
         :param component: Component to put.
         :param uuid: UUID of the component.
-        :param kwargs: Additional arguments to pass to the tool.
+        :param kwargs: Additional arguments.
         """
-        component = self.db.load(component=component, uuid=uuid)
+        object = self.db.load(component=component, uuid=uuid)
         logging.info(
-            f'Putting component: {component.huuid} on to {self.__class__.__name__}'
+            f'Putting component: {object.huuid} on to {self.__class__.__name__}'
         )
-        tool = self.build_tool(component)
+        tool = self.build_tool(object)
+        if tool is None:
+            logging.warning(
+                f'No tool found for component: {object.huuid} on {self.__class__.__name__}'
+            )
+            return
+
         tool.db = self.db
-        self.component_uuid_mapping[(component.component, component.identifier)].add(
-            component.uuid
+        self.component_uuid_mapping[(object.component, object.identifier)].add(
+            object.uuid
         )
-        self.uuid_component_mapping[component.uuid] = (
-            component.component,
-            component.identifier,
+        self.uuid_component_mapping[object.uuid] = (
+            object.component,
+            object.identifier,
         )
-        self.uuid_tool_mapping[component.uuid] = tool.identifier
+        self.uuid_tool_mapping[object.uuid] = tool.identifier
         if tool.identifier in self.tools:
             return
-        self.tool_uuid_mapping[tool.identifier].add(component.uuid)
+        self.tool_uuid_mapping[tool.identifier].add(object.uuid)
         self.tools[tool.identifier] = tool
         tool.initialize(**kwargs)
         logging.info(
-            f'Putting component: {component.huuid} on to {self.__class__.__name__}'
+            f'Putting component: {object.huuid} on to {self.__class__.__name__}'
             f"{self}... DONE"
         )
 
@@ -146,10 +152,11 @@ class BaseBackend(ABC):
         """To be called on program start."""
 
     @abstractmethod
-    def put_component(self, component: 'Component'):
+    def put_component(self, component: str, uuid: str):
         """Add a component to the deployment.
 
         :param component: ``Component`` to put.
+        :param uuid: UUID of the component.
         """
 
     @abstractmethod

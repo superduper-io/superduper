@@ -99,6 +99,19 @@ class Datalayer:
             del r['_path']
         return self[table.identifier].insert(data)
 
+    def replace(self, condition: t.Dict, items: t.List[Base]):
+        """
+        Replace data in a table.
+
+        :param condition: The condition to match.
+        :param items: The instances (`superduper.base.Base`) to insert.
+        """
+        table = self.pre_insert(items)
+        data = [x.dict() for x in items]
+        for r in data:
+            del r['_path']
+        return self[table.identifier].replace(condition, data)
+
     @property
     def cdc(self):
         """CDC property."""

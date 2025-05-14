@@ -232,8 +232,8 @@ class Create(Event):
                     )
 
             logging.info(
-                f'Created {self.path.split("/")[-1]}:'
-                f'{self.data["identifier"]}:{self.data["uuid"]}'
+                f'Creating {self.path.split("/")[-1]}:'
+                f'{self.data["identifier"]}:{self.data["uuid"]}... DONE'
             )
 
         except Exception as e:
@@ -349,9 +349,18 @@ class PutComponent(Event):
 
         :param db: Datalayer instance.
         """
+        logging.info(
+            f'Putting {self.component}:'
+            f'{self.identifier}:{self.uuid} on {self.service}'
+        )
         getattr(db.cluster, self.service).put_component(
             component=self.component,
             uuid=self.uuid,
+        )
+        logging.info(
+            f'Putting {self.component}:'
+            f'{self.identifier}:{self.uuid} on {self.service}'
+            '... DONE'
         )
 
 

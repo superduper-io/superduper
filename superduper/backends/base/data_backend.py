@@ -619,7 +619,10 @@ class KeyedDatabackend(BaseDataBackend):
 
         if not r_table['is_component']:
             pid = self.primary_id(table)
-            docs = self.get_many(table, condition[pid])
+            if pid in condition:
+                docs = self.get_many(table, condition[pid])
+            else:
+                docs = self.get_many(table, '*')
             docs = self._do_filter(docs, condition)
             for s in docs:
                 s[key] = value

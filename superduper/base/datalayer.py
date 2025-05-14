@@ -351,7 +351,10 @@ class Datalayer:
         :param wait: Wait for apply events.
         :param jobs: Execute jobs.
         """
-        result = apply.apply(db=self, object=object, force=force, wait=wait, jobs=jobs)
+        with self.metadata.cache():
+            result = apply.apply(
+                db=self, object=object, force=force, wait=wait, jobs=jobs
+            )
         return result
 
     def remove(

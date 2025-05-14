@@ -1,9 +1,12 @@
+import contextvars
 import dataclasses as dc
 import datetime
 import time
 import traceback
 import typing as t
 import uuid
+from collections import Counter
+from contextlib import contextmanager
 from copy import deepcopy
 from traceback import format_exc
 
@@ -240,6 +243,8 @@ metaclasses = {
     'Job': Job,
 }
 
+_component_cache = contextvars.ContextVar('component_cache', default=None)
+
 
 class MetaDataStore:
     """
@@ -294,8 +299,33 @@ class MetaDataStore:
         self.create(ArtifactRelations)
         self.create(Job)
 
+    @contextmanager
+    def cache(self):
+        """Context manager to enable and manage component class information caching."""
+        current_cache = _component_cache.get()
+
+        if current_cache is None:
+            token = _component_cache.set({})
+        else:
+            token = None
+
+        try:
+            yield
+        finally:
+            if token is not None:
+                _component_cache.reset(token)
+
     def _get_component_class_info(self, component):
+        cache = _component_cache.get()
+
+        if cache is not None and component in cache:
+            return cache[component].copy()
+
         info = self.get_component('Table', component, version=0)
+
+        if cache is not None and info:
+            cache[component] = info.copy()
+
         return info
 
     def check_table_in_metadata(self, table: str):
@@ -918,7 +948,7 @@ class MetaDataStore:
         if r is None:
             raise exceptions.NotFound(component, identifier)
 
-        metadata = self.db['Table'].get(identifier=component)
+        metadata = self.db['Table'].get(identifier=component, raw=True)
         r['_path'] = metadata['path']
 
         return r

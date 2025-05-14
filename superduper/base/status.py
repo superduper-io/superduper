@@ -1,7 +1,7 @@
 from datetime import datetime
 
 # List of Job's stages
-JOB_PHASE_UNINITIALIZED = "uninitialized"
+JOB_PHASE_UNINITIALIZED = "submitted"
 JOB_PHASE_PENDING = "pending"
 JOB_PHASE_RUNNING = "running"
 JOB_PHASE_FAILED = "failed"

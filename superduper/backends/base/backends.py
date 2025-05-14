@@ -26,7 +26,7 @@ class Bookkeeping(ABC):
         This method is executed when a cluster is initialized.
         """
         for info in self.db.show():
-            obj = self.db.load(**info)
+            obj = self.db.load(info['component'], info['identifier'])
             if isreallyinstance(obj, self.cls):
                 self.put_component(obj.component, obj.uuid)
 

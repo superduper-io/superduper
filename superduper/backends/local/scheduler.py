@@ -69,7 +69,7 @@ class LocalScheduler(Bookkeeping, BaseScheduler):
             identifier = component_data['identifier']
             c = self.db.load(component=component, identifier=identifier)
             if isreallyinstance(c, CDC):
-                self.put_component(c)
+                self.put_component(component, c.uuid)
                 with self.lock:
                     self.Q[component, identifier] = []
 

@@ -28,7 +28,7 @@ class Bookkeeping(ABC):
         for info in self.db.show():
             obj = self.db.load(**info)
             if isreallyinstance(obj, self.cls):
-                self.put_component(obj)
+                self.put_component(obj.component, obj.uuid)
 
     def build_tool(self, component: 'Component'):
         """Build a tool from a component.
@@ -45,11 +45,12 @@ class Bookkeeping(ABC):
         tool_id = self.uuid_tool_mapping[uuid]
         return self.tools[tool_id]
 
-    def put_component(self, component: 'Component', uuid: str):
+    def put_component(self, component: 'Component', uuid: str, **kwargs):
         """Put a component to the backend.
 
         :param component: Component to put.
         :param uuid: UUID of the component.
+        :param kwargs: Additional arguments to pass to the tool.
         """
         component = self.db.load(component=component, uuid=uuid)
         logging.info(
@@ -69,7 +70,11 @@ class Bookkeeping(ABC):
             return
         self.tool_uuid_mapping[tool.identifier].add(component.uuid)
         self.tools[tool.identifier] = tool
-        tool.initialize()
+        tool.initialize(**kwargs)
+        logging.info(
+            f'Putting component: {component.huuid} on to {self.__class__.__name__}'
+            f"{self}... DONE"
+        )
 
     def drop_component(self, component: str, identifier: str):
         """Drop the component from backend.

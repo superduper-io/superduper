@@ -55,7 +55,7 @@ class LocalVectorSearchBackend(VectorSearchBackend):
                 for identifier in self.db.show(component):
                     try:
                         vector_index = self.db.load(component, identifier=identifier)
-                        self.put_component(vector_index)
+                        self.put_component(component, vector_index.uuid)
                         vectors = vector_index.get_vectors()
                         vectors = [VectorItem(**vector) for vector in vectors]
                         self.get_tool(vector_index.uuid).add(vectors)

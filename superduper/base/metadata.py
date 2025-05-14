@@ -252,7 +252,6 @@ class MetaDataStore:
     def __init__(self, db: 'Datalayer', parent_db: 'Datalayer'):
         self.db = db
         self.parent_db = parent_db
-        self._registered_components: t.Dict[str, dict] = {}
         self.primary_ids = {
             "Table": "uuid",
             "ParentChildAssociations": "uuid",
@@ -296,13 +295,7 @@ class MetaDataStore:
         self.create(Job)
 
     def _get_component_class_info(self, component):
-        if component in self._registered_components:
-            return self._registered_components[component].copy()
-
-        info = self.get_component('Table', component)
-        if info:
-            self._registered_components[component] = info.copy()
-
+        info = self.get_component('Table', component, version=0)
         return info
 
     def check_table_in_metadata(self, table: str):

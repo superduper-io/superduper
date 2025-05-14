@@ -764,20 +764,52 @@ class MetaDataStore:
                     continue
 
                 identifiers = self.db[component].distinct('identifier')
+                t = self.db[component]
+                q = t.select('identifier', 'status', 'version')
+                results = sorted(q.execute(), key=lambda x: x['version'])
+                output = {}
+                for r in results:
+                    output[r['identifier']] = r['status']['phase']
 
-                try:
-                    out.extend(
-                        [{'component': component, 'identifier': x} for x in identifiers]
-                    )
-                except ModuleNotFoundError as e:
-                    logging.error(f'Component type not found: {component}; ', e)
+                results = [
+                    {'component': component, 'identifier': k, 'status': v}
+                    for k, v in output.items()
+                ]
+
+                out.extend(results)
 
             identifiers = self.db['Table'].distinct('identifier')
 
-            out.extend([{'component': 'Table', 'identifier': x} for x in identifiers])
+            out.extend(
+                [
+                    {'component': 'Table', 'identifier': x, 'status': 'running'}
+                    for x in identifiers
+                ]
+            )
             return out
 
         return self.db[component].distinct('identifier')
+
+    def show_status(self, component: str, identifier: str | None = None):
+        """
+        Show the status of a component.
+
+        :param component: type of component
+        :param identifier: identifier of component
+        """
+        t = self.db[component]
+        if identifier:
+            t = t.filter(t['identifier'] == identifier)
+        t = t.select('status', 'version', 'identifier')
+        results = sorted(t.execute(), key=lambda x: x['version'])
+        output = {}
+        for r in results:
+            output[r['identifier']] = dict(r)
+        output = list(output.values())
+        for r in output:
+            del r['version']
+            r['status'] = r['status']['phase']
+        return output
 
     def show_cdc_tables(self):
         """List the tables used for CDC."""

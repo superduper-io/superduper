@@ -99,18 +99,17 @@ class Datalayer:
             del r['_path']
         return self[table.identifier].insert(data)
 
-    def replace(self, condition: t.Dict, items: t.List[Base]):
+    def replace(self, condition: t.Dict, item: Base):
         """
         Replace data in a table.
 
         :param condition: The condition to match.
-        :param items: The instances (`superduper.base.Base`) to insert.
+        :param item: The instances (`superduper.base.Base`) to insert.
         """
-        table = self.pre_insert(items)
-        data = [x.dict() for x in items]
-        for r in data:
-            del r['_path']
-        return self[table.identifier].replace(condition, data)
+        table = self.pre_insert([item])
+        r = item.dict()
+        del r['_path']
+        return self[table.identifier].replace(condition, r)
 
     @property
     def cdc(self):
@@ -240,7 +239,7 @@ class Datalayer:
             raise ValueError(f"Must specify {identifier} to go with {version}")
 
         if component is None:
-            nt = namedtuple('nt', ('component', 'identifier'))
+            nt = namedtuple('nt', ('component', 'identifier', 'status'))
             out = self.metadata.show_components()
             out = sorted(list(set([nt(**x) for x in out])))
             out = [x._asdict() for x in out]

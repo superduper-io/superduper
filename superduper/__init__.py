@@ -7,6 +7,7 @@ ROOT = config_settings.ROOT
 
 logging = logger.Logging
 
+import typing as t
 from importlib import metadata
 
 try:
@@ -16,6 +17,7 @@ except metadata.PackageNotFoundError:
     __version__ = "dev"
 
 
+from .base.base import Base
 from .base.datatype import BaseDataType, dill_serializer, pickle_serializer
 from .base.document import Document
 from .base.schema import Schema
@@ -74,4 +76,6 @@ __all__ = (
     'pickle_serializer',
     'dill_serializer',
     'Streamlit',
+    'Base',
+    't',
 )

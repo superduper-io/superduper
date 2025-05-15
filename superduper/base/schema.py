@@ -208,8 +208,12 @@ class Schema(BaseDataType):
                 )
                 raise e
 
-            if field.dtype == 'json' and not CFG.json_native:
-                encoded = json.dumps(encoded)
+            if field.dtype == 'json':
+                if context.cfg is not None:
+                    if not context.cfg.json_native:
+                        encoded = json.dumps(encoded)
+                elif not CFG.json_native:
+                    encoded = json.dumps(encoded)
 
             result[k] = encoded
 

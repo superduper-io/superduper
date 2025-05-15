@@ -1,6 +1,8 @@
 import typing as t
 from dataclasses import dataclass, field
 
+from superduper.base.config import Config
+
 if t.TYPE_CHECKING:
     from superduper.base.base import Base
     from superduper.base.datalayer import Datalayer
@@ -19,6 +21,7 @@ class EncodeContext:
     :param leaves_to_keep: A sequence of Base instances to keep.
     :param metadata: Whether to include metadata.
     :param defaults: Whether to include defaults.
+    :param cfg: Configuration object.
     """
 
     name: str = '__main__'
@@ -29,6 +32,7 @@ class EncodeContext:
     leaves_to_keep: t.Sequence['Base'] = field(default_factory=tuple)
     metadata: bool = True
     defaults: bool = True
+    cfg: t.Optional[Config] = None
 
     def __call__(self, name: str):
         return EncodeContext(
@@ -40,4 +44,5 @@ class EncodeContext:
             leaves_to_keep=self.leaves_to_keep,
             metadata=self.metadata,
             defaults=self.defaults,
+            cfg=self.cfg,
         )

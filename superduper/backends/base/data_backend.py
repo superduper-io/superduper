@@ -11,6 +11,7 @@ from superduper.base.document import Document
 from superduper.base.query import Query
 
 if t.TYPE_CHECKING:
+    from superduper.base.datalayer import Datalayer
     from superduper.base.event import CreateTable
     from superduper.base.schema import Schema
 

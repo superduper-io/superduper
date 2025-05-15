@@ -589,7 +589,9 @@ class Component(Base, metaclass=ComponentMeta):
 
         # r = self.dict(defaults=defaults, metadata=metadata)
         # r = r.encode(defaults=defaults, metadata=metadata)
-        r = self.encode(defaults=defaults, metadata=metadata)
+        from superduper import CFG
+
+        r = self.encode(defaults=defaults, metadata=metadata, cfg=CFG(json_native=True))
 
         def rewrite_keys(r, keys):
             if isinstance(r, dict):

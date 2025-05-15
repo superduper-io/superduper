@@ -362,7 +362,8 @@ def replace(self, condition: t.Dict, r: t.Dict | Document):
         s = self.db.metadata.get_schema(self.table)
         r = s.encode_data(r)
 
-    out = self.db.databackend.replace(self.table, condition, r)
+    db = route_db(self.db, self.table)
+    out = db.databackend.replace(self.table, condition, r)
     self.db._post_query(self.table, ids=out, type_='update')
     return out
 

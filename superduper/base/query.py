@@ -313,12 +313,13 @@ def update(self, condition: t.Dict, key: str, value: t.Any):
 
     # noqa
     """
+    db = route_db(self.db, self.table)
     s = self.db.metadata.get_schema(self.table)
     if isinstance(s[key], BaseDataType):
         value = s[key].encode_data(value, None)
         if s[key].dtype == 'json' and not CFG.json_native:
             value = json.dumps(value)
-    out = self.db.databackend.update(self.table, condition, key=key, value=value)
+    out = db.databackend.update(self.table, condition, key=key, value=value)
 
     # FIXME: Access to a protected member _post_query of a class
     self.db._post_query(self.table, ids=out, type_='update')
@@ -975,9 +976,7 @@ class Query(_BaseQuery):
 
         :param raw: Whether to return raw results.
         """
-        db = self.db
-        if db.metadata.check_table_in_metadata(self.table):
-            db = db.metadata.db
+        db = route_db(self.db, self.table)  # type: ignore
         if self.parts and self.parts[0] == 'primary_id':
             return db.databackend.primary_id(self.table)
         results = db.databackend.execute(self, raw=raw)
@@ -1104,6 +1103,18 @@ def parse_query(
         query[i] = _parse_query_part(q, documents, query[:i], db=db)
 
     return query[-1]
+
+
+def route_db(db: "Datalayer", table) -> "Datalayer":
+    """Route the database to the correct datalayer.
+
+    :param db: The datalayer to use.
+    :param table: The table to use.
+    """
+    assert db is not None
+    if db.metadata.check_table_in_metadata(table):
+        db = db.metadata.db
+    return db
 
 
 class _PlaceholderDB:

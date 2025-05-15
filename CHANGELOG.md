@@ -70,9 +70,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix the processed_components in_apply
 - Fix job execution
 - Fix performance issues in batch table creation for Snowflake.
-- Fix the issue related to services.
 - Fix the update method in the KeyedDatabackend class
 - Fix the database routing issue during update operations.
+- Fix the issue related to services.
 
 ## [0.5.0](https://github.com/superduper-io/superduper/compare/0.5.0...0.4.0])    (2024-Nov-02)
 

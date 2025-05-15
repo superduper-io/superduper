@@ -797,6 +797,8 @@ class MetaDataStore:
         :param component: type of component
         :param identifier: identifier of component
         """
+        if component is None:
+            raise exceptions.NotFound(component, identifier)
         t = self.db[component]
         if identifier:
             t = t.filter(t['identifier'] == identifier)

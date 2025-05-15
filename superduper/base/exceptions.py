@@ -225,7 +225,7 @@ class InternalError(AppException):
     :param cause: the original exception (optional)
     """
 
-    def __init__(self, message: str, cause: Exception | None):
+    def __init__(self, message: str, cause: Exception | None = None):
         # Prevent cyclic exception nesting
         if isinstance(cause, AppException):
             logging.error(

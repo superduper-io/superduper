@@ -30,6 +30,7 @@ class Listener(CDC):
     :param predict_kwargs: Keyword arguments to self.model.predict().
     :param select: Query to "listen" for input on.
     :param flatten: Flatten the output into separate records if ``True``.
+    :param compute_kwargs: Keyword arguments to self.db.compute().
     """
 
     breaks: t.ClassVar[t.Sequence[str]] = ('model', 'key', 'select')
@@ -40,6 +41,7 @@ class Listener(CDC):
     select: t.Optional[Query] = None
     cdc_table: str = ''
     flatten: bool = False
+    compute_kwargs: t.Optional[t.Dict] = dc.field(default_factory=dict)
 
     def postinit(self):
         """Post initialization method."""
@@ -143,6 +145,18 @@ class Listener(CDC):
         else:
             raise ValueError(f'Invalid signature: {model_signature}')
 
+    def create_jobs(self, *args, **kwargs):
+        """Create jobs for the listener.
+
+        :param args: Positional arguments.
+        :param kwargs: Keyword arguments.
+        :return: List of jobs.
+        """
+        jobs = super().create_jobs(*args, **kwargs)
+        for job in jobs:
+            job.compute_kwargs = self.compute_kwargs.copy()
+        return jobs
+
     @trigger('apply', 'insert', 'update', requires='select')
     def run(self, ids: t.List[str] | None = None):
         logging.info(f"[{self.huuid}] Running on '{self.cdc_table}'")
@@ -168,6 +182,7 @@ class Listener(CDC):
 
         documents = self.select.subset(ids)
         if not documents:
+            logging.info(f'[{self.huuid}] No documents to process for {self.huuid}, skipping')
             return
         primary_id = self.select.primary_id.execute()
         output_primary_id = self.db[self.outputs].primary_id.execute()
@@ -201,7 +216,10 @@ class Listener(CDC):
                 for id, output in zip(ids, outputs)
             ]
 
-        return self.db[self.outputs].insert(output_documents)
+        logging.info(f"[{self.huuid}] Inserting {len(output_documents)} documents")
+        result = self.db[self.outputs].insert(output_documents)
+        logging.info(f"[{self.huuid}] Inserted {len(result)} documents")
+        return result
 
     def cleanup(self):
         """Clean up when the listener is deleted."""

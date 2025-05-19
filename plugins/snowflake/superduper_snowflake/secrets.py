@@ -16,7 +16,10 @@ def check_secret_updates(db):
     """
     result = db.databackend.execute_native("CALL v1.wrapper('SHOW SECRETS IN ADMIN')")
 
-    lookup = {r[1]: json.loads(r[5])['status']['hash'] for r in result}
+    lookup = {
+        r["name"].replace("-", "_").upper(): json.loads(r["comment"])['status']['hash']
+        for r in result
+    }
 
     updating = []
     for k in lookup:

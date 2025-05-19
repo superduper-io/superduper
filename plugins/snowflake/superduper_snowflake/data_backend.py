@@ -126,6 +126,9 @@ class SnowflakeDataBackend(BaseDataBackend):
         tables = set(self.list_tables())
         events = [e for e in events if e.identifier not in tables]
         statements: list[str] = []
+        if not events:
+            logging.warn("No new tables to create")
+            return
 
         for ev in events:
             schema_obj = Schema.build(**ev.fields)

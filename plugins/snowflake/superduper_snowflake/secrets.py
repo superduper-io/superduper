@@ -14,7 +14,7 @@ def check_secret_updates(db):
 
     :param db: The database connection object.
     """
-    result = db.databackend.raw_sql("CALL v1.wrapper('SHOW SECRETS IN ADMIN')")
+    result = db.databackend.execute_native("CALL v1.wrapper('SHOW SECRETS IN ADMIN')")
 
     lookup = {r[1]: json.loads(r[5])['status']['hash'] for r in result}
 

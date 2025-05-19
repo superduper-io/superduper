@@ -261,7 +261,7 @@ class IbisDataBackend(BaseDataBackend):
         try:
             q = conn.table(query.table)
         except TableNotFound as e:
-            raise exceptions.NotFound("table", query.table) from e
+            raise exceptions.NotFound("Table", query.table) from e
 
         pid = None
         predict_ids = (

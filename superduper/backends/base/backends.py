@@ -58,7 +58,7 @@ class Bookkeeping(ABC):
         )
         tool = self.build_tool(object)
         if tool is None:
-            logging.warning(
+            logging.warn(
                 f'No tool found for component: {object.huuid} on {self.__class__.__name__}'
             )
             return

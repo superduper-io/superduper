@@ -98,7 +98,6 @@ def _consume_event_type(event_type, ids, table, db: 'Datalayer'):
     # and all components triggered by the output of these components etc.
     # "uuid" -> dict("trigger_method": future)
     logging.debug(table)
-    # components: t.List['CDC'] = _get_cdcs_on_table(table, db)
     context = str(uuid.uuid4())
     jobs: t.List['Job'] = []
     job_lookup: t.DefaultDict = defaultdict(dict)

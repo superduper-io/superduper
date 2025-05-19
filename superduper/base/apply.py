@@ -9,7 +9,7 @@ from superduper import CFG, Component, logging
 from superduper.base import exceptions
 from superduper.base.document import Document
 from superduper.base.event import Create, PutComponent, Signal, Update
-from superduper.components.component import running_status
+from superduper.base.status import running_status
 from superduper.misc.tree import dict_to_tree
 
 if t.TYPE_CHECKING:
@@ -73,6 +73,7 @@ def apply(
         global_diff=diff,
         non_breaking_changes={},
     )
+
     logging.info(f'Found {len(create_events)} create events to apply')
     logging.info(f'Found {len(job_events)} jobs to apply')
 
@@ -250,7 +251,7 @@ def _apply(
         if current.hash == object.hash:
             apply_status = 'same'
             object.version = current.version
-            object.status = running_status()
+            object.status, object.details = running_status()
         elif current.uuid == object.uuid:
             apply_status = 'update'
             object.version = current.version
@@ -365,12 +366,10 @@ def _apply(
     # require the status to be "initializing"
 
     if not these_job_events:
+        metadata_event.data['status'], metadata_event.data['details'] = running_status()
         if not CFG.json_native:
-            metadata_event.data['status'] = json.dumps(running_status())
-        else:
-            metadata_event.data['status'] = running_status()
-
-        object.status = running_status()
+            metadata_event.data['details'] = json.dumps(metadata_event.data['details'])
+        object.status, object.details = running_status()
 
     create_events[metadata_event.huuid] = metadata_event
     job_events.update({jj.huuid: jj for jj in these_job_events})

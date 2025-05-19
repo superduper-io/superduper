@@ -18,11 +18,9 @@ from superduper.base.annotations import trigger
 from superduper.base.base import Base, BaseMeta
 from superduper.base.constant import KEY_BLOBS, KEY_FILES, LENGTH_UUID
 from superduper.base.status import (
-    JOB_PHASE_FAILED,
-    JOB_PHASE_PENDING,
-    JOB_PHASE_RUNNING,
+    STATUS_PENDING,
+    STATUS_RUNNING,
     init_status,
-    running_status,
 )
 from superduper.misc.annotations import lazy_classproperty
 from superduper.misc.importing import isreallyinstance
@@ -147,7 +145,7 @@ class Component(Base, metaclass=ComponentMeta):
     def __post_init__(self, db: t.Optional['Datalayer'] = None):
         self.db: Datalayer = db
         self.version: t.Optional[int] = None
-        self.status: t.Dict = init_status()
+        self.status, self.details = init_status()
         self.postinit()
 
     @property
@@ -167,7 +165,11 @@ class Component(Base, metaclass=ComponentMeta):
         r = self._dict()
         s = self.class_schema
         keys = sorted(
-            [k for k in r.keys() if k in s.fields and k not in {'uuid', 'status'}]
+            [
+                k
+                for k in r.keys()
+                if k in s.fields and k not in {'uuid', 'status', 'details'}
+            ]
         )
 
         def get_hash(x):
@@ -211,7 +213,8 @@ class Component(Base, metaclass=ComponentMeta):
 
         s = get_schema(cls)[0]
         s['version'] = 'int'
-        s['status'] = 'json'
+        s['status'] = 'str'
+        s['details'] = 'json'
         return s
 
     @staticmethod
@@ -266,7 +269,7 @@ class Component(Base, metaclass=ComponentMeta):
             if isinstance(r, list):
                 return sum([_find_refs(x) for x in r], [])
             if isinstance(r, Component):
-                if only_initializing and r.status.phase != JOB_PHASE_PENDING:
+                if only_initializing and r.status.phase != STATUS_PENDING:
                     return []
                 else:
                     return [r.huuid]
@@ -338,15 +341,9 @@ class Component(Base, metaclass=ComponentMeta):
 
         :param exc: The exception to propagate.
         """
-        self.db.metadata.set_component_status(
+        self.db.metadata.set_component_failed(
             component=self.component,
             uuid=self.uuid,
-            status_update={
-                'phase': JOB_PHASE_FAILED,
-                'reason': str(exc),
-                'message': format_exc(),
-                'last_change_time': str(datetime.now()),
-            },
         )
 
     @trigger('apply')
@@ -356,7 +353,10 @@ class Component(Base, metaclass=ComponentMeta):
         :param status: The status to set the component to.
         """
         return self.db.metadata.set_component_status(
-            self.__class__.__name__, self.uuid, status_update=running_status()
+            self.__class__.__name__,
+            self.uuid,
+            status=STATUS_RUNNING,
+            reason='The component is ready to use',
         )
 
     def create_table_events(self):
@@ -421,12 +421,12 @@ class Component(Base, metaclass=ComponentMeta):
                         class_name = r['_path'].split('.')[-1]
                         huuid = f'{class_name}:{r["identifier"]}:{r["uuid"]}'
                         if event_type == 'apply':
-                            if r['status'] == JOB_PHASE_PENDING:
+                            if r['status'] == STATUS_PENDING:
                                 raise Exception(
                                     f'Component required component '
                                     f'{huuid} still initializing'
                                 )
-                            elif r['status'] == JOB_PHASE_RUNNING:
+                            elif r['status'] == STATUS_RUNNING:
                                 logging.info(
                                     f'Detected a ready component ' f'dependency {huuid}'
                                 )
@@ -475,6 +475,12 @@ class Component(Base, metaclass=ComponentMeta):
             for job in local_jobs:
                 if job.method in self.compute_kwargs:
                     job.compute_kwargs = self.compute_kwargs[job.method]
+
+        lookup = {**{j.job_id: j for j in jobs}, **{j.job_id: j for j in local_jobs}}
+        for v in lookup.values():
+            if v.dependencies:
+                for dep in v.dependencies:
+                    lookup[dep].inverse_dependencies.append(v.job_id)  # type: ignore[arg-type]
         return local_jobs
 
     @property
@@ -670,6 +676,7 @@ class Component(Base, metaclass=ComponentMeta):
         r = self._dict()
         r['version'] = self.version
         r['status'] = self.status
+        r['details'] = self.details
         r['uuid'] = self.uuid
         r['_path'] = self.__module__ + '.' + self.__class__.__name__
         return r

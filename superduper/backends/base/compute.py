@@ -29,29 +29,8 @@ class ComputeBackend(BaseBackend):
         pass
 
     @abstractmethod
-    def submit(self, job: 'Job') -> t.Any:
-        """
-        Submits a function to the server for execution.
-
-        :param job: The ``Job`` to be executed.
-        """
-        pass
-
-    @abstractmethod
     def disconnect(self) -> None:
         """Disconnect the client."""
-        pass
-
-    @abstractmethod
-    def remote(self, uuid: str, function: str, *args, **kwargs):
-        """
-        Call a remote function on the server.
-
-        :param uuid: The UUID of the component.
-        :param function: The function to call.
-        :param args: The arguments to pass to the function.
-        :param kwargs: The keyword arguments to pass to the function.
-        """
         pass
 
     def initialize(self):

@@ -14,7 +14,7 @@ from superduper.base.datatype import (
     _Artifact,
     dill_serializer,
 )
-from superduper.base.metadata import JOB_PHASE_FAILED, Job
+from superduper.base.metadata import STATUS_FAILED, Job
 from superduper.components.component import Component
 from superduper.components.listener import Listener
 
@@ -316,10 +316,10 @@ def test_propagate_failure(db):
         m.propagate_failure(e)
 
     status_model = db.load('ObjectModel', 'model').status
-    status_listener = db.load('Listener', 'test').status
+    status_listener = db.load('Listener', 'test', component_cache=False).status
 
-    assert status_model['phase'] == JOB_PHASE_FAILED
-    assert status_listener['phase'] == JOB_PHASE_FAILED
+    assert status_model == STATUS_FAILED
+    assert status_listener == STATUS_FAILED
     import datetime
 
     job = Job(
@@ -336,17 +336,23 @@ def test_propagate_failure(db):
 
     db.metadata.create_job(job.dict())
 
-    db.metadata.set_job_status(
-        job_id='my-job-id',
-        status_update={'phase': JOB_PHASE_FAILED, 'reason': 'Test exception'},
+    j = db['Job'].get(job_id='my-job-id', decode=True)
+
+    j.set_failed(
+        db=db,
+        reason='Test exception',
+        message='Traceback (most recent call last):\n  File "<stdin>", line 1, in <module>\nException: Test exception',
     )
 
     j = db['Job'].get(job_id='my-job-id')
 
-    assert j['status']['phase'] == JOB_PHASE_FAILED
-    assert j['status']['reason'] == 'Test exception'
+    assert j['status'] == STATUS_FAILED
+    assert j['details']['reason'] == 'Test exception'
 
-    list = db.load('Listener', 'test')
+    assert db['ObjectModel'].get(uuid=m.uuid)['status'] == STATUS_FAILED
+    assert db['Listener'].get(uuid=listener.uuid)['status'] == STATUS_FAILED
 
-    # check that a message has propagated to the listener
-    assert 'Job' in str(list.status['children'])
+    assert (
+        f'Job/ObjectModel:model:{m.uuid}.predict'
+        in db['ObjectModel'].get(uuid=m.uuid)['details']['failed_children']
+    )

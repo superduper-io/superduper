@@ -53,6 +53,7 @@ class VectorSearchBackend(Bookkeeping, BaseBackend):
     def find_nearest_from_array(
         self,
         h: numpy.typing.ArrayLike,
+        component: str,
         vector_index: str,
         n: int = 100,
         within_ids: t.Sequence[str] = (),
@@ -61,6 +62,7 @@ class VectorSearchBackend(Bookkeeping, BaseBackend):
         Find the nearest vectors to the given vector.
 
         :param h: vector.
+        :param component: component class name.
         :param vector_index: vector index identifier.
         :param n: number of nearest vectors to return.
         :param within_ids: list of ids to search within.
@@ -70,6 +72,7 @@ class VectorSearchBackend(Bookkeeping, BaseBackend):
     def find_nearest_from_id(
         self,
         id: str,
+        component: str,
         vector_index: str,
         n: int = 100,
         within_ids: t.Sequence[str] = (),
@@ -78,9 +81,18 @@ class VectorSearchBackend(Bookkeeping, BaseBackend):
         Find the nearest vectors to the given vector.
 
         :param id: id of the vector to search with
+        :param component: component class name.
         :param vector_index: vector index
         :param n: number of nearest vectors to return
         :param within_ids: list of ids to search within
+        """
+
+    @abstractmethod
+    def describe(self, component: str, vector_index: str):
+        """Describe the vector index in the backend.
+
+        :param component: component class name.
+        :param vector_index: vector index identifier.
         """
 
 

@@ -1,30 +1,28 @@
 from datetime import datetime
 
 # List of Job's stages
-JOB_PHASE_UNINITIALIZED = "submitted"
-JOB_PHASE_PENDING = "pending"
-JOB_PHASE_RUNNING = "running"
-JOB_PHASE_FAILED = "failed"
-JOB_PHASE_SUCCESS = "success"
+STATUS_UNINITIALIZED = "submitted"
+STATUS_PENDING = "pending"
+STATUS_RUNNING = "running"
+STATUS_FAILED = "failed"
+STATUS_SUCCESS = "success"
 
 
 def init_status():
     """Initialize the status of the component."""
-    return {
-        'phase': JOB_PHASE_UNINITIALIZED,
+    return STATUS_UNINITIALIZED, {
         'reason': 'waiting for initialization',
         'message': None,
         'last_change_time': str(datetime.now()),
-        'children': {},
+        'failed_children': {},
     }
 
 
 def running_status():
     """The status of the component as ready."""
-    return {
-        'phase': JOB_PHASE_RUNNING,
+    return STATUS_RUNNING, {
         'reason': 'the component is ready to use',
         'message': None,
         'last_change_time': str(datetime.now()),
-        'children': {},
+        'failed_children': {},
     }

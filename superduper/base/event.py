@@ -10,7 +10,7 @@ import pandas
 
 from superduper import logging
 from superduper.base import Base
-from superduper.base.metadata import JOB_PHASE_FAILED
+from superduper.base.metadata import STATUS_FAILED
 from superduper.base.schema import Schema
 from superduper.misc.importing import import_object
 
@@ -240,8 +240,8 @@ class Create(Event):
             db.metadata.set_component_status(
                 component=self.component,
                 uuid=self.data['uuid'],
-                status_update={
-                    'phase': JOB_PHASE_FAILED,
+                details_update={
+                    'phase': STATUS_FAILED,
                     'reason': f'Failed to create: {str(e)}',
                     'message': format_exc(),
                 },
@@ -421,8 +421,8 @@ class Delete(Event):
             db.metadata.set_component_status(
                 component=self.component,
                 uuid=self.identifier,
-                status_update={
-                    'phase': JOB_PHASE_FAILED,
+                details_update={
+                    'phase': STATUS_FAILED,
                     'reason': f'Failed to delete: {str(e)}',
                     'message': format_exc(),
                 },
@@ -470,8 +470,8 @@ class Update(Event):
             db.metadata.set_component_status(
                 component=self.component,
                 uuid=self.data['uuid'],
-                status_update={
-                    'phase': JOB_PHASE_FAILED,
+                details_update={
+                    'phase': STATUS_FAILED,
                     'reason': f'Failed to update: {str(e)}',
                     'message': format_exc(),
                 },

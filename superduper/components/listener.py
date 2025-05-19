@@ -168,6 +168,9 @@ class Listener(CDC):
 
         documents = self.select.subset(ids)
         if not documents:
+            logging.info(
+                f'[{self.huuid}] No documents to process for {self.huuid}, skipping'
+            )
             return
         primary_id = self.select.primary_id.execute()
         output_primary_id = self.db[self.outputs].primary_id.execute()
@@ -201,7 +204,10 @@ class Listener(CDC):
                 for id, output in zip(ids, outputs)
             ]
 
-        return self.db[self.outputs].insert(output_documents)
+        logging.info(f"[{self.huuid}] Inserting {len(output_documents)} documents")
+        result = self.db[self.outputs].insert(output_documents)
+        logging.info(f"[{self.huuid}] Inserted {len(result)} documents")
+        return result
 
     def cleanup(self):
         """Clean up when the listener is deleted."""

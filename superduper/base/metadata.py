@@ -54,6 +54,7 @@ class Job(Base):
     method: str
     status: t.Dict = dc.field(default_factory=init_status)
     dependencies: t.List[str] = dc.field(default_factory=list)
+    compute_kwargs: t.Dict = dc.field(default_factory=dict)
 
     def get_status(self, db):
         """Get the status of the job.

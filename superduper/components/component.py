@@ -127,6 +127,7 @@ class Component(Base, metaclass=ComponentMeta):
 
     :param identifier: Identifier of the instance.
     :param upstream: A list of upstream components.
+    :param compute_kwargs: Keyword arguments to manage the compute environment.
 
     :param db: Datalayer instance.
     """
@@ -139,6 +140,7 @@ class Component(Base, metaclass=ComponentMeta):
 
     identifier: str
     upstream: t.Optional[t.List['Component']] = None
+    compute_kwargs: t.Dict = dc.field(default_factory=dict)
 
     db: dc.InitVar[t.Optional['Datalayer']] = None
 
@@ -468,6 +470,11 @@ class Component(Base, metaclass=ComponentMeta):
             status_update: 'Job' = self.set_status(job=True, context=context)
             status_update.dependencies = [j.job_id for j in local_jobs]
             local_jobs.append(status_update)
+
+        if self.compute_kwargs:
+            for job in local_jobs:
+                if job.method in self.compute_kwargs:
+                    job.compute_kwargs = self.compute_kwargs[job.method]
         return local_jobs
 
     @property

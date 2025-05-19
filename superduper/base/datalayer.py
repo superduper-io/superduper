@@ -189,8 +189,6 @@ class Datalayer:
 
                 # Parse status
                 status = r['status']
-                if not CFG.json_native:
-                    status = json.loads(status)
 
                 # Check the phase of the object
                 if status == STATUS_RUNNING:

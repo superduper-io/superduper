@@ -306,9 +306,22 @@ class Base(metaclass=BaseMeta):
             for v in context.builds.values():
                 if 'uuid' in v:
                     del v['uuid']
+                if 'status' in v:
+                    del v['status']
+                if 'details' in v:
+                    del v['details']
+                if 'version' in v:
+                    del v['version']
 
             if 'uuid' in r:
                 del r['uuid']
+            if 'status' in r:
+                del r['status']
+            if 'details' in r:
+                del r['details']
+            if 'rersion' in v:
+                del r['version']
+
             r = _replace_uuids_with_keys(r)
 
         return {

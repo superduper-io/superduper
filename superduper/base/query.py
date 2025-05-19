@@ -364,6 +364,7 @@ def replace(self, condition: t.Dict, r: t.Dict | Document):
 
     db = route_db(self.db, self.table)
     out = db.databackend.replace(self.table, condition, r)
+
     self.db._post_query(self.table, ids=out, type_='update')
     return out
 

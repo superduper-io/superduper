@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Batch create tables, put-components
 - Add fix for exporting component with `CFG.json_native=True`
 - Add compute_kwargs to `Component` and `Job`
+- Propagate errors from `Job` upwards through `Component` hierarchy
 
 #### New Features & Functionality
 

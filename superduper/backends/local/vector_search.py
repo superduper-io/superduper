@@ -77,6 +77,9 @@ class LocalVectorSearchBackend(VectorSearchBackend):
             except exceptions.NotFound:
                 pass
 
+    def describe(self, component, vector_index):
+        return self[component, vector_index].describe()
+
     def find_nearest_from_array(
         self,
         h: numpy.typing.ArrayLike,
@@ -177,6 +180,19 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
         self.h = h
         self.index = index
         self.lookup = dict(zip(index, range(len(index))))
+
+    def describe(self):
+        """Describe the vector index.
+
+        :param component: name of the component
+        :param vector_index: name of the vector index
+        """
+        return {
+            'uuid': self.identifier,
+            'dimensions': self.dimensions,
+            'measure': self.measure_name,
+            'size': len(self),
+        }
 
     def find_nearest_from_id(self, _id, n=100, within_ids=None):
         """Find the nearest vectors to the given ID.

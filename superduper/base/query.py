@@ -972,15 +972,21 @@ class Query(_BaseQuery):
 
         return modified_query.execute()
 
-    def execute(self, raw: bool = False):
+    def execute(self, raw: bool = False, decode: bool = False):
         """Execute the query.
 
         :param raw: Whether to return raw results.
+        :param decode: Whether to decode the results.
         """
         db = route_db(self.db, self.table)  # type: ignore
         if self.parts and self.parts[0] == 'primary_id':
             return db.databackend.primary_id(self.table)
         results = db.databackend.execute(self, raw=raw)
+
+        if decode:
+            cls = self.db.load('Table', self.table).cls
+            return [cls.decode(r, db=self.db) for r in results]
+
         return results
 
 

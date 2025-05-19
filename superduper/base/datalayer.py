@@ -17,8 +17,8 @@ from superduper.base.datatype import BaseType, ComponentType
 from superduper.base.document import Document
 from superduper.base.event import Delete
 from superduper.base.metadata import (
-    JOB_PHASE_FAILED,
-    JOB_PHASE_RUNNING,
+    STATUS_FAILED,
+    STATUS_RUNNING,
     MetaDataStore,
     metaclasses,
 )
@@ -173,7 +173,7 @@ class Datalayer:
             # Check for timeout at the beginning of each iteration
             if time.time() - start > timeout:
                 raise exceptions.TimeoutError(
-                    f'Timed out waiting for component to become {JOB_PHASE_RUNNING}.'
+                    f'Timed out waiting for component to become {STATUS_RUNNING}.'
                 )
 
             try:
@@ -193,11 +193,11 @@ class Datalayer:
                     status = json.loads(status)
 
                 # Check the phase of the object
-                if status['phase'] == JOB_PHASE_RUNNING:
+                if status['phase'] == STATUS_RUNNING:
                     # object is running. return immediately.
                     logging.info(f"{component}:{identifier} is running")
                     return
-                elif status['phase'] == JOB_PHASE_FAILED:
+                elif status['phase'] == STATUS_FAILED:
                     # object has failed. throw an error.
                     err_msg = f"{component_id} failed with status {status}"
                     raise exceptions.InternalError(err_msg, None)
@@ -293,8 +293,9 @@ class Datalayer:
     def _post_query(self, table: str, ids: t.Sequence[str], type_: str):
         if table in metaclasses or self.metadata.is_component(table):
             return
-        if table in self.metadata.show_cdc_tables() and not table.startswith(
-            CFG.output_prefix
+        if (
+            not table.startswith(CFG.output_prefix)
+            and table in self.metadata.show_cdc_tables()
         ):
             logging.info(f'CDC for {table} is enabled')
             assert self.cluster is not None
@@ -512,7 +513,6 @@ class Datalayer:
             info.update(overrides or {})
         else:
             if component_cache and (component, identifier) in self._component_cache:
-
                 assert isinstance(identifier, str)
                 if self._component_cache[
                     (component, identifier)
@@ -531,6 +531,13 @@ class Datalayer:
                         self._component_cache[(component, identifier)].uuid
                     ]
                     del self._component_cache[(component, identifier)]
+            elif (
+                not component_cache and (component, identifier) in self._component_cache
+            ):
+                logging.info(
+                    f'Found {component, identifier} in cache but '
+                    'component_cache is disabled...'
+                )
 
         if huuid is not None:
             uuid = huuid.split(':')[-1]

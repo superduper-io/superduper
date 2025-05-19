@@ -3,8 +3,8 @@ from collections import defaultdict
 
 from superduper import logging
 from superduper.backends.base.compute import ComputeBackend
-from superduper.base.metadata import JOB_PHASE_FAILED, Job
-from superduper.base.status import JOB_PHASE_RUNNING, JOB_PHASE_SUCCESS
+from superduper.base.metadata import STATUS_FAILED, Job
+from superduper.base.status import STATUS_RUNNING, STATUS_SUCCESS
 
 if t.TYPE_CHECKING:
     from superduper import Component

@@ -80,7 +80,7 @@ class SnowflakeDataBackend(BaseDataBackend):
 
     def reconnect(self):
         """Reconnect to the data backend."""
-        self.session = connect(self.uri)
+        self.session, self.schema = connect(self.uri)
 
     def _run_query(self, query):
         start = time.time()

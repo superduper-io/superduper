@@ -73,7 +73,7 @@ class Job(Base):
         """
         start = time.time()
         while True:
-            status = self.get_status(db)
+            status = self.get_status(db)[0]
             elapsed_time = time.time() - start
 
             # Check if timeout has been exceeded

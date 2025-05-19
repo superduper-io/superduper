@@ -52,6 +52,7 @@ dependencies = [
     "PyYAML>=6.0.0",
     "uvicorn>=0.24.0",
     "fastapi>=0.103.2",
+    "pyyaml",
     "ruamel.yaml>=0.18",
     "python-magic",
     "apscheduler",

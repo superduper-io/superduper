@@ -189,15 +189,13 @@ class Datalayer:
 
                 # Parse status
                 status = r['status']
-                if not CFG.json_native:
-                    status = json.loads(status)
 
                 # Check the phase of the object
-                if status['phase'] == STATUS_RUNNING:
+                if status == STATUS_RUNNING:
                     # object is running. return immediately.
                     logging.info(f"{component}:{identifier} is running")
                     return
-                elif status['phase'] == STATUS_FAILED:
+                elif status == STATUS_FAILED:
                     # object has failed. throw an error.
                     err_msg = f"{component_id} failed with status {status}"
                     raise exceptions.InternalError(err_msg, None)

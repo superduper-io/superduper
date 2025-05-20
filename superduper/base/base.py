@@ -302,25 +302,16 @@ class Base(metaclass=BaseMeta):
             return json.loads(dump)
 
         if not context.metadata:
+            _KEYS_TO_DROP = ('uuid', 'status', 'details', 'version')
             context.builds = _replace_uuids_with_keys(context.builds)
             for v in context.builds.values():
-                if 'uuid' in v:
-                    del v['uuid']
-                if 'status' in v:
-                    del v['status']
-                if 'details' in v:
-                    del v['details']
-                if 'version' in v:
-                    del v['version']
+                for k in _KEYS_TO_DROP:
+                    if k in v:
+                        del v[k]
 
-            if 'uuid' in r:
-                del r['uuid']
-            if 'status' in r:
-                del r['status']
-            if 'details' in r:
-                del r['details']
-            if 'rersion' in v:
-                del r['version']
+            for k in _KEYS_TO_DROP:
+                if k in r:
+                    del r[k]
 
             r = _replace_uuids_with_keys(r)
 

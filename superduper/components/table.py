@@ -56,12 +56,6 @@ class Table(Component):
     def cleanup(self):
         """Cleanup the table, on removal of the component."""
         self.db.databackend.drop_table(self.identifier)
-        if self.db.cluster.cache is not None:
-            from superduper import logging
-
-            logging.info(f'Deleting schema for table {self.identifier}')
-            del self.db.cluster.cache[f'Table/{self.identifier}/schema']
-            logging.info(f'Deleting schema for table {self.identifier}... DONE')
 
     @trigger('apply', requires='data')
     def add_data(self):

@@ -421,11 +421,9 @@ class Delete(Event):
             db.metadata.set_component_status(
                 component=self.component,
                 uuid=self.identifier,
-                details_update={
-                    'phase': STATUS_FAILED,
-                    'reason': f'Failed to delete: {str(e)}',
-                    'message': format_exc(),
-                },
+                status=STATUS_FAILED,
+                reason=f'Failed to delete: {str(e)}',
+                message=str(format_exc()),
             )
             raise e
 

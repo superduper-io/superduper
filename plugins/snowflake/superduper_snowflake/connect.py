@@ -25,17 +25,27 @@ def connect(uri):
         'Creating Snowpark session for' ' snowflake data-backend implementation'
     )
     if uri == 'snowflake://':
-        connection_parameters = dict(
-            host=os.environ['SNOWFLAKE_HOST'],
-            port=int(os.environ['SNOWFLAKE_PORT']),
-            account=os.environ['SNOWFLAKE_ACCOUNT'],
-            authenticator='oauth',
-            token=open('/snowflake/session/token').read(),
-            warehouse=os.environ['SNOWFLAKE_WAREHOUSE'],
-            database=os.environ['SNOWFLAKE_DATABASE'],
-            schema=os.environ['SUPERDUPER_DATA_SCHEMA'],
-        )
-        schema = os.environ['SUPERDUPER_DATA_SCHEMA']
+        try:
+            connection_parameters = dict(
+                host=os.environ['SNOWFLAKE_HOST'],
+                port=int(os.environ['SNOWFLAKE_PORT']),
+                account=os.environ['SNOWFLAKE_ACCOUNT'],
+                authenticator='oauth',
+                token=open('/snowflake/session/token').read(),
+                warehouse=os.environ['SNOWFLAKE_WAREHOUSE'],
+                database=os.environ['SNOWFLAKE_DATABASE'],
+                schema=os.environ['SUPERDUPER_DATA_SCHEMA'],
+            )
+            schema = os.environ['SUPERDUPER_DATA_SCHEMA']
+        except KeyError as e:
+            all_snowflake_envs = [
+                key for key in os.environ.keys() if 'SNOWFLAKE' in key
+            ]
+            raise KeyError(
+                f'Environment variable {e} not set. '
+                f'Available snowflake environment variables: {all_snowflake_envs}. '
+                'Please set the environment variables for Snowflake connection.'
+            )
     else:
         if '?warehouse=' not in uri:
             match = re.match('^snowflake:\/\/(.*):(.*)\@(.*)\/(.*)\/(.*)$', uri)

@@ -18,6 +18,11 @@ class CDC(Component):
     cdc_table: str
     services: t.ClassVar[t.Sequence[str]] = ('scheduler', 'cdc')
 
+    @property
+    def dependent_tables(self):
+        """Get tables of this component."""
+        return [self.cdc_table]
+
     def handle_update_or_same(self, other):
         """Handle the case in which the component is update without breaking changes.
 

@@ -146,6 +146,11 @@ class Component(Base, metaclass=ComponentMeta):
         self.postinit()
 
     @property
+    def dependent_tables(self):
+        """Get tables of this component."""
+        return []
+
+    @property
     def uuid(self):
         """Get UUID."""
         t = self.get_merkle_tree(breaks=True)

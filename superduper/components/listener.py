@@ -111,6 +111,13 @@ class Listener(CDC):
         raise Exception(f'Invalid key type: {type(key)}')
 
     @property
+    def dependent_tables(self):
+        """Get tables of this component."""
+        if self.select is None:
+            return []
+        return [self.cdc_table, self.outputs]
+
+    @property
     def outputs(self):
         """Get reference to outputs of listener model."""
         return f'{CFG.output_prefix}{self.predict_id}'
@@ -208,9 +215,3 @@ class Listener(CDC):
         result = self.db[self.outputs].insert(output_documents)
         logging.info(f"[{self.huuid}] Inserted {len(result)} documents")
         return result
-
-    def cleanup(self):
-        """Clean up when the listener is deleted."""
-        super().cleanup()
-        if self.select is not None:
-            self.db.databackend.drop_table(self.outputs)

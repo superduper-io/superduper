@@ -450,7 +450,7 @@ class Datalayer:
             raise exceptions.Conflict(
                 component,
                 identifier,
-                f"the following components are using some components scheduler for deletion: {msg}",
+                f"the following components are using some components scheduled for deletion: {msg}",
             )
 
         for i, e in enumerate(filtered_events):
@@ -485,6 +485,14 @@ class Datalayer:
                 parents=[':'.join(p) for p in parents],
             )
         )
+        for table in object.dependent_tables:
+            events.append(
+                Delete(
+                    component='Table',
+                    identifier=table,
+                    parents=[]
+                )
+            )
 
         if recursive:
             children = object.get_children()

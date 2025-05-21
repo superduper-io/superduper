@@ -1,6 +1,8 @@
 import typing as t
 
 from superduper import CFG, logging
+from superduper.base.annotations import trigger
+from superduper.base.status import STATUS_RUNNING
 
 from .component import Component
 

@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add fix for exporting component with `CFG.json_native=True`
 - Add compute_kwargs to `Component` and `Job`
 - Propagate errors from `Job` upwards through `Component` hierarchy
+- Handle deletion in progress with status updates
 
 #### New Features & Functionality
 

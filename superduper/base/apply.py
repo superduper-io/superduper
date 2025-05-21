@@ -9,7 +9,7 @@ from superduper import CFG, Component, logging
 from superduper.base import exceptions
 from superduper.base.document import Document
 from superduper.base.event import Create, PutComponent, Signal, Update
-from superduper.base.status import running_status
+from superduper.base.status import pending_status, running_status
 from superduper.misc.tree import dict_to_tree
 
 if t.TYPE_CHECKING:
@@ -203,6 +203,8 @@ def _apply(
     processed_components: t.Optional[t.Set] = None,
 ):
 
+    object.status, object.details = pending_status()
+
     processed_components = processed_components or set()
     if context is None:
         context = object.uuid
@@ -365,11 +367,11 @@ def _apply(
     # If nothing needs to be done, then don't
     # require the status to be "initializing"
 
-    if not these_job_events:
-        metadata_event.data['status'], metadata_event.data['details'] = running_status()
-        if not CFG.json_native:
-            metadata_event.data['details'] = json.dumps(metadata_event.data['details'])
-        object.status, object.details = running_status()
+    # if not these_job_events:
+    #     metadata_event.data['status'], metadata_event.data['details'] = running_status()
+    #     if not CFG.json_native:
+    #         metadata_event.data['details'] = json.dumps(metadata_event.data['details'])
+    #     object.status, object.details = running_status()
 
     create_events[metadata_event.huuid] = metadata_event
     job_events.update({jj.huuid: jj for jj in these_job_events})

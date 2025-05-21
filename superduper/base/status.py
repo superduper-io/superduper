@@ -4,6 +4,7 @@ from datetime import datetime
 STATUS_UNINITIALIZED = "submitted"
 STATUS_PENDING = "pending"
 STATUS_RUNNING = "running"
+STATUS_DELETING = "deletion"
 STATUS_FAILED = "failed"
 STATUS_SUCCESS = "success"
 

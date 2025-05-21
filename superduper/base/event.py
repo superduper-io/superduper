@@ -418,12 +418,12 @@ class Delete(Event):
             object.cleanup()
 
         except Exception as e:
-            db.metadata.set_component_status(
+            db.metadata.set_component_failed(
                 component=self.component,
                 uuid=self.identifier,
-                status=STATUS_FAILED,
                 reason=f'Failed to delete: {str(e)}',
                 message=str(format_exc()),
+                context=None,
             )
             raise e
 

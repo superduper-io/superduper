@@ -33,6 +33,12 @@ class CDC(Component):
             return [tuple(['Listener'] + list(self.cdc_table.split('__')[1:]))]
         return []
 
+    def cleanup(self):
+        """Cleanup the component."""
+        super().cleanup()
+        self.db.cluster.cdc.drop_component(self.component, self.identifier)
+        self.db.cluster.scheduler.drop_component(self.component, self.identifier)
+
 
 def _get_parent_cdcs_of_component(component, db: 'Datalayer'):
     parents = db.metadata.get_component_version_parents(component.uuid)

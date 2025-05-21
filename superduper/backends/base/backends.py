@@ -95,7 +95,13 @@ class Bookkeeping(ABC):
             tool_id = self.uuid_tool_mapping[uuid]
             tool_ids.append(tool_id)
             del self.uuid_tool_mapping[uuid]
-            self.tool_uuid_mapping[tool_id].remove(uuid)
+            try:
+                self.tool_uuid_mapping[tool_id].remove(uuid)
+            except KeyError:
+                logging.warn(
+                    f"KeyError: {tool_id} -> {uuid} not found in tool_uuid_mapping"
+                )
+                continue
             if not self.tool_uuid_mapping[tool_id]:
                 self.tools[tool_id].drop()
                 del self.tools[tool_id]

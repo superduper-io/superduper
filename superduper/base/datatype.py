@@ -741,6 +741,7 @@ class _DatatypeLookup:
             FieldType('float'),
             FieldType('bool'),
             FieldType('date'),
+            FieldType('timestamp'),
             FieldType('ID'),
         ]
     }

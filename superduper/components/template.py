@@ -28,6 +28,7 @@ class Template(Component):
     :param substitutions: dict of substitutions to be made in the template.
     :param requirements: pip requirements for the template.
     :param default_tables: Default table to be used with the template.
+    :param postprocess: Postprocess to be applied to the template.
     """
 
     template: st.JSON
@@ -39,6 +40,7 @@ class Template(Component):
     substitutions: dc.InitVar[t.Optional[t.Dict]] = None
     requirements: t.List[str] | None = None
     default_tables: t.List[Table] | None = None
+    postprocess: Component | None = None
 
     def __post_init__(self, db, substitutions):
         self.substitutions = substitutions

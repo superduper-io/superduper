@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - '[0-9]+.[0-9]+'
+      - main
 
 jobs:
   plugin_update_check:

@@ -20,7 +20,7 @@ def connect(uri):
     - SNOWFLAKE_DATABASE: The Snowflake database.
     - SUPERDUPER_DATA_SCHEMA: The Snowflake schema.
     - /snowflake/session/token: The Snowflake OAuth token.
-    """
+    """    
     logging.info(
         'Creating Snowpark session for' ' snowflake data-backend implementation'
     )

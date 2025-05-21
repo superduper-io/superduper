@@ -104,6 +104,10 @@ class SnowflakeVectorSearcher(BaseVectorSearcher):
         """Check if vector index initialized."""
         return True
 
+    def drop(self):
+        """Drop the vector index."""
+        pass
+
     @classmethod
     def from_component(cls, vi: "VectorIndex"):
         """Create a vector searcher from a vector index.

@@ -201,6 +201,11 @@ class BaseVectorSearcher(VectorSearcherInterface):
         )
 
     @abstractmethod
+    def drop(self):
+        """Drop the vector index."""
+        pass
+
+    @abstractmethod
     def initialize(self, db):
         """Initialize the vector-searcher.
 

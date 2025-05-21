@@ -33,12 +33,10 @@ class LocalCDCBackend(CDCBackend):
         return list(self._trigger_uuid_mapping.values())
 
     def put_component(self, component: str, uuid: str):
-        self.triggers.add((component, uuid))
+        pass
 
     def drop_component(self, component, identifier):
-        c = self.db.load(component=component, identifier=identifier)
-        if isinstance(c, CDC):
-            self.triggers.remove(c.cdc_table)
+        pass
 
     def initialize(self):
         """Initialize the CDC."""

@@ -1,9 +1,9 @@
-import json
 import time
 import typing as t
-from collections import namedtuple
+from collections import defaultdict, namedtuple
 
 import click
+import networkx as nx
 
 import superduper as s
 from superduper import CFG, logging
@@ -368,6 +368,53 @@ class Datalayer:
             )
         return result
 
+    def _filter_deletions_by_cascade(self, events: t.List[Delete]):
+        """
+        Filter deletions by cascade.
+
+        :param events: List of events to filter.
+        """
+        all_huuids = set(e.huuid for e in events)
+        lookup = {e.huuid: e for e in events}
+
+        graph = nx.DiGraph()
+
+        for e in events:
+            graph.add_node(e.huuid)
+            for dep in e.parents:
+                if dep in all_huuids:
+                    graph.add_edge(dep, e.huuid)
+
+        # sort events by graph
+        sorted_nodes = nx.topological_sort(graph)
+        events = [lookup[n] for n in sorted_nodes if n in all_huuids]
+
+        conflicting_events = [
+            e.huuid for e in events if not set(e.parents).issubset(all_huuids)
+        ]
+        potential_breakages = defaultdict(list)
+        if conflicting_events:
+            for e in conflicting_events:
+                potential_breakages[e].extend(
+                    [x for x in lookup[e].parents if x not in all_huuids]
+                )
+
+        all_conflicts = conflicting_events[:]
+
+        if conflicting_events:
+            for e in conflicting_events:
+                # find descendants downstream from the event
+                downstream = list(nx.descendants(graph, e))
+                all_conflicts.extend(downstream)
+
+        all_conflicts = set(all_conflicts)
+
+        events = [e for e in events if e.huuid not in all_conflicts]
+
+        non_table_events = [e for e in events if e.component != 'Table']
+        table_events = [e for e in events if e.component == 'Table']
+        return non_table_events + table_events, potential_breakages
+
     def remove(
         self,
         component: str,
@@ -385,28 +432,35 @@ class Datalayer:
         :param force: Toggle to force remove the component.
         """
         events: t.List[Delete] = []
-        failed: t.List[str] = []
         self._build_remove(
             component=component,
             identifier=identifier,
             events=events,
-            failed=failed,
             recursive=recursive,
         )
 
-        if failed and not force:
+        events = list({e.huuid: e for e in events}.values())  # remove duplicates
+
+        filtered_events, potential_breakages = self._filter_deletions_by_cascade(events)
+
+        if potential_breakages and not force:
+            msg = '\n' + '\n'.join(
+                '  ' + f'{k} -> {v}' for k, v in potential_breakages.items()
+            )
             raise exceptions.Conflict(
-                component, identifier, f"the following components are in use: {failed}"
+                component,
+                identifier,
+                f"the following components are using some components scheduler for deletion: {msg}",
             )
 
-        for i, e in enumerate(events):
+        for i, e in enumerate(filtered_events):
             logging.info(
-                f'Removing component [{i + 1}/{len(events)}] '
+                f'Removing component [{i + 1}/{len(filtered_events)}] '
                 f'{e.component}:{e.identifier}'
             )
             e.execute(self)
             logging.info(
-                f'Removing component [{i + 1}/{len(events)}] '
+                f'Removing component [{i + 1}/{len(filtered_events)}] '
                 f'{e.component}:{e.identifier}... DONE'
             )
 
@@ -415,30 +469,22 @@ class Datalayer:
         component: str,
         identifier: str,
         events: t.List,
-        failed: t.List,
         recursive: bool = False,
     ):
 
         object = self.load(component=component, identifier=identifier)
 
-        previous = [e.huuid for e in events]
-
         parents = self.metadata.get_component_parents(
             component=component, identifier=identifier
         )
-        fail = False
-        if parents:
-            # Only fail the deletion attempt if the parents aren't in this cascade
-            for p in parents:
-                if f'{p[0]}:{p[1]}' not in previous:
-                    failed.append(f'{component}:{identifier} -> {p[0]}:{p[1]}')
-                    fail = True
 
-            # If the deletion fails, we need to stop
-            if fail:
-                return
-
-        events.append(Delete(component=component, identifier=identifier))
+        events.append(
+            Delete(
+                component=component,
+                identifier=identifier,
+                parents=[':'.join(p) for p in parents],
+            )
+        )
 
         if recursive:
             children = object.get_children()
@@ -448,7 +494,6 @@ class Datalayer:
                     c.identifier,
                     recursive=True,
                     events=events,
-                    failed=failed,
                 )
 
     def load_all(self, component: str, **kwargs) -> t.List[Component]:

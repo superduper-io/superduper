@@ -1,3 +1,4 @@
+import dataclasses as dc
 import math
 import typing as t
 from abc import abstractmethod
@@ -370,12 +371,14 @@ class Delete(Event):
 
     :param component: the type of component to be created
     :param identifier: the identifier of the component to be deleted
+    :param parents: the parents of the component (if any)
     """
 
     queue: t.ClassVar[str] = '_apply'
 
     component: str
     identifier: str
+    parents: t.List[str] = dc.field(default_factory=list)
 
     @property
     def huuid(self):
@@ -389,7 +392,7 @@ class Delete(Event):
         """
         try:
             object = db.load(component=self.component, identifier=self.identifier)
-
+            object.cleanup()
             db.metadata.delete_component(self.component, self.identifier)
             artifact_ids = db.metadata.get_artifact_relations_for_component(
                 self.component, self.identifier
@@ -415,16 +418,20 @@ class Delete(Event):
                 parent_identifier=self.identifier,
             )
 
-            object.cleanup()
-
         except Exception as e:
-            db.metadata.set_component_failed(
-                component=self.component,
-                uuid=self.identifier,
-                reason=f'Failed to delete: {str(e)}',
-                message=str(format_exc()),
-                context=None,
-            )
+            try:
+                db.metadata.set_component_failed(
+                    component=self.component,
+                    uuid=object.uuid,
+                    reason=f'Failed to delete: {str(e)}',
+                    message=str(format_exc()),
+                    context=None,
+                )
+            except Exception as ee:
+                logging.error(
+                    f'Failed to set component status: {str(ee)}'
+                    f'while deleting {self.component}:{self.identifier}'
+                )
             raise e
 
 

@@ -55,7 +55,8 @@ class Table(Component):
 
     def cleanup(self):
         """Cleanup the table, on removal of the component."""
-        self.db.databackend.drop_table(self.identifier)
+        if self.identifier.startswith(CFG.output_prefix):
+            self.db.databackend.drop_table(self.identifier)
 
     @trigger('apply', requires='data')
     def add_data(self):

@@ -6,10 +6,7 @@ import os
 import shutil
 import typing as t
 from collections import OrderedDict, defaultdict
-from datetime import datetime
-from enum import Enum
 from functools import wraps
-from traceback import format_exc
 
 import networkx
 
@@ -466,9 +463,9 @@ class Component(Base, metaclass=ComponentMeta):
             if len(local_jobs) == len(triggers):
                 break
 
-        if event_type == 'apply' and local_jobs:
+        if event_type == 'apply':  # and local_jobs:
             status_update: 'Job' = self.set_status(job=True, context=context)
-            status_update.dependencies = [j.job_id for j in local_jobs]
+            status_update.dependencies = [j.job_id for j in local_jobs + list(jobs)]
             local_jobs.append(status_update)
 
         if self.compute_kwargs:

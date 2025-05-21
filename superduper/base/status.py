@@ -27,3 +27,13 @@ def running_status():
         'last_change_time': str(datetime.now()),
         'failed_children': {},
     }
+
+
+def pending_status():
+    """The status of the component as ready."""
+    return STATUS_PENDING, {
+        'reason': 'the component is being initialized by jobs',
+        'message': None,
+        'last_change_time': str(datetime.now()),
+        'failed_children': {},
+    }

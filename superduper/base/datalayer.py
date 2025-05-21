@@ -490,7 +490,7 @@ class Datalayer:
                 Delete(
                     component='Table',
                     identifier=table,
-                    parents=[]
+                    parents=[':'.join(p) for p in parents],
                 )
             )
 

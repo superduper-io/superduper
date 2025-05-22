@@ -24,6 +24,8 @@ class BaseDataBackend(ABC):
     :param flavour: Flavour of the databackend.
     """
 
+    tables_ignore: str | None = None
+
     batched: bool = False
     id_field: str = 'id'
 

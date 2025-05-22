@@ -71,6 +71,8 @@ def _watch_token_file(databackend):
 class SnowflakeDataBackend(BaseDataBackend):
     """Snowflake data backend."""
 
+    tables_ignore = '^SNOWFLAKE_*'
+
     def __init__(self, uri, plugin, flavour):
         self.uri = uri
         self.session, self.schema = connect(uri)

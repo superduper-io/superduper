@@ -105,10 +105,10 @@ def _consume_event_type(event_type, ids, table, db: 'Datalayer'):
 
     from superduper.components.cdc import build_streaming_graph
 
-    G, components = build_streaming_graph(table, db)
+    G = build_streaming_graph(table, db)
 
     for huuid in nx.topological_sort(G):
-        component = components[huuid]
+        component = G.nodes[huuid]["component"]
         # this is a dictionary/ mapping method_name -> future
         # try this until the dependencies are there
         input_table = component.cdc_table

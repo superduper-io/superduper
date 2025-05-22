@@ -139,6 +139,9 @@ class Component(Base, metaclass=ComponentMeta):
 
     db: dc.InitVar[t.Optional['Datalayer']] = None
 
+    def __repr__(self):
+        return self.huuid
+
     def __post_init__(self, db: t.Optional['Datalayer'] = None):
         self.db: Datalayer = db
         self.version: t.Optional[int] = None
@@ -508,11 +511,6 @@ class Component(Base, metaclass=ComponentMeta):
             'status': self.status,
         }
         return metadata
-
-    @property
-    def dependencies(self):
-        """Get dependencies on the component."""
-        return ()
 
     def setup(self):
         """Method to help initiate component field dependencies."""

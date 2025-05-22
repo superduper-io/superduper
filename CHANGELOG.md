@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Propagate errors from `Job` upwards through `Component` hierarchy
 - Handle deletion in progress with status updates
 - Add postprocess in Template
+- Remove the dependencies property from `Component`
 
 #### New Features & Functionality
 

@@ -122,13 +122,6 @@ class Listener(CDC):
         """Get reference to outputs of listener model."""
         return f'{CFG.output_prefix}{self.predict_id}'
 
-    @property
-    def dependencies(self):
-        """Get dependencies of this component."""
-        tables = self.select.tables if self.select else []
-        tables = [t for t in tables if t.startswith(CFG.output_prefix)]
-        return [tuple(['Listener'] + list(t.split('__')[1:])) for t in tables]
-
     def _check_signature(self):
         model_signature = self.model.signature
 

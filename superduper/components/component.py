@@ -473,7 +473,11 @@ class Component(Base, metaclass=ComponentMeta):
 
         if event_type == 'apply':  # and local_jobs:
             status_update: 'Job' = self.set_status(job=True, context=context)
-            status_update.dependencies = [j.job_id for j in local_jobs + list(jobs)]
+            children_set = {(c.component, c.uuid) for c in self.get_children()}
+            children_jobs = [
+                job for job in jobs if (job.component, job.uuid) in children_set
+            ]
+            status_update.dependencies = [j.job_id for j in local_jobs + children_jobs]
             local_jobs.append(status_update)
 
         if self.compute_kwargs:
@@ -481,11 +485,15 @@ class Component(Base, metaclass=ComponentMeta):
                 if job.method in self.compute_kwargs:
                     job.compute_kwargs = self.compute_kwargs[job.method]
 
-        lookup = {**{j.job_id: j for j in jobs}, **{j.job_id: j for j in local_jobs}}
-        for v in lookup.values():
-            if v.dependencies:
-                for dep in v.dependencies:
-                    lookup[dep].inverse_dependencies.append(v.job_id)  # type: ignore[arg-type]
+        lookup: dict[str, "Job"] = {
+            **{j.job_id: j for j in jobs},
+            **{j.job_id: j for j in local_jobs},
+        }
+        for job in lookup.values():
+            for dep in job.dependencies:
+                dep_job = lookup[dep]
+                if job.job_id not in dep_job.dependencies:
+                    dep_job.inverse_dependencies.append(job.job_id)
         return local_jobs
 
     @property

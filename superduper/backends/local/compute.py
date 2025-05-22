@@ -48,7 +48,9 @@ class LocalComputeBackend(ComputeBackend):
         job.args, job.kwargs = job.get_args_kwargs(self.futures[job.context])
         dependencies = job.kwargs.pop('dependencies', [])
         if dependencies:
-            logging.info(f'Running job {job.job_id} with dependencies: {dependencies}')
+            logging.info(
+                f'Running job {job.job_id} with {len(dependencies)} dependencies'
+            )
         output = job.run(db=self.db)
         self.futures[job.context][job.job_id] = output
         assert job.job_id is not None

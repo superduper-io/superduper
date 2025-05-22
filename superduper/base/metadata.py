@@ -50,7 +50,7 @@ class Job(Base):
     args: t.List = dc.field(default_factory=list)
     kwargs: t.Dict = dc.field(default_factory=dict)
     time: str = dc.field(default_factory=lambda: str(datetime.datetime.now()))
-    job_id: t.Optional[str] = dc.field(default_factory=lambda: str(uuid.uuid4()))
+    job_id: str = dc.field(default_factory=lambda: str(uuid.uuid4()))
     method: str
     details: t.Dict = dc.field(default_factory=lambda: init_status()[1])
     status: str = STATUS_UNINITIALIZED
@@ -1137,10 +1137,6 @@ class MetaDataStore:
         versions = t.filter(t['identifier'] == identifier).distinct('version')
 
         if not versions:
-            if identifier == 'd0e63b4e881cd9edd3':
-                import pdb
-
-                pdb.set_trace()
             raise exceptions.NotFound(component, identifier)
         return max(versions)
 

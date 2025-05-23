@@ -571,7 +571,7 @@ class Datalayer:
                     component=component,
                     identifier=identifier,
                 ):
-                    logging.info(f'Found {component, identifier} in cache...')
+                    logging.debug(f'Found {component, identifier} in cache...')
                     return self._component_cache[(component, identifier)]
                 else:
                     logging.info(

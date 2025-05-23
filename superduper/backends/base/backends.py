@@ -53,9 +53,8 @@ class Bookkeeping(ABC):
         :param kwargs: Additional arguments.
         """
         object = self.db.load(component=component, uuid=uuid)
-        logging.info(
-            f'Putting component: {object.huuid} on to {self.__class__.__name__}'
-        )
+        class_name = self.__class__.__name__
+        logging.info(f'[{class_name}] Adding component: {object.huuid}')
         tool = self.build_tool(object)
         if tool is None:
             logging.warn(
@@ -73,14 +72,13 @@ class Bookkeeping(ABC):
         )
         self.uuid_tool_mapping[object.uuid] = tool.identifier
         if tool.identifier in self.tools:
+            logging.info(f'[{class_name}] Tool already exists: {tool.identifier}')
             return
         self.tool_uuid_mapping[tool.identifier].add(object.uuid)
         self.tools[tool.identifier] = tool
         tool.initialize(**kwargs)
-        logging.info(
-            f'Putting component: {object.huuid} on to {self.__class__.__name__}'
-            f"{self}... DONE"
-        )
+        logging.info(f'[{class_name}] Tool initialized: {tool.identifier}')
+        logging.info(f'[{class_name}] Component added: {object.huuid}')
 
     def drop_component(self, component: str, identifier: str):
         """Drop the component from backend.

@@ -103,15 +103,13 @@ def test_component_cache(db: 'Datalayer', capsys):
 
     db.apply(app, force=True)
 
-    db.load('Application', 'test')
+    app_0 = db.load('Application', 'test')
 
     assert ('Application', 'test') in db._component_cache
 
-    db.load('Application', 'test')
+    app_1 = db.load('Application', 'test')
 
-    log = capsys.readouterr().out
-
-    assert "Found ('Application', 'test') in cache..." in log
+    assert id(app_0) == id(app_1)
 
     m2 = ObjectModel('test', object=lambda x: x + 1)
     app2 = Application('test', components=[m2])

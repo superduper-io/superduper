@@ -1,3 +1,4 @@
+import numpy as np
 import os
 import re
 import typing as t
@@ -169,6 +170,9 @@ class SnowflakeVectorSearcher(BaseVectorSearcher):
         """
         from snowflake.snowpark.functions import col, lit, vector_l2_distance
         from snowflake.snowpark.types import VectorType
+
+        if isinstance(h, np.ndarray):
+            h = h.tolist()
 
         vector_table = self.session.table(f'"{self.collection}"')
         result_df = (

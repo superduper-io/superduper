@@ -25,7 +25,7 @@ class _SnowflakeTokenWatcher(FileSystemEventHandler):
             with db_lock:
                 logging.info(
                     f'Detected Snowflake token file change, '
-                    f'reconnect to the {self.databackend}'
+                    f'reconnect to the {self.databackend.__class__.__name__}'
                 )
                 self.databackend.reconnect()
 

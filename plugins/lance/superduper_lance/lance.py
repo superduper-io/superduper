@@ -42,6 +42,11 @@ class LanceVectorSearcher(BaseVectorSearcher):
         """Initialize the vector index."""
         pass
 
+    def drop(self):
+        """Drop the vector index."""
+        if os.path.exists(self.dataset_path):
+            os.remove(self.dataset_path)
+
     @property
     def dataset(self):
         """Return the Lance dataset."""

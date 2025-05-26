@@ -1,4 +1,3 @@
-import io
 import os
 
 import openai
@@ -7,11 +6,8 @@ import vcr
 from vcr.stubs import httpx_stubs
 
 from superduper_openai.model import (
-    OpenAIAudioTranscription,
-    OpenAIAudioTranslation,
     OpenAIChatCompletion,
     OpenAIEmbedding,
-    _available_models,
 )
 
 PNG_BYTE_SIGNATURE = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR'
@@ -81,11 +77,6 @@ vcr = vcr.VCR(
 )
 
 
-@pytest.fixture(autouse=True)
-def mock_lru_cache():
-    _available_models.cache_clear()
-
-
 @vcr.use_cassette()
 def test_embed():
     e = OpenAIEmbedding(identifier='text-embedding-ada-002')
@@ -118,54 +109,3 @@ def test_batch_chat():
 
     assert isinstance(resp, list)
     assert isinstance(resp[0], str)
-
-
-@vcr.use_cassette()
-def test_transcribe():
-    with open('test/material/data/test.wav', 'rb') as f:
-        buffer = io.BytesIO(f.read())
-    buffer.name = 'test.wav'
-    prompt = (
-        'i have some advice for you. write all text in lower-case.'
-        'only make an exception for the following words: {context}'
-    )
-    e = OpenAIAudioTranscription(identifier='whisper-1', prompt=prompt)
-    resp = e.predict(buffer, context=['United States'])
-    buffer.close()
-
-    assert 'United States' in resp
-
-
-@vcr.use_cassette()
-def test_translate():
-    with open('test/material/data/german.wav', 'rb') as f:
-        buffer = io.BytesIO(f.read())
-    buffer.name = 'test.wav'
-    prompt = (
-        'i have some advice for you. write all text in lower-case.'
-        'only make an exception for the following words: {context}'
-    )
-    e = OpenAIAudioTranslation(identifier='whisper-1', prompt=prompt)
-    resp = e.predict(buffer, context=['Emmerich'])
-    buffer.close()
-
-    assert 'station' in resp
-
-
-@vcr.use_cassette()
-def test_batch_translate():
-    with open('test/material/data/german.wav', 'rb') as f:
-        buffer = io.BytesIO(f.read())
-        buffer.name = 'test.wav'
-
-    with open('test/material/data/german.wav', 'rb') as f:
-        buffer2 = io.BytesIO(f.read())
-        buffer2.name = 'test.wav'
-
-    e = OpenAIAudioTranslation(identifier='whisper-1', batch_size=1)
-    resp = e.predict_batches([buffer, buffer2])
-    buffer.close()
-
-    assert len(resp) == 2
-    assert resp[0] == resp[1]
-    assert 'station' in resp[0]

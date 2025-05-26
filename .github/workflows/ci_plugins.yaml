@@ -4,7 +4,8 @@ on:
   pull_request:
     branches:
       - main
-    paths:  # run this action only when the docs folder is changed
+      - '[0-9]+.[0-9]+'
+    paths:  # run this action only when the plugins folder is changed
       - 'plugins/**'
 
 concurrency:

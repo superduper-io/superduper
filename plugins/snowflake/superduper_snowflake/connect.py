@@ -1,8 +1,52 @@
 import os
 import re
+import threading
 
 from snowflake.snowpark import Session
 from superduper import logging
+from watchdog.events import FileSystemEventHandler
+from watchdog.observers import Observer
+
+db_lock = threading.Lock()
+SESSION_DIR = os.environ.get('SNOWFLAKE_SESSION_DIR') or '/snowflake/session'
+
+
+class _SnowflakeTokenWatcher(FileSystemEventHandler):
+    timeout = 60
+
+    def __init__(self, databackend):
+        super().__init__()
+        self.databackend = databackend
+
+    def on_any_event(self, event):
+        logging.warn(str(event))
+
+        if event.src_path.endswith('data_tmp') and event.event_type == 'moved':
+            with db_lock:
+                logging.info(
+                    f'Detected Snowflake token file change, '
+                    f'reconnect to the {self.databackend}'
+                )
+                self.databackend.reconnect()
+
+
+def watch_token_file(databackend):
+    """Watch the Snowflake token file for changes.
+
+    :param databackend: The data backend instance to reconnect.
+    This function sets up a file system observer that watches The
+    Snowflake token file for changes. When the token file is modified,
+    it will trigger a reconnection of the data backend.
+    """
+    observer = Observer()
+    handler = _SnowflakeTokenWatcher(databackend)
+
+    logging.info(f'Starting Snowflake token watcher on {SESSION_DIR}/token')
+
+    observer.schedule(handler, SESSION_DIR, recursive=False)
+    observer.start()
+    logging.info('Started Snowflake token watcher')
+    return observer
 
 
 def connect(uri):

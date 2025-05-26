@@ -37,11 +37,18 @@ jobs:
       with:
         changelog: CHANGELOG.md
 
-    - name: Scan for password leaking
+    - name: Get changed files
+      id: changed-files
+      uses: tj-actions/changed-files@v44
+
+    - name: Scan changed files for leaking password
+      if: steps.changed-files.outputs.any_changed == 'true'
       uses: gitleaks/gitleaks-action@v2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+      with:
+        args: '--source=. --verbose --redact --log-opts="origin/${{ github.base_ref }}..HEAD"'
 
     #---------------------------------------------------
     # Configuring Python environments.

@@ -47,6 +47,7 @@ dependencies = [
     "overrides>=7",
     "tenacity>=8.1.0,<=8.2.3",
     "packaging",
+    "pandas",
     "prettytable",
     "python-dotenv",
     "PyYAML>=6.0.0",
@@ -66,7 +67,6 @@ dependencies = [
 [project.optional-dependencies]
 test = [
     "scikit-learn>=1.1.3",
-    "pandas",
     "pre-commit",
     "black==25.1.0",
     "ruff==0.4.4",

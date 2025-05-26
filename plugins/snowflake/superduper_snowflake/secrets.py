@@ -21,7 +21,7 @@ def check_secret_updates(db):
         for r in result
     }
 
-    updating = []
+    updating = {}
     for k in lookup:
         if k not in os.environ:
             raise exceptions.NotFound("secret", k)
@@ -29,7 +29,8 @@ def check_secret_updates(db):
         value = os.environ[k]
         target = hashlib.sha256(value.encode()).hexdigest()
         if lookup[k] != target:
-            updating.append(k)
+            updating[k] = {'current': lookup[k], 'target': target}
 
     if updating:
-        raise UpdatingSecretException(f'Secrets {updating} are still updating.')
+        msg = ', '.join(f"{k} (Expected {v['current']} -> Got{v['target']})" for k, v in updating.items())
+        raise UpdatingSecretException(f'Secrets {list(updating.keys())} are still updating. {msg}')

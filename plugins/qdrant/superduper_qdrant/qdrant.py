@@ -94,6 +94,11 @@ class QdrantVectorSearcher(BaseVectorSearcher):
             points.append(point)
         self.client.upsert(collection_name=self.collection_name, points=points)
 
+    def drop(self):
+        """Drop the vector index."""
+        if self.client.collection_exists(self.collection_name):
+            self.client.delete_collection(self.collection_name)
+
     def delete(self, ids: t.Sequence[str]) -> None:
         """Delete vectors from the index.
 

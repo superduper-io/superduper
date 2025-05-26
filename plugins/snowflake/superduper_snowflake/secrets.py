@@ -32,5 +32,10 @@ def check_secret_updates(db):
             updating[k] = {'current': lookup[k], 'target': target}
 
     if updating:
-        msg = ', '.join(f"{k} (Expected {v['current']} -> Got{v['target']})" for k, v in updating.items())
-        raise UpdatingSecretException(f'Secrets {list(updating.keys())} are still updating. {msg}')
+        msg = ', '.join(
+            f"{k} (Expected {v['current']} -> Got{v['target']})"
+            for k, v in updating.items()
+        )
+        raise UpdatingSecretException(
+            f'Secrets {list(updating.keys())} are still updating. {msg}'
+        )

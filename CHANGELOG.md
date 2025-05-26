@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 **Before you create a Pull Request, remember to update the Changelog with your changes.**
 
+## [0.7.0](https://github.com/superduper-io/superduper/compare/0.7.0...0.6.0])    (2025-May-26)
+
+#### Changed defaults / behaviours
+
+- Add load cache checking for latest `uuid`
+- Add temporary caching for db.load of components during apply.
+- Replace adhoc exceptions with well-defined counterparts
+- Replace adhoc statuses with well-defined counterparts
+- Optimize performance during apply.
+- Add option of multiple `VectorIndex` implementations
+- Batch create tables, put-components
+- Add fix for exporting component with `CFG.json_native=True`
+- Add compute_kwargs to `Component` and `Job`
+- Propagate errors from `Job` upwards through `Component` hierarchy
+- Handle deletion in progress with status updates
+- Add postprocess in Template
+- Remove the dependencies property from `Component`
+
+### New features
+
+- Add pydantic schema support
+- Add recursive error propagation
+- Add reconnection support for Snowflake vector search
+
+### Bug fixes
+
+- Fix the snowflake plugin
+- Fix the bug where an empty variable was added to the vector.
+- Fix the primary_id of ArtifactRelations
+- Fix the snowflake and KeyedDatabackend
+- Fix a bug where Ibis throws Ibis.TableError but the framework waits for MetadataNoExists
+- Fix primary_id and add test cases for in-memory metadata store.
+- Fix the processed_components in_apply
+- Fix job execution
+- Fix performance issues in batch table creation for Snowflake.
+- Fix the update method in the KeyedDatabackend class
+- Fix the database routing issue during update operations.
+- Fix the issue related to services.
+- Fix the snowflake plugin
+- Fix the export method
+- Recursive component deletion overeagerly skipping components
+
 ## [0.6.0](https://github.com/superduper-io/superduper/compare/0.6.0...0.5.0])    (2025-Mar-26)
 
 #### Changed defaults / behaviours
@@ -23,19 +65,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Renamed `Component.init` to `Component.setup`
 - Require `.upstream` when setting upstream dependencies
 - Disable ability to remove components verion-by-version
-- Add load cache checking for latest `uuid`
-- Add temporary caching for db.load of components during apply.
-- Replace adhoc exceptions with well-defined counterparts
-- Replace adhoc statuses with well-defined counterparts
-- Optimize performance during apply.
-- Add option of multiple `VectorIndex` implementations
-- Batch create tables, put-components
-- Add fix for exporting component with `CFG.json_native=True`
-- Add compute_kwargs to `Component` and `Job`
-- Propagate errors from `Job` upwards through `Component` hierarchy
-- Handle deletion in progress with status updates
-- Add postprocess in Template
-- Remove the dependencies property from `Component`
 
 #### New Features & Functionality
 
@@ -45,9 +74,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Snowflake native data-backend implementation
 - Add redis cache inside `db.metadata` for quick multi-process loading
 - Add redis plugin
-- Add pydantic schema support
-- Add recursive error propagation
-- Add reconnection support for Snowflake vector search
 
 #### Bug Fixes
 
@@ -67,21 +93,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remove `.component` of `Table`
 - Allow multiple implementations of `VectorIndex`
 - Fix key pattern matching in Redis plugin
-- Fix the snowflake plugin
-- Fix the bug where an empty variable was added to the vector.
-- Fix the primary_id of ArtifactRelations
-- Fix the snowflake and KeyedDatabackend
-- Fix a bug where Ibis throws Ibis.TableError but the framework waits for MetadataNoExists
-- Fix primary_id and add test cases for in-memory metadata store.
-- Fix the processed_components in_apply
-- Fix job execution
-- Fix performance issues in batch table creation for Snowflake.
-- Fix the update method in the KeyedDatabackend class
-- Fix the database routing issue during update operations.
-- Fix the issue related to services.
-- Fix the snowflake plugin
-- Fix the export method
-- Recursive component deletion overeagerly skipping components
 
 ## [0.5.0](https://github.com/superduper-io/superduper/compare/0.5.0...0.4.0])    (2024-Nov-02)
 

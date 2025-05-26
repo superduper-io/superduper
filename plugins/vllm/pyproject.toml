@@ -27,7 +27,7 @@ dependencies = [
 test = [
     "pytest-asyncio"
     # Annotation plugin dependencies will be installed in CI
-    # :CI: plugins/ibis
+    # :CI: plugins/sql
 ]
 
 [project.urls]

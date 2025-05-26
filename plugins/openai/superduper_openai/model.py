@@ -1,10 +1,9 @@
-import base64
 import dataclasses as dc
+import os
 import traceback
 import typing as t
 
 import numpy
-import requests
 import tqdm
 from httpx import ResponseNotRead
 from openai import (
@@ -14,10 +13,9 @@ from openai import (
     OpenAI as SyncOpenAI,
     RateLimitError,
 )
-from openai._types import NOT_GIVEN
-from superduper import logging
+from superduper import CFG, logging
 from superduper.base.datalayer import Datalayer
-from superduper.components.model import APIBaseModel
+from superduper.components.model import APIBaseModel, method_wrapper
 from superduper.misc.files import load_secrets
 from superduper.misc.retry import Retry, safe_retry
 
@@ -45,6 +43,13 @@ class _OpenAI(APIBaseModel):
     openai_api_base: t.Optional[str] = None
     client_kwargs: t.Optional[dict] = dc.field(default_factory=dict)
 
+    def _wrapper(self, item: t.Any):
+        """Wrap the item with the model.
+
+        :param item: Item to wrap.
+        """
+        return method_wrapper(self.predict, item, self.signature)
+
     def postinit(self):
         assert isinstance(self.client_kwargs, dict)
         if self.openai_api_key is not None:
@@ -55,7 +60,9 @@ class _OpenAI(APIBaseModel):
 
     @property
     def sync_client(self):
-        if 'OPENAI_API_KEY' not in self.client_kwargs:
+        if 'OPENAI_API_KEY' not in self.client_kwargs and os.path.exists(
+            CFG.secrets_volume
+        ):
             try:
                 load_secrets()
             except Exception as e:
@@ -185,324 +192,5 @@ class OpenAIChatCompletion(_OpenAI):
         """
         out = []
         for i in range(len(dataset)):
-            args, kwargs = self.handle_input_type(
-                data=dataset[i], signature=self.signature
-            )
-            out.append(self.predict(*args, **kwargs))
+            out.append(method_wrapper(self.predict, dataset[i], self.signature))
         return out
-
-
-class OpenAIImageCreation(_OpenAI):
-    """OpenAI image creation predictor.
-
-    :param takes_context: Whether the model takes context into account.
-    :param prompt: The prompt to use to seed the response.
-    :param n: The number of images to generate.
-    :param response_format: The response format to use.
-
-    Example:
-    -------
-    >>> from superduper_openai.model import OpenAIImageCreation
-    >>>
-    >>> model = OpenAIImageCreation(
-    >>>     model="dall-e",
-    >>>     prompt="a close up, studio photographic portrait of a {context}",
-    >>>     response_format="url",
-    >>> )
-    >>> model.predict("cat")
-
-    """
-
-    signature: str = 'singleton'
-    takes_context: bool = True
-    prompt: str = ''
-    n: int = 1
-    response_format: str = 'b64_json'
-
-    def _pre_create(self, db: Datalayer):
-        """Pre creates the model.
-
-        :param db: The datalayer instance.
-        """
-        self.datatype = self.datatype or 'bytes'
-
-    def _format_prompt(self, context, X):
-        prompt = self.prompt.format(context='\n'.join(context))
-        return prompt + X
-
-    @retry
-    def predict(self, X: str):
-        """Generates images from text prompts.
-
-        :param X: The text prompt.
-        """
-        if self.response_format == 'b64_json':
-            resp = self.sync_client.images.generate(
-                prompt=X,
-                n=self.n,
-                response_format='b64_json',
-                **self.predict_kwargs,
-            )
-            b64_json = resp.data[0].b64_json
-            assert b64_json is not None
-            return base64.b64decode(b64_json)
-        else:
-            url = (
-                self.sync_client.images.generate(
-                    prompt=X, n=self.n, **self.predict_kwargs
-                )
-                .data[0]
-                .url
-            )
-            return requests.get(url).content
-
-    def predict_batches(self, dataset: t.List) -> t.List:
-        """Generates images from text prompts.
-
-        :param dataset: The dataset of text prompts.
-        """
-        out = []
-        for i in range(len(dataset)):
-            args, kwargs = self.handle_input_type(
-                data=dataset[i], signature=self.signature
-            )
-            out.append(self.predict(*args, **kwargs))
-        return out
-
-
-class OpenAIImageEdit(_OpenAI):
-    """OpenAI image edit predictor.
-
-    :param takes_context: Whether the model takes context into account.
-    :param prompt: The prompt to use to seed the response.
-    :param response_format: The response format to use.
-    :param n: The number of images to generate.
-
-    Example:
-    -------
-    >>> import io
-    >>>
-    >>> from superduper_openai.model import OpenAIImageEdit
-    >>>
-    >>> model = OpenAIImageEdit(
-    >>>     model="dall-e",
-    >>>     prompt="A celebration party at the launch of {context}",
-    >>>     response_format="url",
-    >>> )
-    >>> with open("test/material/data/rickroll.png", "rb") as f:
-    >>>     buffer = io.BytesIO(f.read())
-    >>> model.predict(buffer, context=["superduper"])
-
-    """
-
-    takes_context: bool = True
-    prompt: str = ''
-    response_format: str = 'b64_json'
-    n: int = 1
-
-    def _format_prompt(self, context):
-        prompt = self.prompt.format(context='\n'.join(context))
-        return prompt
-
-    def _pre_create(self, db: Datalayer):
-        """Pre creates the model.
-
-        :param db: The datalayer instance.
-        """
-        self.datatype = self.datatype or 'bytes'
-
-    @retry
-    def predict(
-        self,
-        image: t.BinaryIO,
-        mask: t.Optional[t.BinaryIO] = None,
-        context: t.Optional[t.List[str]] = None,
-    ):
-        """Edits an image.
-
-        :param image: The image to edit.
-        :param mask: The mask to apply to the image.
-        :param context: The context to use for the prompt.
-        """
-        if context is not None:
-            self.prompt = self._format_prompt(context)
-
-        maybe_mask = mask or NOT_GIVEN
-
-        if self.response_format == 'b64_json':
-            b64_json = (
-                self.sync_client.images.edit(
-                    image=image,
-                    mask=maybe_mask,
-                    prompt=self.prompt,
-                    n=self.n,
-                    response_format='b64_json',
-                    **self.predict_kwargs,
-                )
-                .data[0]
-                .b64_json
-            )
-            out = base64.b64decode(b64_json)
-        else:
-            url = (
-                self.sync_client.images.edit(
-                    image=image,
-                    mask=maybe_mask,
-                    prompt=self.prompt,
-                    n=self.n,
-                    **self.predict_kwargs,
-                )
-                .data[0]
-                .url
-            )
-            out = requests.get(url).content
-        return out
-
-    def predict_batches(self, dataset: t.List) -> t.List:
-        """Predicts the output for a dataset of images.
-
-        :param dataset: The dataset of images.
-        """
-        out = []
-        for i in range(len(dataset)):
-            args, kwargs = self.handle_input_type(
-                data=dataset[i], signature=self.signature
-            )
-            out.append(self.predict(*args, **kwargs))
-        return out
-
-
-class OpenAIAudioTranscription(_OpenAI):
-    """OpenAI audio transcription predictor.
-
-    :param takes_context: Whether the model takes context into account.
-    :param prompt: The prompt to guide the model's style.
-
-    The prompt should contain the `"context"` format variable.
-
-    Example:
-    -------
-    >>> import io
-    >>> from superduper_openai.model import OpenAIAudioTranscription
-    >>> with open('test/material/data/test.wav', 'rb') as f:
-    >>>     buffer = io.BytesIO(f.read())
-    >>> buffer.name = 'test.wav'
-    >>> prompt = (
-    >>>     'i have some advice for you. write all text in lower-case.'
-    >>>     'only make an exception for the following words: {context}'
-    >>> )
-    >>> model = OpenAIAudioTranscription(identifier='whisper-1', prompt=prompt)
-    >>> model.predict(buffer, context=['United States'])
-
-    """
-
-    takes_context: bool = True
-    prompt: str = ''
-
-    def _pre_create(self, db: Datalayer):
-        """Pre creates the model.
-
-        :param db: The datalayer instance.
-        """
-        self.datatype = self.datatype or 'str'
-
-    @retry
-    def predict(self, file: t.BinaryIO, context: t.Optional[t.List[str]] = None):
-        """Converts a file-like Audio recording to text.
-
-        :param file: The file-like Audio recording to transcribe.
-        :param context: The context to use for the prompt.
-        """
-        if context is not None:
-            self.prompt = self.prompt.format(context='\n'.join(context))
-        return self.sync_client.audio.transcriptions.create(
-            file=file,
-            model=self.model,
-            prompt=self.prompt,
-            **self.predict_kwargs,
-        ).text
-
-    @retry
-    def _predict_a_batch(self, files: t.List[t.BinaryIO], **kwargs):
-        """Converts multiple file-like Audio recordings to text."""
-        resps = [
-            self.sync_client.audio.transcriptions.create(
-                file=file, model=self.model, **self.predict_kwargs
-            )
-            for file in files
-        ]
-        return [resp.text for resp in resps]
-
-
-class OpenAIAudioTranslation(_OpenAI):
-    """OpenAI audio translation predictor.
-
-    :param takes_context: Whether the model takes context into account.
-    :param prompt: The prompt to guide the model's style.
-    :param batch_size: The batch size to use.
-
-    The prompt should contain the `"context"` format variable.
-
-    Example:
-    -------
-    >>> import io
-    >>> from superduper_openai.model import OpenAIAudioTranslation
-    >>> with open('test/material/data/german.wav', 'rb') as f:
-    >>>     buffer = io.BytesIO(f.read())
-    >>> buffer.name = 'test.wav'
-    >>> prompt = (
-    >>>     'i have some advice for you. write all text in lower-case.'
-    >>>     'only make an exception for the following words: {context}'
-    >>> )
-    >>> e = OpenAIAudioTranslation(identifier='whisper-1', prompt=prompt)
-    >>> resp = e.predict(buffer, context=['Emmerich'])
-    >>> buffer.close()
-
-    """
-
-    signature: str = 'singleton'
-
-    takes_context: bool = True
-    prompt: str = ''
-    batch_size: int = 1
-
-    def _pre_create(self, db: Datalayer):
-        """Translates a file-like Audio recording to English.
-
-        :param db: The datalayer to use for the model.
-        """
-        self.datatype = self.datatype or 'str'
-
-    @retry
-    def predict(
-        self,
-        file: t.BinaryIO,
-        context: t.Optional[t.List[str]] = None,
-    ):
-        """Translates a file-like Audio recording to English.
-
-        :param file: The file-like Audio recording to translate.
-        :param context: The context to use for the prompt.
-        """
-        if context is not None:
-            self.prompt = self.prompt.format(context='\n'.join(context))
-        return (
-            self.sync_client.audio.translations.create(
-                file=file,
-                model=self.model,
-                prompt=self.prompt,
-                **self.predict_kwargs,
-            )
-        ).text
-
-    @retry
-    def _predict_a_batch(self, files: t.List[t.BinaryIO]):
-        """Translates multiple file-like Audio recordings to English."""
-        # TODO use async or threads
-        resps = [
-            self.sync_client.audio.translations.create(
-                file=file, model=self.model, **self.predict_kwargs
-            )
-            for file in files
-        ]
-        return [resp.text for resp in resps]

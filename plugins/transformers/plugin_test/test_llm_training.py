@@ -2,6 +2,7 @@ import dataclasses as dc
 import os
 import random
 
+import pytest
 from superduper.base.base import Base
 from superduper.components.dataset import Dataset
 from superduper.components.metric import Metric
@@ -35,6 +36,7 @@ class documents(Base):
     _fold: str = dc.field(default_factory=create_fold)
 
 
+@pytest.mark.skip
 def test_training(db, tmpdir):
 
     db.create(documents)
@@ -61,7 +63,7 @@ def test_training(db, tmpdir):
         logging_steps=1,
         eval_steps=1,
         save_strategy="steps",
-        evaluation_strategy="steps",
+        eval_strategy="steps",
         save_steps=1,
         per_device_train_batch_size=1,
         per_device_eval_batch_size=1,

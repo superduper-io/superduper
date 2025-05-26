@@ -1,11 +1,10 @@
-import numpy as np
-import os
-import re
 import typing as t
 
-from snowflake.snowpark import Session
+import numpy as np
 from superduper import CFG
 from superduper.backends.base.vector_search import BaseVectorSearcher, VectorItem
+
+from superduper_snowflake.connect import connect, watch_token_file
 
 if t.TYPE_CHECKING:
     from superduper.components.vector_index import VectorIndex
@@ -32,10 +31,13 @@ class SnowflakeVectorSearcher(BaseVectorSearcher):
         output_path: t.Optional[str] = None,
     ):
         self.identifier = identifier
-        vector_search_uri = CFG.data_backend
-        assert vector_search_uri, "Vector search URI is required"
+        self.uri = CFG.data_backend
+        assert self.uri, "Vector search URI is required"
 
-        self.session = SnowflakeVectorSearcher.create_session(vector_search_uri)
+        self.session, self.schema = connect(self.uri)
+        self.observer = None
+        if self.uri == 'snowflake://':
+            self.observer = watch_token_file(self)
 
         assert output_path
         self.output_path = output_path
@@ -51,52 +53,9 @@ class SnowflakeVectorSearcher(BaseVectorSearcher):
         self._cache = {}
         self._db = None
 
-    @classmethod
-    def create_session(cls, vector_search_uri):
-        """Creates a snowflake session.
-
-        :param vector_search_uri: Connection URI.
-        """
-        if vector_search_uri == 'snowflake://':
-            host = os.environ['SNOWFLAKE_HOST']
-            port = int(os.environ['SNOWFLAKE_PORT'])
-            account = os.environ['SNOWFLAKE_ACCOUNT']
-            token = open('/snowflake/session/token').read()
-            warehouse = os.environ['SNOWFLAKE_WAREHOUSE']
-            database = os.environ['SNOWFLAKE_DATABASE']
-            schema = os.environ['SUPERDUPER_DATA_SCHEMA']
-
-            connection_parameters = {
-                "token": token,
-                "account": account,
-                "database": database,
-                "schema": schema,
-                "warehouse": warehouse,
-                "authenticator": "oauth",
-                "port": port,
-                "host": host,
-            }
-        else:
-            pattern = r"snowflake://(?P<user>[^:]+):(?P<password>[^@]+)@(?P<account>[^/]+)/(?P<database>[^/]+)/(?P<schema>[^/]+)"
-            match = re.match(pattern, vector_search_uri)
-            schema = match.group("schema")
-            database = match.group("database")
-            if match:
-                connection_parameters = {
-                    "user": match.group("user"),
-                    "password": match.group("password"),
-                    "account": match.group("account"),
-                    "database": match.group("database"),
-                    "schema": match.group("schema"),
-                    # TODO: check warehouse
-                    "warehouse": "base",
-                }
-
-            else:
-                raise ValueError(f"URI `{vector_search_uri}` is invalid!")
-
-        session = Session.builder.configs(connection_parameters).create()
-        return session
+    def reconnect(self):
+        """Reconnect to the data backend."""
+        self.session, self.schema = connect(self.uri)
 
     def __len__(self):
         pass

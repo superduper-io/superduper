@@ -140,7 +140,7 @@ class Component(Base, metaclass=ComponentMeta):
     db: dc.InitVar[t.Optional['Datalayer']] = None
 
     def __repr__(self):
-        return self.huuid
+        return f'{self.__class__.__name__}:{self.identifier}'
 
     def __post_init__(self, db: t.Optional['Datalayer'] = None):
         self.db: Datalayer = db

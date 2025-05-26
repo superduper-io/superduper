@@ -40,18 +40,18 @@
 Install the base package:
 
 ```bash
-pip install superduper-framework >= 0.6.0
+pip install superduper-framework >= 0.7.0
 ```
 
 Install a plugin for your databackend:
 
 ```bash
 # at least one or more of the following:
-pip install superduper-mongodb >= 0.6.0
+pip install superduper-mongodb >= 0.7.0
 # or
-pip install superduper-sql >= 0.6.0
+pip install superduper-sql >= 0.7.0
 # or
-pip install superduper-snowflake >= 0.6.0
+pip install superduper-snowflake >= 0.7.0
 ```
 
 Install additional plugins for your use-case (optional):

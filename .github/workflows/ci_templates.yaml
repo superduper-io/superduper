@@ -32,7 +32,7 @@ jobs:
       - name: Get changed templates
         if: env.mode == 'changed'
         id: changed-files-specific
-        uses: tj-actions/changed-files@v44
+        uses: tj-actions/changed-files@v46.0.1
 
       - name: Filter changed templates and set output
         if: env.mode == 'changed'

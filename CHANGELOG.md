@@ -30,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add pydantic schema support
 - Add recursive error propagation
 - Add reconnection support for Snowflake vector search
-- Add scanning for leaked passwords on the CI
+- Add scanning for leaked passwords on the CI 
 
 ### Bug fixes
 

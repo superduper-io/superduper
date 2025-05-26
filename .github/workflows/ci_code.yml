@@ -15,17 +15,16 @@ concurrency:
   group: ${{ github.ref }}-${{ github.job }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
+
   # ---------------------------------
-  # Unit Testing
+  # Code Scanning
   # ---------------------------------
-  unit_testing:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ "ubuntu-latest" ]
-        python-version: ["3.10", "3.11"]
+  code_scanning:
+    runs-on: "ubuntu-latest"
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -39,7 +38,7 @@ jobs:
 
     - name: Get changed files
       id: changed-files
-      uses: tj-actions/changed-files@v44
+      uses: tj-actions/changed-files@v46.0.1
 
     - name: Scan changed files for leaking password
       if: steps.changed-files.outputs.any_changed == 'true'
@@ -47,8 +46,23 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+  # ---------------------------------
+  # Unit Testing
+  # ---------------------------------
+  unit_testing:
+    needs: ['code_scanning']
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ "ubuntu-latest" ]
+        python-version: ["3.10", "3.11"]
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
       with:
-        args: '--source=. --verbose --redact --log-opts="origin/${{ github.base_ref }}..HEAD"'
+        fetch-depth: 2
 
     #---------------------------------------------------
     # Configuring Python environments.
@@ -84,6 +98,7 @@ jobs:
     - name: Lint and type-check
       run: |
         make lint-and-type-check
+
 
     - name: Unit Testing
       run: |

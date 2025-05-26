@@ -22,7 +22,7 @@ class QueueWrapper:
     :param scheduler: LocalScheduler instance.
     """
 
-    def __init__(self, identifier: str, scheduler: 'LocalScheduler'):
+    def __init__(self, identifier: str, scheduler: 'SimpleScheduler'):
         self.scheduler = scheduler
         self.identifier = identifier
 

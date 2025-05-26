@@ -14,7 +14,7 @@ jobs:
 
       - name: Get changed files for templates
         id: changed-files-specific
-        uses: tj-actions/changed-files@v44
+        uses: tj-actions/changed-files@v46.0.1
 
       - name: Filter changed plugins and set output
         id: set-matrix

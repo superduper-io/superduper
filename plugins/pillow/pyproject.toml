@@ -27,7 +27,7 @@ dependencies = [
 test = [
     "ibis-framework[sqlite]>=5.1.0",
     # Annotation plugin dependencies will be installed in CI
-    # :CI: plugins/ibis
+    # :CI: plugins/sql
     # :CI: plugins/mongodb
 ]
 

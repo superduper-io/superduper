@@ -2,7 +2,7 @@ from .data_backend import SnowflakeDataBackend as DataBackend
 from .secrets import check_secret_updates
 from .vector_search import SnowflakeVectorSearcher as VectorSearcher
 
-__version__ = "0.6.5"
+__version__ = "0.7.0"
 
 __all__ = [
     "VectorSearcher",

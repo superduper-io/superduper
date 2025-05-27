@@ -7,6 +7,7 @@ from superduper.backends.base.scheduler import (
     consume_events,
 )
 from superduper.base import Base
+from superduper.base.event import Event
 from superduper.components.cdc import CDC
 from superduper.misc.importing import isreallyinstance
 
@@ -73,7 +74,7 @@ class LocalScheduler(Bookkeeping, BaseScheduler):
                 with self.lock:
                     self.Q[component, identifier] = []
 
-    def publish(self, events: t.List[Base]):
+    def publish(self, events: t.List[Event]):
         """
         Publish events to local queue.
 

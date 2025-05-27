@@ -1,18 +1,18 @@
-from collections import defaultdict
-from concurrent.futures import ALL_COMPLETED, ThreadPoolExecutor
-from concurrent.futures import wait 
-
 import contextlib
-from queue import Queue
-import requests
 import sys
 import threading
-from threading import Lock, Thread
 import time
 import typing as t
+from collections import defaultdict
+from concurrent.futures import ALL_COMPLETED, ThreadPoolExecutor, wait
+from queue import Queue
+from threading import Lock, Thread
+
+import requests
 
 from superduper import logging
 from superduper.backends.base.compute import ComputeBackend
+from superduper.backends.simple.vector_search import SimpleVectorSearchClient
 from superduper.base.metadata import Job
 
 if t.TYPE_CHECKING:
@@ -22,8 +22,9 @@ if t.TYPE_CHECKING:
 
 class ThreadStdoutRouter:
     """A pseudo-file that forwards writes to a thread-specific file object."""
+
     def __init__(self):
-        self._local = threading.local()      # holds .stream per thread
+        self._local = threading.local()  # holds .stream per thread
 
     # –– API that print() expects ––
     def write(self, data):
@@ -50,7 +51,8 @@ ROUTER = ThreadStdoutRouter()
 
 
 class SimpleComputeClient(ComputeBackend):
-    
+    """Simple compute client for local execution."""
+
     def __init__(self):
         super().__init__()
         self.uri = 'http://localhost:8001'
@@ -60,7 +62,9 @@ class SimpleComputeClient(ComputeBackend):
 
         :param context: Futures context to release.
         """
-        pass
+        requests.post(
+            f'{self.uri}/release_futures?context={context}',
+        )
 
     def disconnect(self) -> None:
         """Disconnect the client."""
@@ -80,7 +84,7 @@ class SimpleComputeClient(ComputeBackend):
     def initialize(self):
         """Connect to address."""
 
-    def put_component(self, component: 'Component'):
+    def put_component(self, component: str, uuid: str):
         """Create handler on component declare.
 
         :param component: Component to put.
@@ -107,18 +111,14 @@ class SimpleComputeClient(ComputeBackend):
         """
 
     def submit(self, job: Job) -> str:
-        """
-        Submits a function for local
-        """
-        r = requests.post(
-            f'{self.uri}/submit',
-            json=job.dict()
-        )
+        """Submits a function to simple compute backend."""
+        r = requests.post(f'{self.uri}/submit', json=job.dict())
         if r.status_code != 200:
             raise Exception(f'Failed to submit job: {r.text}')
         return job.job_id
 
     def drop(self):
+        """Drop the compute backend."""
         r = requests.post(
             f'{self.uri}/drop',
         )
@@ -133,28 +133,36 @@ class SimpleComputeClient(ComputeBackend):
 
 
 class StopEvent:
-    ...
+    """A simple event to stop the worker thread."""
 
 
 def job_worker(job: Job) -> t.Any:
+    """Worker function to execute a job."""
     from superduper import superduper
+
     logging.info('Building job datalayer instance')
+
     db = superduper(cluster_engine='local')
+    db.cluster.vector_search = SimpleVectorSearchClient()
+    
     logging.info('Building job datalayer instance... DONE')
 
     logging.info('Executing job in worker')
     import os
-    current = os.environ.copy()
-    os.environ.update(job.envs)
-    for p in os.environ.get("PYTHONPATH", "").split(os.pathsep):
-        if p and p not in sys.path:
-            sys.path.insert(0, p)
+
+    # current = os.environ.copy()
+    # os.environ.update(job.envs)
+    # for p in os.environ.get("PYTHONPATH", "").split(os.pathsep):
+    #     if p and p not in sys.path:
+    #         sys.path.insert(0, p)
     logging.info('Redirecting stdout and stderr')
     os.makedirs(os.path.expanduser('~/.superduper/simple'), exist_ok=True)
-    with ROUTER.redirect_to(os.path.expanduser(f'~/.superduper/simple/{job.huuid}.log'), 'w'):
+    with ROUTER.redirect_to(
+        os.path.expanduser(f'~/.superduper/simple/{job.huuid}.log'), 'w'
+    ):
         result = job.run(db)
-    os.environ.clear()
-    os.environ.update(current)
+    # os.environ.clear()
+    # os.environ.update(current)
     logging.info('Executing job in worker... DONE')
     db.disconnect()
     return result
@@ -178,8 +186,8 @@ class SimpleComputeBackend(ComputeBackend):
         self._cache: t.Dict = {}
         self._db = None
         self.futures: t.DefaultDict = defaultdict(lambda: {})
-        self.contexts = {}
-        self.locks = {}
+        self.contexts: t.Dict = {}
+        self.locks: t.Dict = {}
 
     def release_futures(self, context: str):
         """Release futures for a given context.
@@ -206,15 +214,14 @@ class SimpleComputeBackend(ComputeBackend):
 
     def _execute_job(self, job: Job, context: str, executor: ThreadPoolExecutor):
         """Execute a job."""
-
         upstream = [self.futures[context][dep] for dep in job.dependencies]
         done, _ = wait(upstream, return_when=ALL_COMPLETED)
         errors = [f.exception() for f in done if f.exception() is not None]
         if errors:
-            logging.error(
-                '\n'.join([str(e) for e in errors])
+            logging.error('\n'.join([str(e) for e in errors]))
+            raise Exception(
+                f'Upstream job dependencies failed with {len(errors)} errors'
             )
-            raise Exception(f'Upstream job dependencies failed with {len(errors)} errors')
 
         logging.info(f'Submitting job {job.huuid} in context {context}')
         fut = executor.submit(job_worker, job)
@@ -236,9 +243,7 @@ class SimpleComputeBackend(ComputeBackend):
         # Collect any exceptions
         errors = [f.exception() for f in done if f.exception() is not None]
         if errors:
-            logging.error(
-                '\n'.join([str(e) for e in errors])
-            )
+            logging.error('\n'.join([str(e) for e in errors]))
             raise Exception(f'Job failed with {len(errors)} errors')
 
     def drop(self):
@@ -250,12 +255,7 @@ class SimpleComputeBackend(ComputeBackend):
         while self.contexts:
             time.sleep(0.1)
             if time.time() - timeout > 0:
-                raise TimeoutError(
-                    'Timeout waiting for jobs to finish'
-                )
-
-    def release_futures(self, context: str):
-        """Stop the context thread."""
+                raise TimeoutError('Timeout waiting for jobs to finish')
 
     def _start_context_thread(self, context: str):
         """Start a thread for the given context."""
@@ -281,7 +281,9 @@ class SimpleComputeBackend(ComputeBackend):
                     else:
                         logging.info(f'Received job {event.huuid}, ...executing')
                         self._execute_job(event, context, executor)
-                        logging.info(f'Received job {event.huuid}, ...executing... DONE')
+                        logging.info(
+                            f'Received job {event.huuid}, ...executing... DONE'
+                        )
             logging.info('Received stop event, stopping worker thread... DONE')
 
         thread = Thread(target=worker)
@@ -298,7 +300,7 @@ class SimpleComputeBackend(ComputeBackend):
     def drop_component(self, component: str, identifier: str):
         """Drop a component from the compute."""
 
-    def put_component(self, component: 'Component'):
+    def put_component(self, component: str, uuid: str):
         """Create a handler on compute."""
 
     def initialize(self):
@@ -308,28 +310,18 @@ class SimpleComputeBackend(ComputeBackend):
         """Run a remote method on the compute."""
         raise NotImplementedError
 
-    def drop(self):
-        """Drop the compute.
-
-        :param component: Component to remove.
-        """
-
     def disconnect(self) -> None:
         """Disconnect the local client."""
 
-    def build(self, app = None):
-        from fastapi import FastAPI
+    def build(self, app):
         import inspect
-
-        app = FastAPI()
 
         @app.post('/submit')
         def submit(job: t.Dict):
             logging.info(f'Processing submit request {job}')
             parameters = inspect.signature(Job).parameters
             job = {k: v for k, v in job.items() if k in parameters}
-            job = Job(**job)
-            self.submit(job)
+            self.submit(Job(**job))
             logging.info(f'Processing submit request {job}... DONE')
             return {"status": "success"}
 
@@ -337,10 +329,3 @@ class SimpleComputeBackend(ComputeBackend):
         def release_futures(context: str):
             self.release_futures(context)
             return {"status": "success"}
-
-        return app
-
-
-if __name__ == '__main__':
-    import uvicorn
-    uvicorn.run(SimpleComputeBackend().build(), host='localhost', port=8001)

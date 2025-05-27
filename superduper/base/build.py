@@ -89,7 +89,7 @@ def build_datalayer(
     # Use the provided configuration or fall back to the default configuration.
     if s.CFG.cluster_engine != 'local':
         plugin = load_plugin(s.CFG.cluster_engine)
-        CFG = getattr(plugin, 'CFG')
+        CFG = getattr(plugin, 'CFG', s.CFG)
     else:
         CFG = s.CFG
 

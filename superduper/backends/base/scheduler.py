@@ -10,7 +10,7 @@ import networkx as nx
 from superduper import CFG, logging
 from superduper.backends.base.backends import BaseBackend
 from superduper.base.base import Base
-from superduper.base.event import Create, CreateTable, PutComponent, Update
+from superduper.base.event import Create, CreateTable, Event, PutComponent, Update
 
 DependencyType = t.Union[t.Dict[str, str], t.Sequence[t.Dict[str, str]]]
 
@@ -142,7 +142,7 @@ def _consume_event_type(event_type, ids, table, db: 'Datalayer'):
 
 
 def cluster_events(
-    events: t.List[Base],
+    events: t.List[Event],
 ):
     """
     Cluster events into table, create and job events.
@@ -162,14 +162,14 @@ def cluster_events(
         elif isinstance(event, (Update, Create)):
             create_events.append(event)
         elif isinstance(event, Job):
-            job_events.append(event)
+            job_events.append(event)  # type: ignore[arg-type]
         elif isinstance(event, PutComponent):
             put_events.append(event)
     return table_events, create_events, put_events, job_events
 
 
 def consume_events(
-    events: t.List[Base],
+    events: t.List[Event],
     table: str,
     db: 'Datalayer',
     batch_size: int | None = None,

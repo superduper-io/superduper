@@ -11,7 +11,6 @@ from superduper.base.metadata import Job
 from superduper.components.cdc import CDC
 from superduper.misc.importing import isreallyinstance
 
-
 Event = t.Union[Job, Create, Update, Delete, Signal]
 
 
@@ -73,7 +72,7 @@ class SimpleScheduler(Bookkeeping, BaseScheduler):
             identifier = component_data['identifier']
             c = self.db.load(component=component, identifier=identifier)
             if isreallyinstance(c, CDC):
-                self.put_component(c)
+                self.put_component(c.component, c.uuid)
                 with self.lock:
                     self.Q[component, identifier] = []
 
@@ -97,7 +96,7 @@ class SimpleScheduler(Bookkeeping, BaseScheduler):
 
         for queue, events in data:
             consume_events(
-                events=events,
+                events=events,  # type: ignore[arg-type]
                 table=queue,
                 db=self.db,
             )

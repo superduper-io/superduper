@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add recursive error propagation
 - Add reconnection support for Snowflake vector search
 - Add scanning for leaked passwords on the CI 
+- Simple detached-lifetime compute and vector-search implementations
 
 ### Bug fixes
 

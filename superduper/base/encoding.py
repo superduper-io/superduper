@@ -22,6 +22,8 @@ class EncodeContext:
     :param metadata: Whether to include metadata.
     :param defaults: Whether to include defaults.
     :param cfg: Configuration object.
+    :param keep_variables: Whether to keep variables.
+    :param include_defaults: Whether to include default values.
     """
 
     name: str = '__main__'
@@ -33,6 +35,8 @@ class EncodeContext:
     metadata: bool = True
     defaults: bool = True
     cfg: t.Optional[Config] = None
+    keep_variables: bool = False
+    include_defaults: bool = True
 
     def __call__(self, name: str):
         return EncodeContext(
@@ -44,5 +48,7 @@ class EncodeContext:
             leaves_to_keep=self.leaves_to_keep,
             metadata=self.metadata,
             defaults=self.defaults,
+            keep_variables=self.keep_variables,
+            include_defaults=self.include_defaults,
             cfg=self.cfg,
         )

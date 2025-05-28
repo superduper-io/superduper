@@ -121,7 +121,24 @@ class ComponentType(BaseDataType):
             context.builds[key] = item
             return '?' + key
 
-        r = item.dict()
+        if context.keep_variables:
+            r = item._original_parameters
+        else:
+            r = item.dict()
+
+        if not context.include_defaults:
+            from superduper.base.document import Document
+
+            for k, v in list(r.items()):
+                if not v:
+                    del r[k]
+            if 'status' in r:
+                del r['status']
+            if 'details' in r:
+                del r['details']
+            if 'version' in r:
+                del r['version']
+
         if r.schema:
             r = dict(r.schema.encode_data(r, context))
         else:

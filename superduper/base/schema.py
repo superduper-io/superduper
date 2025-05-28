@@ -192,9 +192,6 @@ class Schema(BaseDataType):
 
             assert field is not None
 
-            # TODO
-            # field.validate(out[k])
-
             try:
                 encoded = field.encode_data(
                     out[k],

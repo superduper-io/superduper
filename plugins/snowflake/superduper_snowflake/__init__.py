@@ -9,5 +9,5 @@ __all__ = [
     "DataBackend",
     "check_secret_updates",
     "raise_if_secrets_pending",
-    "secrets_not_ready"
+    "secrets_not_ready",
 ]

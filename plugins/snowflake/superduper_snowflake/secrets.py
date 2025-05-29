@@ -1,41 +1,100 @@
-import hashlib
 import json
+import logging
 import os
+import hashlib
+from dataclasses import dataclass
+from typing import List
 
 from superduper.base import exceptions
+from superduper.base.status import STATUS_FAILED, STATUS_RUNNING, STATUS_PENDING
 
 
-class UpdatingSecretException(Exception):
-    """Exception raised when secrets are still updating."""
+@dataclass
+class SecretStatus:
+    """Status information for a secret."""
+    Name: str
+    Phase: str
+    Reason: str
+    Msg: str
 
 
-def check_secret_updates(db):
-    """Check if secrets are updated in Snowflake.
+@dataclass
+class SecretStatusReport:
+    """Report containing status for all secrets."""
+    secrets: List[SecretStatus]
+
+
+def check_secret_updates(db) -> SecretStatusReport:
+    """Check if secrets are updated in Snowflake and return structured status.
 
     :param db: The database connection object.
+    :return: SecretStatusReport with status for each secret
     """
     result = db.databackend.execute_native("CALL v1.wrapper('SHOW SECRETS IN ADMIN')")
 
     lookup = {
+        # Replace underscores with hyphens
         r["name"].replace("-", "_").upper(): json.loads(r["comment"])['status']['hash']
         for r in result
     }
 
-    updating = {}
-    for k in lookup:
-        if k not in os.environ:
-            raise exceptions.NotFound("secret", k)
+    secrets_list = []
 
-        value = os.environ[k]
-        target = hashlib.sha256(value.encode()).hexdigest()
-        if lookup[k] != target:
-            updating[k] = {'current': lookup[k], 'target': target}
+    for secret_name in lookup:
+        logging.info(f"check secret {secret_name} ")
+        if secret_name not in os.environ:
+            logging.info("not in env")
 
-    if updating:
-        msg = ', '.join(
-            f"{k} (Expected {v['current']} -> Got{v['target']})"
-            for k, v in updating.items()
-        )
-        raise UpdatingSecretException(
-            f'Secrets {list(updating.keys())} are still updating. {msg}'
-        )
+            secrets_list.append(SecretStatus(
+                Name=secret_name.lower(),
+                Phase= STATUS_FAILED,
+                Reason="NotFound",
+                Msg=f"Secret {secret_name} not found in environment variables"
+            ))
+            continue
+
+        local_value = os.environ[secret_name]
+        local_hash = hashlib.sha256(local_value.encode()).hexdigest()
+        remote_hash = lookup[secret_name]
+
+        if remote_hash == local_hash:
+            secrets_list.append(SecretStatus(
+                Name=secret_name.lower(),
+                Phase=STATUS_RUNNING,
+                Reason="InSync",
+                Msg=f"hash: {local_hash[:8]}"
+            ))
+        else:
+            secrets_list.append(SecretStatus(
+                Name=secret_name.lower(),
+                Phase=STATUS_PENDING,
+                Reason="Updating",
+                Msg=f"Expected {remote_hash[:8]}... got {local_hash[:8]}..."
+            ))
+
+    return SecretStatusReport(secrets=secrets_list)
+
+
+def raise_if_secrets_pending(report: SecretStatusReport):
+    """Check if any secrets are pending and raise exception if so.
+
+    :param report: SecretStatusReport to check
+    :raises UpdatingSecretException: If any secrets are still updating
+    """
+    pending_secrets = [secret for secret in report.secrets if secret.Phase == STATUS_PENDING]
+
+    if pending_secrets:
+        raise exceptions.Conflict("secret",
+                                  ", ".join(secret.name for secret in pending_secrets),
+                                  "Some secrets are still updating",
+                                  )
+
+
+
+def secrets_not_ready(report: SecretStatusReport) -> bool:
+    """Check if any secrets are not in 'Running' phase.
+
+    :param report: SecretStatusReport to check
+    :return: True if any secret is not in 'Running' phase, False if all are Running
+    """
+    return any(secret.Phase != STATUS_RUNNING for secret in report.secrets)

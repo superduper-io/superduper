@@ -50,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix the snowflake plugin
 - Fix the export method
 - Recursive component deletion overeagerly skipping components
+- Fix bug with secrets healthcheck
 
 ## [0.6.0](https://github.com/superduper-io/superduper/compare/0.6.0...0.5.0])    (2025-Mar-26)
 

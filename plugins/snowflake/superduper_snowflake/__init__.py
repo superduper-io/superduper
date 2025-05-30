@@ -4,6 +4,7 @@ from .vector_search import SnowflakeVectorSearcher as VectorSearcher
 
 __version__ = "0.7.2"
 
+
 __all__ = [
     "VectorSearcher",
     "DataBackend",

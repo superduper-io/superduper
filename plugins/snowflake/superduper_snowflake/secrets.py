@@ -25,7 +25,7 @@ class SecretStatusReport:
     secrets: List[SecretStatus]
 
 
-def check_secret_updates(db) -> SecretStatusReport:
+def build_secret_status_report(db) -> SecretStatusReport:
     """Check if secrets are updated in Snowflake and return structured status.
 
     :param db: The database connection object.
@@ -77,6 +77,16 @@ def check_secret_updates(db) -> SecretStatusReport:
             )
 
     return SecretStatusReport(secrets=secrets_list)
+
+
+def check_secret_updates(db) -> SecretStatusReport:
+    """Check the status of secrets in Snowflake and return a report.
+
+    :param db: The database connection object.
+    :return: SecretStatusReport with status for each secret
+    """
+    report = build_secret_status_report(db)
+    raise_if_secrets_pending(report)
 
 
 def raise_if_secrets_pending(report: SecretStatusReport):

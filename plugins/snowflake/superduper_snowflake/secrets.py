@@ -102,7 +102,7 @@ def raise_if_secrets_pending(report: SecretStatusReport):
     if pending_secrets:
         raise exceptions.Conflict(
             "secret",
-            ", ".join(secret.name for secret in pending_secrets),
+            ", ".join(secret.Name for secret in pending_secrets),
             "Some secrets are still updating",
         )
 

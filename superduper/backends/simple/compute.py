@@ -144,7 +144,7 @@ def job_worker(job: Job) -> t.Any:
 
     db = superduper(cluster_engine='local')
     db.cluster.vector_search = SimpleVectorSearchClient()
-    
+
     logging.info('Building job datalayer instance... DONE')
 
     logging.info('Executing job in worker')

@@ -181,8 +181,9 @@ class SnowflakeDataBackend(BaseDataBackend):
 
     def list_tables(self):
         """List all tables or collections in the database."""
-        results = self.session.sql("SHOW TABLES").collect()
-        return [r.name for r in results]
+        results_tables = self.session.sql("SHOW TABLES").collect()
+        results_views = self.session.sql("SHOW VIEWS").collect()
+        return [r.name for r in results_tables] + [r.name for r in results_views]
 
     ########################################################
     # Abstract methods/ optional methods to be implemented #

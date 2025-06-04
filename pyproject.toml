@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "superduper-framework"
 description = "Build compositional and declarative AI applications and agents"
 readme = "README.md"
-version = '0.7.2'
+version = '0.7.3'
 license = {file = "LICENSE"}
 maintainers = [{name = "superduper.io, Inc.", email = "opensource@superduper.com"}]
 keywords = [
@@ -70,7 +70,7 @@ test = [
     "pre-commit",
     "black==25.1.0",
     "ruff==0.4.4",
-    "mypy",
+    "mypy==1.15.0",
     "types-PyYAML",
     "types-requests",
     "interrogate",

@@ -486,11 +486,14 @@ class Datalayer:
             )
         )
         for table in object.dependent_tables:
+            table_parents = self.metadata.get_component_parents(
+                component='Table', identifier=table
+            )
             events.append(
                 Delete(
                     component='Table',
                     identifier=table,
-                    parents=[':'.join(p) for p in parents],
+                    parents=[':'.join(p) for p in table_parents],
                 )
             )
 

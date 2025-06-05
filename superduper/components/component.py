@@ -1,11 +1,13 @@
 """The component module provides the base class for all components in superduper.io."""
 
+import contextvars
 import dataclasses as dc
 import json
 import os
 import shutil
 import typing as t
 from collections import OrderedDict, defaultdict
+from contextlib import contextmanager
 from functools import wraps
 
 import networkx
@@ -19,6 +21,7 @@ from superduper.base.status import (
     STATUS_RUNNING,
     init_status,
 )
+from superduper.base.variables import _replace_variables
 from superduper.misc.annotations import lazy_classproperty
 from superduper.misc.importing import isreallyinstance
 from superduper.misc.utils import hash_item
@@ -113,6 +116,22 @@ class ComponentMeta(BaseMeta):
         return new_cls
 
 
+build_vars_var: contextvars.ContextVar[dict[str, t.Any]] = contextvars.ContextVar(
+    "build_vars_var"
+)
+
+
+def current_build_vars(default: t.Any | None = None) -> dict[str, t.Any] | None:
+    """Get the current build variables.
+
+    :param default: Default value to return if no variables are set.
+    """
+    try:
+        return build_vars_var.get()
+    except LookupError:
+        return default
+
+
 class Component(Base, metaclass=ComponentMeta):
     """Base class for all components in superduper.io.
 
@@ -146,6 +165,7 @@ class Component(Base, metaclass=ComponentMeta):
         self.db: Datalayer = db
         self.version: t.Optional[int] = None
         self.status, self.details = init_status()
+        self._original_parameters: t.Dict | None = None
         self.postinit()
 
     @property
@@ -507,6 +527,18 @@ class Component(Base, metaclass=ComponentMeta):
         """Post initialization method."""
         if not self.identifier:
             raise ValueError('identifier cannot be empty or None')
+        if not self._original_parameters:
+            self._original_parameters = self.dict()
+
+        variables = build_vars_var.get(None)
+        if variables is None:
+            return
+
+        for f in dc.fields(self):
+            attr = getattr(self, f.name)
+            if isinstance(attr, (str, list, dict)) and '<var:' in str(attr):
+                built = _replace_variables(attr, **variables)
+                setattr(self, f.name, built)
 
     def cleanup(self):
         """Method to clean the component."""
@@ -612,7 +644,12 @@ class Component(Base, metaclass=ComponentMeta):
         # r = r.encode(defaults=defaults, metadata=metadata)
         from superduper import CFG
 
-        r = self.encode(defaults=defaults, metadata=metadata, cfg=CFG(json_native=True))
+        r = self.encode(
+            defaults=defaults,
+            metadata=metadata,
+            cfg=CFG(json_native=True),
+            include_defaults=False,
+        )
 
         def rewrite_keys(r, keys):
             if isinstance(r, dict):

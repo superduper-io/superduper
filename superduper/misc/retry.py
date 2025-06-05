@@ -61,7 +61,15 @@ def safe_retry(exception_to_check, retries=1, delay=0.3, verbose=1):
             while attempt <= retries:
                 try:
                     if attempt >= 1:
-                        load_secrets()
+                        try:
+                            load_secrets()
+                        except FileNotFoundError:
+                            raise RuntimeError(
+                                "A secret was not found and the system attempted to "
+                                "load secrets from the secrets volume. "
+                                "However the secrets volume was not found. "
+                                f"Please ensure the secrets volume is mounted. {s.CFG.secrets_volume}"
+                            )
                     return func(*args, **kwargs)
                 except exception_to_check as e:
                     attempt += 1

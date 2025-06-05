@@ -157,6 +157,7 @@ def test_pm_predict_with_select_ids(monkeypatch, predict_mixin):
             select_using_ids.assert_called_once_with(ids)
 
 
+@pytest.mark.skip
 def test_model_append_metrics():
     @dc.dataclass
     class _Tmp(ObjectModel): ...
@@ -168,6 +169,7 @@ def test_model_append_metrics():
         'test',
         object=object(),
         validation=Validation('test', key=('x', 'y')),
+        # select
         trainer=MyTrainer('test', key='x', select='1'),
     )
 

@@ -272,7 +272,22 @@ class Base(metaclass=BaseMeta):
         for k, v in kwargs.items():
             setattr(context, k, v)
 
-        r = self.dict()
+        if context.keep_variables:
+            r = self._original_parameters
+        else:
+            r = self.dict()
+
+        if not context.include_defaults:
+            for k, v in list(r.items()):
+                if not v:
+                    del r[k]
+            if 'details' in r:
+                del r['details']
+            if 'status' in r:
+                del r['status']
+            if 'version' in r:
+                del r['version']
+
         r = self.class_schema.encode_data(r, context=context)
 
         def _replace_loads_with_references(record, lookup):

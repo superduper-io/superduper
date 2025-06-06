@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add postprocess in Template
 - Remove the dependencies property from `Component`
 - Fix the bug where the parent of dependent_tables was incorrect when deleting a component.
+- Add `outputs` parameter to `@trigger` to show outputs location and link streaming tasks
 
 ### New features
 

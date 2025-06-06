@@ -107,10 +107,7 @@ class ComponentMeta(BaseMeta):
         for base in bases:
             if hasattr(base, 'metadata_fields'):
                 merged_metadata_fields.update(base.metadata_fields)
-        new_cls.metadata_fields = {
-            **new_cls.metadata_fields,
-            **merged_metadata_fields
-        }
+        new_cls.metadata_fields = {**new_cls.metadata_fields, **merged_metadata_fields}
 
         for base in bases:
             if hasattr(base, 'triggers'):
@@ -158,12 +155,11 @@ class Component(Base, metaclass=ComponentMeta):
     breaks: t.ClassVar[t.Sequence] = ()
     triggers: t.ClassVar[t.List] = []
     services: t.ClassVar[t.List] = ()
-    # TODO replace post init with metadata
-    # set_post_init: t.ClassVar[t.Sequence] = ('version', 'status')
-    # metadata are fields to be saved, but not configured by the user
-    # they should be set post-init
-    # we save them, so that we can query them from the db
-    metadata_fields: t.ClassVar[t.Dict[str, t.Type]] = {'version': int, 'status': str, 'details': dict}
+    metadata_fields: t.ClassVar[t.Dict[str, t.Type]] = {
+        'version': int,
+        'status': str,
+        'details': dict,
+    }
 
     identifier: str
     upstream: t.Optional[t.List['Component']] = None
@@ -186,15 +182,7 @@ class Component(Base, metaclass=ComponentMeta):
     @property
     def metadata(self):
         """Get metadata of the component."""
-        return {
-            k: getattr(self, k)
-            for k in self.metadata_fields
-        }
-
-    @property
-    def dependent_tables(self):
-        """Get tables of this component."""
-        return []
+        return {k: getattr(self, k) for k in self.metadata_fields}
 
     @property
     def uuid(self):
@@ -253,17 +241,6 @@ class Component(Base, metaclass=ComponentMeta):
     @property
     def component(self):
         return self.__class__.__name__
-
-    # @lazy_classproperty
-    # def _new_fields(cls):
-    #     """Get the schema of the class."""
-    #     from superduper.misc.schema import get_schema
-
-    #     s = get_schema(cls)[0]
-    #     s['version'] = 'int'
-    #     s['status'] = 'str'
-    #     s['details'] = 'json'
-    #     return s
 
     @staticmethod
     def sort_components(components):
@@ -567,14 +544,6 @@ class Component(Base, metaclass=ComponentMeta):
         """Method to clean the component."""
         pass
 
-    # def _get_metadata(self):
-    #     """Get metadata of the component."""
-    #     metadata = {
-    #         'version': self.version,
-    #         'status': self.status,
-    #     }
-    #     return metadata
-
     def setup(self):
         """Method to help initiate component field dependencies."""
 
@@ -741,13 +710,10 @@ class Component(Base, metaclass=ComponentMeta):
 
     def dict(self, metadata: bool = True):
         """Get the dictionary representation of the component.
-        
+
         :param metadata: If set `True` include metadata in the dictionary.
         """
         r = self._dict(metadata=metadata)
-        # r['version'] = self.version
-        # r['status'] = self.status
-        # r['details'] = self.details
         r['uuid'] = self.uuid
         r['_path'] = self.__module__ + '.' + self.__class__.__name__
         return r

@@ -397,7 +397,7 @@ class Base(metaclass=BaseMeta):
 
         # if self.component == 'Listener' and not metadata:
         #     # Listeners are special, they have no metadata
-        #     import pdb; pdb.set_trace() 
+        #     import pdb; pdb.set_trace()
         return Document(r, schema=self.class_schema)
 
     @classmethod

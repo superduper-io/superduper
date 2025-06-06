@@ -485,17 +485,27 @@ class Datalayer:
                 parents=[':'.join(p) for p in parents],
             )
         )
-        for table in object.dependent_tables:
-            table_parents = self.metadata.get_component_parents(
-                component='Table', identifier=table
-            )
-            events.append(
-                Delete(
-                    component='Table',
-                    identifier=table,
-                    parents=[':'.join(p) for p in table_parents],
+        # for table in object.dependent_tables:
+        #     table_parents = self.metadata.get_component_parents(
+        #         component='Table', identifier=table
+        #     )
+        #     events.append(
+        #         Delete(
+        #             component='Table',
+        #             identifier=table,
+        #             parents=[':'.join(p) for p in table_parents],
+        #         )
+        #     )
+
+        for v in object.metadata.values():
+            if isinstance(v, Component):
+                events.append(
+                    Delete(
+                        component=v.component,
+                        identifier=v.identifier,
+                        parents=[f'{object.component}:{object.identifier}'],
+                    )
                 )
-            )
 
         if recursive:
             children = object.get_children()

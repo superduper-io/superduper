@@ -33,6 +33,7 @@ class Listener(CDC):
     """
 
     breaks: t.ClassVar[t.Sequence[str]] = ('model', 'key', 'select')
+    metadata_fields: t.ClassVar[t.Dict[str, t.Type]] = {'output_table': Table}
 
     key: st.JSON
     model: Model
@@ -47,18 +48,20 @@ class Listener(CDC):
             self.cdc_table = self.select.table
         if isinstance(self.key, tuple):
             self.key = list(self.key)
-
-        super().postinit()
-
-    @property
-    def output_table(self):
-        return Table(
+        self.output_table = Table(
             self.outputs, fields={self.outputs: self.model.datatype, '_source': 'str'}
         )
+        super().postinit()
 
-    def _get_metadata(self):
-        r = super()._get_metadata()
-        return {**r, 'output_table': self.output_table}
+    # @property
+    # def output_table(self):
+    #     return Table(
+    #         self.outputs, fields={self.outputs: self.model.datatype, '_source': 'str'}
+    #     )
+
+    # def _get_metadata(self):
+    #     r = super()._get_metadata()
+    #     return {**r, 'output_table': self.output_table}
 
     @property
     def predict_id(self):
@@ -110,6 +113,7 @@ class Listener(CDC):
             }
         raise Exception(f'Invalid key type: {type(key)}')
 
+    # TODO remove this
     @property
     def dependent_tables(self):
         """Get tables of this component."""
@@ -125,7 +129,7 @@ class Listener(CDC):
     def _check_signature(self):
         model_signature = self.model.signature
 
-        msg = 'Invalid lookup key {self.key} for model signature {model_signature}'
+        msg = f'Invalid lookup key {self.key} for model signature {model_signature}'
 
         if model_signature == 'singleton':
             assert isinstance(self.key, str) or self.key is None, msg

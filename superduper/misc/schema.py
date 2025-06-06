@@ -72,6 +72,15 @@ def _safe_get_type_hints(cls: t.Type[t.Any]) -> dict[str, t.Any]:
         hints[f.name] = _safe_resolve_annotation(
             f.type, {**module_globals, **superduper_globals, **mro_globals}
         )
+    if hasattr(cls, 'metadata_fields'):
+        assert isinstance(cls.metadata_fields, dict), (
+            f"Expected metadata_fields to be a dict, got {type(cls.metadata_fields)}"
+        )
+        for field_name, field_type in cls.metadata_fields.items():
+            if field_name not in hints:
+                hints[field_name] = _safe_resolve_annotation(
+                    field_type, {**module_globals, **superduper_globals, **mro_globals}
+                )
     return hints
 
 

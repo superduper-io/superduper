@@ -48,20 +48,14 @@ class Listener(CDC):
             self.cdc_table = self.select.table
         if isinstance(self.key, tuple):
             self.key = list(self.key)
-        self.output_table = Table(
-            self.outputs, fields={self.outputs: self.model.datatype, '_source': 'str'}
-        )
         super().postinit()
 
-    # @property
-    # def output_table(self):
-    #     return Table(
-    #         self.outputs, fields={self.outputs: self.model.datatype, '_source': 'str'}
-    #     )
-
-    # def _get_metadata(self):
-    #     r = super()._get_metadata()
-    #     return {**r, 'output_table': self.output_table}
+    @property
+    def output_table(self):
+        """Output table property."""
+        return Table(
+            self.outputs, fields={self.outputs: self.model.datatype, '_source': 'str'}
+        )
 
     @property
     def predict_id(self):
@@ -70,56 +64,6 @@ class Listener(CDC):
         name_length = LENGTH_OUTPUT_NAME - length_uuid - 2
         name = self.identifier[:name_length]
         return f'{name}__{self.uuid}'
-
-    # TODO deprecate this
-    @staticmethod
-    def _complete_key(key, db, listener_uuids=()):
-        if isinstance(key, str) and key.startswith(CFG.output_prefix):
-            if len(key[len(CFG.output_prefix) :].split('__')) == 2:
-                return key
-            identifier_and_sub_key = key[len(CFG.output_prefix) :].split('.', 1)
-            if len(identifier_and_sub_key) == 2:
-                identifier, sub_key = identifier_and_sub_key
-            else:
-                identifier = identifier_and_sub_key[0]
-                sub_key = ''
-
-            key = CFG.output_prefix + identifier
-            try:
-                uuid = listener_uuids[identifier]
-            except KeyError:
-                try:
-                    uuid = db.show('listener', identifier, -1)['uuid']
-                except FileNotFoundError:
-                    raise Exception(
-                        'Couldn\'t complete `Listener` key '
-                        f'based on ellipsis {key}__????????????????. '
-                        'Please specify using upstream_listener.outputs'
-                    )
-
-            complete_key = key + '__' + uuid
-            if sub_key:
-                complete_key += '.' + sub_key
-            return complete_key
-        elif isinstance(key, str):
-            return key
-        elif isinstance(key, list):
-            return [Listener._complete_key(k, db, listener_uuids) for k in key]
-        elif isinstance(key, tuple):
-            return tuple([Listener._complete_key(k, db, listener_uuids) for k in key])
-        elif isinstance(key, dict):
-            return {
-                Listener._complete_key(k, db, listener_uuids): v for k, v in key.items()
-            }
-        raise Exception(f'Invalid key type: {type(key)}')
-
-    # TODO remove this
-    @property
-    def dependent_tables(self):
-        """Get tables of this component."""
-        if self.select is None:
-            return []
-        return [self.cdc_table, self.outputs]
 
     @property
     def outputs(self):
@@ -147,7 +91,12 @@ class Listener(CDC):
         else:
             raise ValueError(f'Invalid signature: {model_signature}')
 
-    @trigger('apply', 'insert', 'update', requires='select')
+    # The outputs parameter denotes the attribute of the component
+    # to which the outputs of this job will be written.
+    # This is needed if there are downstream jobs which depend on the outputs
+    # of this job.
+    # In this case `self.outputs` i.e. `CFG.output_prefix + self.predict_id`
+    @trigger('apply', 'insert', 'update', requires='select', outputs='outputs')
     def run(self, ids: t.List[str] | None = None):
         logging.info(f"[{self.huuid}] Running on '{self.cdc_table}'")
 

@@ -198,25 +198,22 @@ class Base(metaclass=BaseMeta):
                 signature_params = inspect.signature(cls.__init__).parameters
                 init_params = {k: v for k, v in r.items() if k in signature_params}
                 post_init_params = {
-                    k: v for k, v in r.items() if k in getattr(cls, 'metadata_fields', {})
+                    k: v
+                    for k, v in r.items()
+                    if k in getattr(cls, 'metadata_fields', {})
                 }
                 instance = cls(**init_params)
                 for k, v in post_init_params.items():
-                    setattr(instance, k, v)
+                    try:
+                        setattr(instance, k, v)
+                    except AttributeError:
+                        pass  # can't set property
                 return instance
             raise e
 
     def postinit(self):
         """Post-initialization method."""
         pass
-
-    # def _get_metadata(self):
-    #     return {}
-
-    # @property
-    # def metadata(self):
-    #     """Get metadata of the object."""
-    #     return self._get_metadata()
 
     @property
     def leaves(self):
@@ -383,7 +380,7 @@ class Base(metaclass=BaseMeta):
 
     def dict(self, metadata: bool = True) -> t.Dict[str, t.Any]:
         """Return dictionary representation of the object.
-        
+
         :param metadata: Whether to include metadata in the dictionary.
         """
         from superduper import Document
@@ -395,9 +392,6 @@ class Base(metaclass=BaseMeta):
             for k, v in metadata.items():
                 r[k] = v
 
-        # if self.component == 'Listener' and not metadata:
-        #     # Listeners are special, they have no metadata
-        #     import pdb; pdb.set_trace()
         return Document(r, schema=self.class_schema)
 
     @classmethod

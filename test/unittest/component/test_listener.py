@@ -204,6 +204,7 @@ def test_listener_cleanup(db, data):
     else:
         assert result == data
 
+    # Remove the listener
     db.remove('Listener', listener1.identifier, force=True)
     assert not db.databackend.check_output_dest(listener1.predict_id)
 

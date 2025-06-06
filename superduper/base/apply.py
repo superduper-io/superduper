@@ -284,7 +284,7 @@ def _apply(
     # as replacement for those leaves which are `Component`
     # instances.
     serialized = serialized.map(wrapper, lambda x: isinstance(x, Component))
-    Document(object.metadata).map(wrapper, lambda x: isinstance(x, Component))
+    # Document(object.metadata).map(wrapper, lambda x: isinstance(x, Component))
     serialized = db._save_artifact(serialized.encode())
 
     if apply_status == 'same':

@@ -124,7 +124,7 @@ class ComponentType(BaseDataType):
         if context.keep_variables:
             r = item._original_parameters
         else:
-            r = item.dict()
+            r = item.dict(metadata=context.metadata)
 
         if not context.include_defaults:
             from superduper.base.document import Document

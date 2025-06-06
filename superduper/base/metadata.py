@@ -58,6 +58,7 @@ class Job(Base):
     compute_kwargs: t.Dict = dc.field(default_factory=dict)
     result: t.List | None = None
     inverse_dependencies: t.List[str] = dc.field(default_factory=list)
+    outputs: str | None = None
 
     def wait(self, db: 'Datalayer', heartbeat: float = 1, timeout: int = 60):
         """Wait for the job to finish.

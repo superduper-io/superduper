@@ -78,7 +78,7 @@ def test_template_export(db):
     # (depends on developer use-case)
     t = Template(
         identifier='my-template',
-        template=m.encode(),
+        template=m.encode(metadata=False),
     )
 
     db.apply(t)

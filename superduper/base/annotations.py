@@ -6,6 +6,7 @@ def trigger(
     *event_types: t.Sequence[str],
     depends: t.Sequence[str] | str = (),
     requires: t.Sequence[str] | str = (),
+    outputs: str | None = None,
 ):
     """Decorator to trigger a method when an event is detected.
 
@@ -13,6 +14,7 @@ def trigger(
     :param depends: Triggers which should run before this method.
     :param requires: Dataclass parameters/ attributes which should be
                      available to trigger the method
+    :param outputs: Name of the attribute to store the output of the method.
     """
     if isinstance(depends, str):
         depends = [depends]
@@ -40,6 +42,11 @@ def trigger(
                 assert isinstance(self, CDC), msg
             from superduper.base.metadata import Job
 
+            if outputs:
+                output_dest = getattr(self, outputs)
+            else:
+                output_dest = None
+
             if job:
                 return Job(
                     component=self.__class__.__name__,
@@ -48,6 +55,7 @@ def trigger(
                     method=f.__name__,
                     kwargs=kwargs,
                     context=context,
+                    outputs=output_dest,
                 )
             else:
                 self.setup()
@@ -58,6 +66,7 @@ def trigger(
         decorated.events = event_types
         decorated.depends = depends
         decorated.requires = requires
+        decorated.outputs = outputs
         return decorated
 
     return decorator

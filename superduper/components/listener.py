@@ -147,7 +147,12 @@ class Listener(CDC):
         else:
             raise ValueError(f'Invalid signature: {model_signature}')
 
-    @trigger('apply', 'insert', 'update', requires='select')
+    # The outputs parameter denotes the attribute of the component
+    # to which the outputs of this job will be written.
+    # This is needed if there are downstream jobs which depend on the outputs
+    # of this job.
+    # In this case `self.outputs` i.e. `CFG.output_prefix + self.predict_id`
+    @trigger('apply', 'insert', 'update', requires='select', outputs='outputs')
     def run(self, ids: t.List[str] | None = None):
         logging.info(f"[{self.huuid}] Running on '{self.cdc_table}'")
 

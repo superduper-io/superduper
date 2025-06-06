@@ -101,6 +101,7 @@ def _consume_event_type(event_type, ids, table, db: 'Datalayer'):
     context = str(uuid.uuid4())
     jobs: t.List['Job'] = []
     job_lookup: t.DefaultDict = defaultdict(dict)
+    output_lookup = {}
     logging.info(f'Consuming {event_type} events on {table}')
 
     from superduper.components.cdc import build_streaming_graph
@@ -113,10 +114,12 @@ def _consume_event_type(event_type, ids, table, db: 'Datalayer'):
         # try this until the dependencies are there
         input_table = component.cdc_table
         if input_table.startswith(CFG.output_prefix):
-            input_uuid = input_table.split('__')[-1]
-            # Maybe think about generalizing this
-            # This is getting the "run" method from `Listener`
-            input_ids = Future(job_lookup[input_uuid]['run'])
+
+            # input_uuid = input_table.split('__')[-1]
+            # # TODO remove this logic specific to Listener (hack)
+            # # This is getting the "run" method from `Listener`
+            # input_ids = Future(job_lookup[input_uuid]['run'])
+            input_ids = Future(output_lookup[input_table])
         else:
             input_ids = ids
 
@@ -131,6 +134,8 @@ def _consume_event_type(event_type, ids, table, db: 'Datalayer'):
 
         for job in sub_jobs:
             job_lookup[component.uuid][job.method] = job.job_id
+            if job.outputs:
+                output_lookup[job.outputs] = job.job_id
         jobs += sub_jobs
         logging.info(f'Streaming with {component.component}:{component.identifier}')
 

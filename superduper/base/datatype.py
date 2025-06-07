@@ -166,8 +166,9 @@ class ComponentType(BaseDataType):
                 builds[key] = _decode_base(r, builds, db=db)
             return builds[key]
         elif isinstance(item, str) and item.startswith('&'):
-            _, component, _, uuid = item[2:].split(':')
-            return db.load(component=component, uuid=uuid)
+            _, component, identifier, uuid = item[2:].split(':')
+            return ComponentRef(component=component, identifier=identifier, uuid=uuid, db=db)
+            # return db.load(component=component, uuid=uuid)
         elif isinstance(item, str):
             raise ValueError(f'Unknown reference type {item} for a base instance')
 
@@ -890,6 +891,34 @@ class FileItem(Saveable):
     @property
     def reference(self):
         return f'&:file:{self.identifier}'
+
+
+@dc.dataclass(kw_only=True)
+class ComponentRef(Saveable):
+    """Placeholder for a component reference.
+
+    :param component: The component to reference.
+    :param uuid: The UUID of the component.
+    :param db: The Datalayer.
+    """
+
+    component: str
+    uuid: str
+    identifier: str
+    object: Component | None = None
+
+    @property
+    def reference(self):
+        return f'&:component:{self.component}:{self.identifier}:{self.uuid}'
+
+    def setup(self):
+        """Initialize the component reference."""
+        if not self.db:
+            raise ValueError('Datalayer is not set for ComponentRef')
+        self.object = self.db.load(component=self.component, uuid=self.uuid)
+
+    def unpack(self):
+        return self.object
 
 
 @dc.dataclass(kw_only=True)

@@ -315,11 +315,10 @@ def update(self, condition: t.Dict, key: str, value: t.Any):
     """
     db = route_db(self.db, self.table)
     s = self.db.metadata.get_schema(self.table)
+    datatype = None
     if isinstance(s[key], BaseDataType):
-        value = s[key].encode_data(value, None)
-        if s[key].dtype == 'json' and not CFG.json_native:
-            value = json.dumps(value)
-    out = db.databackend.update(self.table, condition, key=key, value=value)
+        datatype = s[key]
+    out = db.databackend._update(self.table, condition, key=key, value=value, datatype=datatype)
 
     # FIXME: Access to a protected member _post_query of a class
     self.db._post_query(self.table, ids=out, type_='update')
@@ -982,6 +981,7 @@ class Query(_BaseQuery):
             return db.databackend.primary_id(self.table)
         results = db.databackend.execute(self, raw=raw)
 
+        # TODO we have decode x2 in databackend and here
         if decode:
             cls = self.db.load('Table', self.table).cls
             return [cls.decode(r, db=self.db) for r in results]

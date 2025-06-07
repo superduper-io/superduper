@@ -31,6 +31,7 @@ class MongoDBDataBackend(BaseDataBackend):
     """
 
     id_field = "_id"
+    json_native: bool = True
 
     def __init__(self, uri: str, plugin: t.Any, flavour: t.Optional[str] = None):
         self.connection_callback = lambda: connection_callback(uri, flavour)

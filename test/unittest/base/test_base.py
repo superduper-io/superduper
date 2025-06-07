@@ -73,8 +73,6 @@ def test_encode_leaf_with_children():
         'b': 'test_b',
         'c': (
             obj.c.dict().unpack()
-            if CFG.json_native
-            else json.dumps(obj.c.dict().unpack())
         ),
         '_builds': {},
         '_files': {},

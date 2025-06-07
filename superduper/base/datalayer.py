@@ -486,6 +486,7 @@ class Datalayer:
             )
         )
 
+        object.setup()
         for v in object.metadata.values():
             if isinstance(v, Component):
                 events.append(

@@ -586,11 +586,6 @@ class MetaDataStore:
         r = self._get_component_class_info(table)
         fields = r['fields']
 
-        # TODO this seems to be to do with json_native
-        if isinstance(fields, str):
-            import json
-
-            fields = json.loads(fields)
         schema = Schema.build(**fields)
         return schema
 

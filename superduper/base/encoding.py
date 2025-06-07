@@ -21,7 +21,6 @@ class EncodeContext:
     :param leaves_to_keep: A sequence of Base instances to keep.
     :param metadata: Whether to include metadata.
     :param defaults: Whether to include defaults.
-    :param cfg: Configuration object.
     :param keep_variables: Whether to keep variables.
     :param include_defaults: Whether to include default values.
     """
@@ -34,7 +33,6 @@ class EncodeContext:
     leaves_to_keep: t.Sequence['Base'] = field(default_factory=tuple)
     metadata: bool = True
     defaults: bool = True
-    cfg: t.Optional[Config] = None
     keep_variables: bool = False
     include_defaults: bool = True
 
@@ -50,5 +48,4 @@ class EncodeContext:
             defaults=self.defaults,
             keep_variables=self.keep_variables,
             include_defaults=self.include_defaults,
-            cfg=self.cfg,
         )

@@ -48,20 +48,21 @@ class Dataset(Component):
         """Property representing the dataset's data."""
         return self._data
 
-    def setup(self):
+    def setup(self) -> 'Dataset':
         """Initialization method."""
         super().setup()
         if self.pin:
             assert self.raw_data is not None
             if self.schema is not None:
                 self._data = [
-                    Document.decode(r, db=self.db, schema=self.schema).unpack()
+                    Document.decode(r, db=self.db, schema=self.schema).unpack()  # type: ignore[arg-type]
                     for r in self.raw_data
                 ]
             else:
                 self._data = self.raw_data
         else:
-            self._data = self._load_data(self.db)
+            self._data = self._load_data(self.db)  # type: ignore[arg-type]
+        return self
 
     def _load_data(self, db: 'Datalayer'):
         assert db is not None, 'Database must be set'

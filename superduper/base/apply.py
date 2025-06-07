@@ -250,6 +250,7 @@ def _apply(
 
     try:
         current = db.load(object.__class__.__name__, object.identifier)
+        current.setup()
         if current.hash == object.hash:
             apply_status = 'same'
             object.version = current.version

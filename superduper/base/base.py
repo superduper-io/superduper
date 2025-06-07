@@ -404,9 +404,6 @@ class Base(metaclass=BaseMeta):
         modified = {k: v for k, v in r.items() if k in signature_params}
         return cls(**modified)
 
-    def setup(self, db=None):
-        """Initialize object.
-
-        :param db: Datalayer instance.
-        """
+    def setup(self):
+        """Initialize object."""
         pass

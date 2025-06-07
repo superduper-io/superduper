@@ -11,6 +11,7 @@ from superduper.base.datalayer import Datalayer
 from superduper.base.document import Document
 from superduper.base.schema import Schema
 from superduper.components.cdc import CDC
+from superduper.components.component import ensure_setup
 from superduper.components.listener import Listener
 from superduper.components.table import Table
 from superduper.misc.special_dicts import DeepKeyedDict
@@ -60,12 +61,17 @@ class VectorIndex(CDC):
     def postinit(self):
         """Post-initialization method."""
         self.cdc_table = self.cdc_table or self.indexing_listener.outputs
+        super().postinit()
 
+    def setup(self):
+        """Set up the vector index."""
+        super().setup()
+
+        self.indexing_listener.setup()
         assert isinstance(self.indexing_listener, Listener)
         assert hasattr(self.indexing_listener, 'output_table')
         assert hasattr(self.indexing_listener.output_table, 'schema')
-        assert isinstance(self.indexing_listener, Listener)
-        assert isinstance(self.indexing_listener.output_table, Table)
+
         try:
             next(
                 v
@@ -77,14 +83,15 @@ class VectorIndex(CDC):
                 f'Couldn\'t get a vector shape for\n'
                 f'{self.indexing_listener.output_table.schema}'
             )
+        return self
 
-        super().postinit()
-
+    @ensure_setup
     def get_vectors(self, ids: t.Sequence[str] | None = None):
         """Get vectors from the vector index.
 
         :param ids: A list of ids to match
         """
+        self.indexing_listener.setup()
         if not hasattr(self.indexing_listener.model, 'datatype'):
             self.indexing_listener.model = self.db.load(
                 uuid=self.indexing_listener.model.uuid
@@ -249,6 +256,7 @@ class VectorIndex(CDC):
         self.db.cluster.vector_search.drop_component(self.component, self.identifier)
 
     @property
+    @ensure_setup
     def models_keys(self):
         """Return a list of model and keys for each listener."""
         assert not isinstance(self.indexing_listener, str)
@@ -264,6 +272,7 @@ class VectorIndex(CDC):
         return models, keys
 
     @property
+    @ensure_setup
     def dimensions(self) -> int:
         """Get dimension for vector database.
 

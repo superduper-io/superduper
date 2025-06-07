@@ -1,4 +1,5 @@
 import functools
+import json
 import hashlib
 import typing as t
 import uuid
@@ -7,6 +8,7 @@ from abc import ABC, abstractmethod
 from superduper import CFG, logging
 from superduper.base import exceptions
 from superduper.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES
+from superduper.base.datatype import JSON, BaseDataType
 from superduper.base.document import Document
 from superduper.base.query import Query
 
@@ -25,6 +27,7 @@ class BaseDataBackend(ABC):
     """
 
     tables_ignore: str | None = None
+    json_native: bool = False
 
     batched: bool = False
     id_field: str = 'id'
@@ -166,6 +169,23 @@ class BaseDataBackend(ABC):
         :param r: The document to replace.
         """
 
+    def _update(self, table: str, condition: t.Dict, key: str, value: t.Any, datatype: BaseDataType | None = None):
+        """Update data in the database.
+
+        This method is a wrapper around the `update` method to ensure
+        that the datatype is set to `None` by default.
+
+        :param table: The table to update.
+        :param condition: The condition to update.
+        :param key: The key to update.
+        :param value: The value to update.
+        """
+        if datatype is not None:
+            value = datatype.encode_data(value, None)
+            if datatype.dtype == 'json' and not self.json_native:
+                value = json.dumps(value)
+        self.update(table, condition, key, value)
+
     @abstractmethod
     def update(self, table: str, condition: t.Dict, key: str, value: t.Any):
         """Update data in the database.
@@ -247,8 +267,16 @@ class BaseDataBackend(ABC):
             if '_source' in r:
                 r['_source'] = str(r['_source'])
 
+        if not self.json_native:
+            json_fields = [k for k in schema.fields if getattr(schema.fields[k], 'dtype', None) == 'json']
+            for r in result:
+                for k in json_fields:
+                    if k in r and isinstance(r[k], str):
+                        r[k] = json.loads(r[k])
+
         if raw:
             return result
+
         return [Document.decode(r, schema=schema, db=self.db) for r in result]
 
     def execute(self, query: Query, raw: bool = False):
@@ -313,6 +341,13 @@ class BaseDataBackend(ABC):
                 except KeyError:
                     pass
                 documents[i] = r
+
+        if not self.json_native:
+            json_fields = [k for k in schema.fields if getattr(schema.fields[k], 'dtype', None) == 'json']
+            for r in documents:
+                for k in json_fields:
+                    if k in r:
+                        r[k] = json.dumps(r[k])
 
         out = self.insert(table, documents)
         return [str(x) for x in out]

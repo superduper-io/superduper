@@ -142,22 +142,6 @@ class Schema(BaseDataType):
                 decoded[k] = builds[value[1:]]
                 continue
             else:
-                msg = (
-                    'Expected a string since databackend is not json native;'
-                    ' CFG.json_native is False'
-                )
-                # If the item has been cached, it will not be a string
-                if (
-                    isinstance(value, str)
-                    and field.dtype == 'json'
-                    and not CFG.json_native
-                ):
-                    assert isinstance(value, str), msg
-                    try:
-                        value = json.loads(value)
-                    except json.JSONDecodeError:
-                        pass
-
                 decoded[k] = field.decode_data(value, builds=builds, db=db)
 
         return decoded
@@ -204,13 +188,6 @@ class Schema(BaseDataType):
                     'Have you chosen an appropriate encoder?'
                 )
                 raise e
-
-            if field.dtype == 'json':
-                if context.cfg is not None:
-                    if not context.cfg.json_native:
-                        encoded = json.dumps(encoded)
-                elif not CFG.json_native:
-                    encoded = json.dumps(encoded)
 
             result[k] = encoded
 

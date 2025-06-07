@@ -364,15 +364,6 @@ def _apply(
             requires=diff,
         )
 
-    # If nothing needs to be done, then don't
-    # require the status to be "initializing"
-
-    # if not these_job_events:
-    #     metadata_event.data['status'], metadata_event.data['details'] = running_status()
-    #     if not CFG.json_native:
-    #         metadata_event.data['details'] = json.dumps(metadata_event.data['details'])
-    #     object.status, object.details = running_status()
-
     create_events[metadata_event.huuid] = metadata_event
     job_events.update({jj.huuid: jj for jj in these_job_events})
     return table_events, create_events, put_events, job_events

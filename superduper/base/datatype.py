@@ -166,8 +166,14 @@ class ComponentType(BaseDataType):
                 builds[key] = _decode_base(r, builds, db=db)
             return builds[key]
         elif isinstance(item, str) and item.startswith('&'):
-            _, component, _, uuid = item[2:].split(':')
-            return db.load(component=component, uuid=uuid)
+            _, component, identifier, uuid = item[2:].split(':')
+            return ComponentRef(
+                component=component,
+                identifier=identifier,
+                uuid=uuid,
+                db=db,
+            )
+            # return db.load(component=component, uuid=uuid)
         elif isinstance(item, str):
             raise ValueError(f'Unknown reference type {item} for a base instance')
 
@@ -852,8 +858,11 @@ class Saveable:
         pass
 
     @abstractmethod
-    def setup(self):
-        """Initialize the object."""
+    def setup(self, deep: bool = False):
+        """Initialize the object.
+        
+        :param deep: If True, setup the object recursively.
+        """
         pass
 
     @abstractmethod
@@ -876,8 +885,11 @@ class FileItem(Saveable):
     def __post_init__(self):
         """Post init."""
 
-    def setup(self):
-        """Initialize the file to local disk."""
+    def setup(self, deep: bool = False):
+        """Initialize the file to local disk.
+        
+        :param deep: Ignore
+        """
         if self.path:
             return
         self.path = self.db.artifact_store.get_file(self.identifier)
@@ -890,6 +902,47 @@ class FileItem(Saveable):
     @property
     def reference(self):
         return f'&:file:{self.identifier}'
+
+
+@dc.dataclass(kw_only=True)
+class ComponentRef(Saveable):
+    """Placeholder for a component reference.
+
+    :param identifier: Identifier of the component.
+    :param db: The Datalayer.
+    :param component: Component class name.
+    :param uuid: UUID of the component.
+    :param object: The component object, if already loaded.
+    """
+
+    component: str
+    uuid: str
+    object: t.Optional[Component] = None
+
+    def setup(self, deep: bool = False):
+        """Initialize the component reference.
+        
+        :param deep: If True, setup the component deeply.
+        """
+        if self.object is not None:
+            return
+        self.object = self.db.load(
+            component=self.component, 
+            identifier=self.identifier,
+            uuid=self.uuid,
+        )
+        if deep:
+            self.object.setup(deep=True)
+        return self.object
+
+    def unpack(self):
+        """Get the component reference."""
+        self.setup()
+        return self.object
+
+    @property
+    def reference(self):
+        return f'&:component:{self.component}:{self.object}:{self.uuid}'
 
 
 @dc.dataclass(kw_only=True)
@@ -911,8 +964,11 @@ class Blob(Saveable):
             assert self.bytes is not None
             self.identifier = get_hash(self.bytes)
 
-    def setup(self):
-        """Initialize the blob."""
+    def setup(self, deep: bool = False):
+        """Initialize the blob.
+        
+        :param deep: Ignore
+        """
         if self.bytes:
             return
         self.bytes = self.db.artifact_store.get_bytes(self.identifier)

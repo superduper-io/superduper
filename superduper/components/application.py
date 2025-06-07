@@ -47,7 +47,9 @@ class Application(Component):
         """Post-initialization method to set up the application."""
         with build_context(self.variables):
             for component in self.components:
-                component.postinit()
+                # Might be just a ComponentRef
+                if isinstance(component, Component):
+                    component.postinit()
             return super().postinit()
 
     @classmethod

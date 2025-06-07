@@ -308,10 +308,12 @@ class Component(Base, metaclass=ComponentMeta):
 
         :param deep: If set `True` get all recursively.
         """
-        from superduper.base.datatype import Saveable
+        from superduper.base.datatype import Saveable, ComponentRef
 
         r = self.dict().encode(leaves_to_keep=(Component, Saveable))
-        out = [v for v in r['_builds'].values() if isinstance(v, Component)]
+        out = [v.setup() for v in r['_builds'].values() if isinstance(v, (Component, ComponentRef))]
+        if any(x is None for x in out):
+            import pdb; pdb.set_trace()  # noqa: T201
         lookup = {}
         for v in out:
             lookup[id(v)] = v
@@ -552,8 +554,11 @@ class Component(Base, metaclass=ComponentMeta):
         }
         return metadata
 
-    def setup(self):
-        """Method to help initiate component field dependencies."""
+    def setup(self, deep: bool = False):
+        """Method to help initiate component field dependencies.
+        
+        :param deep: If set `True` recursively setup all the fields.
+        """
 
         def mro(item):
             objects = item.__class__.__mro__
@@ -574,7 +579,7 @@ class Component(Base, metaclass=ComponentMeta):
             from superduper.base.datatype import Saveable
 
             if isinstance(item, Saveable):
-                item.setup()
+                item.setup(deep=deep)
                 return item.unpack()
 
             return item

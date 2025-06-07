@@ -48,8 +48,11 @@ class Dataset(Component):
         """Property representing the dataset's data."""
         return self._data
 
-    def setup(self):
-        """Initialization method."""
+    def setup(self, deep: bool = False) -> 'Dataset':
+        """Initialization method.
+        
+        :param deep: Whether to perform a deep setup.
+        """
         super().setup()
         if self.pin:
             assert self.raw_data is not None
@@ -62,6 +65,7 @@ class Dataset(Component):
                 self._data = self.raw_data
         else:
             self._data = self._load_data(self.db)
+        return self
 
     def _load_data(self, db: 'Datalayer'):
         assert db is not None, 'Database must be set'

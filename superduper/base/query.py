@@ -834,8 +834,6 @@ class Query(_BaseQuery):
             except KeyError:
                 pass
 
-            if '_base' in out:
-                return out['_base']
             return out
 
         if isinstance(r, (tuple, list)):

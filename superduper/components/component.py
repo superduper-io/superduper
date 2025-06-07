@@ -31,6 +31,25 @@ if t.TYPE_CHECKING:
     from superduper.base.metadata import Job
 
 
+def ensure_setup(func):
+    """Decorator to ensure that the model is initialized before calling the function.
+
+    :param func: Decorator function.
+    """
+
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        if not getattr(self, "_is_setup", False):
+            model_message = f"{self.__class__.__name__} : {self.identifier}"
+            logging.debug(f"Initializing {model_message}")
+            self.setup()
+            self._is_setup = True
+            logging.debug(f"Initialized  {model_message} successfully")
+        return func(self, *args, **kwargs)
+
+    return wrapper
+
+
 def propagate_failure(f):
     """Propagate failure decorator.
 
@@ -182,6 +201,7 @@ class Component(Base, metaclass=ComponentMeta):
         )
         return breaking[:LENGTH_UUID]
 
+    @ensure_setup
     def get_merkle_tree(self, breaks: bool):
         """Get the merkle tree of the component.
 
@@ -735,21 +755,3 @@ class Component(Base, metaclass=ComponentMeta):
         non_breaking = hash_item(non_breaking_hashes)
         return breaking[:32] + non_breaking[:32]
 
-
-def ensure_setup(func):
-    """Decorator to ensure that the model is initialized before calling the function.
-
-    :param func: Decorator function.
-    """
-
-    @wraps(func)
-    def wrapper(self, *args, **kwargs):
-        if not getattr(self, "_is_setup", False):
-            model_message = f"{self.__class__.__name__} : {self.identifier}"
-            logging.debug(f"Initializing {model_message}")
-            self.setup()
-            self._is_setup = True
-            logging.debug(f"Initialized  {model_message} successfully")
-        return func(self, *args, **kwargs)
-
-    return wrapper

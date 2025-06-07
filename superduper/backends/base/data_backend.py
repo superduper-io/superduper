@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod
 from superduper import CFG, logging
 from superduper.base import exceptions
 from superduper.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES
-from superduper.base.datatype import JSON, BaseDataType
+from superduper.base.datatype import JSON, BaseDataType, NativeVector, Vector
 from superduper.base.document import Document
 from superduper.base.query import Query
 
@@ -31,6 +31,7 @@ class BaseDataBackend(ABC):
 
     batched: bool = False
     id_field: str = 'id'
+    vector_impl: t.Type = NativeVector
 
     # TODO plugin not required
     # TODO flavour required?
@@ -184,6 +185,9 @@ class BaseDataBackend(ABC):
             value = datatype.encode_data(value, None)
             if datatype.dtype == 'json' and not self.json_native:
                 value = json.dumps(value)
+            elif isinstance(datatype, Vector):
+                vector_datatype = self.vector_impl(dtype=datatype.dtype, shape=datatype.shape)
+                value = vector_datatype.encode_data(value, None)
         self.update(table, condition, key, value)
 
     @abstractmethod
@@ -274,6 +278,17 @@ class BaseDataBackend(ABC):
                     if k in r and isinstance(r[k], str):
                         r[k] = json.loads(r[k])
 
+        vector_datatypes = {
+            k: self.vector_impl(dtype=v.dtype, shape=v.shape)
+            for k, v in schema.fields.items() if isinstance(v, Vector)
+        }
+
+        if vector_datatypes:
+            for r in result:
+                for k in vector_datatypes:
+                    if k in r and not r[k] is None:
+                        r[k] = vector_datatypes[k].decode_data(r[k], builds={}, db=self.db)
+
         if raw:
             return result
 
@@ -341,6 +356,16 @@ class BaseDataBackend(ABC):
                 except KeyError:
                     pass
                 documents[i] = r
+
+        vector_datatypes = {
+            k: self.vector_impl(dtype=v.dtype, shape=v.shape)
+            for k, v in schema.fields.items() if isinstance(v, Vector)
+        }
+        if vector_datatypes:
+            for r in documents:
+                for k in vector_datatypes:
+                    if k in r:
+                        r[k] = vector_datatypes[k].encode_data(r[k], None)
 
         if not self.json_native:
             json_fields = [k for k in schema.fields if getattr(schema.fields[k], 'dtype', None) == 'json']

@@ -119,18 +119,6 @@ class Downloads(BaseConfig):
 
 
 @dc.dataclass
-class DataTypePresets(BaseConfig):
-    """Paths of default types of data.
-
-    Overrides DataBackend.datatype_presets.
-
-    :param vector: BaseDataType to encode vectors.
-    """
-
-    vector: str | None = None
-
-
-@dc.dataclass
 class Config(BaseConfig):
     """The data class containing all configurable superduper values.
 
@@ -148,7 +136,6 @@ class Config(BaseConfig):
     :param logging_type: The type of logging to use
     :param log_hostname: Whether to include the hostname in the logs
     :param force_apply: Whether to force apply the configuration
-    :param datatype_presets: Presets to be applied for default types of data
     :param log_colorize: Whether to colorize the logs
     :param bytes_encoding: (Deprecated)
     :param output_prefix: The prefix for the output table and output field key
@@ -177,8 +164,6 @@ class Config(BaseConfig):
     bytes_encoding: str = 'bytes'
 
     force_apply: bool = False
-
-    datatype_presets: DataTypePresets = dc.field(default_factory=DataTypePresets)
 
     output_prefix: str = "_outputs__"
     vector_search_kwargs: t.Dict = dc.field(default_factory=dict)

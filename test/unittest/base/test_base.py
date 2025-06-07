@@ -71,9 +71,7 @@ def test_encode_leaf_with_children():
         '_path': 'test.unittest.base.test_base.MySer',
         'a': 1,
         'b': 'test_b',
-        'c': (
-            obj.c.dict().unpack()
-        ),
+        'c': (obj.c.dict().unpack()),
         '_builds': {},
         '_files': {},
         '_blobs': {},

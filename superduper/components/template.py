@@ -89,7 +89,8 @@ class Template(Component):
         """Post initialization method."""
         if isinstance(self.template, Base):
             self.template = self.template.encode(
-                defaults=True, metadata=False,
+                defaults=True,
+                metadata=False,
             )
 
         if '_blobs' in self.template:

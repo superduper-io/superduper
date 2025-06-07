@@ -303,7 +303,7 @@ def insert(self: 'Query', documents, raw: bool = False):
     # noqa
     """
     # FIXME: Access to a protected member _do_insert of a class
-    out = self.db.databackend._do_insert(self.table, documents, raw=raw)
+    out = self.db.databackend.do_insert(self.table, documents, raw=raw)
     self.db._post_query(self.table, ids=out, type_='insert')
     return out
 
@@ -318,7 +318,9 @@ def update(self, condition: t.Dict, key: str, value: t.Any):
     datatype = None
     if isinstance(s[key], BaseDataType):
         datatype = s[key]
-    out = db.databackend._update(self.table, condition, key=key, value=value, datatype=datatype)
+    out = db.databackend.do_update(
+        self.table, condition, key=key, value=value, datatype=datatype
+    )
 
     # FIXME: Access to a protected member _post_query of a class
     self.db._post_query(self.table, ids=out, type_='update')
@@ -340,29 +342,29 @@ def replace(self, condition: t.Dict, r: t.Dict | Document):
 
     # noqa
     """
-    try:
-        r.pop(KEY_BUILDS)
-    except KeyError:
-        pass
-    try:
-        r.pop(KEY_BLOBS)
-    except KeyError:
-        pass
-    try:
-        r.pop(KEY_FILES)
-    except KeyError:
-        pass
-    try:
-        r.pop(KEY_PATH)
-    except KeyError:
-        pass
+    # try:
+    #     r.pop(KEY_BUILDS)
+    # except KeyError:
+    #     pass
+    # try:
+    #     r.pop(KEY_BLOBS)
+    # except KeyError:
+    #     pass
+    # try:
+    #     r.pop(KEY_FILES)
+    # except KeyError:
+    #     pass
+    # try:
+    #     r.pop(KEY_PATH)
+    # except KeyError:
+    #     pass
 
-    if isinstance(r, Document):
-        s = self.db.metadata.get_schema(self.table)
-        r = s.encode_data(r)
+    # if isinstance(r, Document):
+    #     s = self.db.metadata.get_schema(self.table)
+    #     r = s.encode_data(r)
 
     db = route_db(self.db, self.table)
-    out = db.databackend.replace(self.table, condition, r)
+    out = db.databackend.do_replace(self.table, condition, r)
 
     self.db._post_query(self.table, ids=out, type_='update')
     return out

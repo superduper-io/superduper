@@ -472,14 +472,12 @@ class Update(Event):
                 self.component, uuid=self.data['uuid'], info=self.data
             )
         except Exception as e:
-            db.metadata.set_component_status(
+            db.metadata.set_component_failed(
                 component=self.component,
                 uuid=self.data['uuid'],
-                details_update={
-                    'phase': STATUS_FAILED,
-                    'reason': f'Failed to update: {str(e)}',
-                    'message': format_exc(),
-                },
+                reason=f'Failed to update: {str(e)}',
+                message=str(format_exc()),
+                context=self.context,
             )
             raise e
 

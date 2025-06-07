@@ -1,14 +1,14 @@
 import functools
-import json
 import hashlib
+import json
 import typing as t
 import uuid
 from abc import ABC, abstractmethod
 
 from superduper import CFG, logging
 from superduper.base import exceptions
-from superduper.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES
-from superduper.base.datatype import JSON, BaseDataType
+from superduper.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES, KEY_PATH
+from superduper.base.datatype import JSON, BaseDataType, NativeVector, Vector
 from superduper.base.document import Document
 from superduper.base.query import Query
 
@@ -31,6 +31,7 @@ class BaseDataBackend(ABC):
 
     batched: bool = False
     id_field: str = 'id'
+    vector_impl: t.Type = NativeVector
 
     # TODO plugin not required
     # TODO flavour required?
@@ -160,6 +161,64 @@ class BaseDataBackend(ABC):
         :param documents: The documents to insert.
         """
 
+    def do_replace(self, table: str, condition: t.Dict, r: t.Dict):
+        """Replace data in the database.
+
+        This method is a wrapper around the `replace` method to ensure
+        that the datatype is set to `None` by default.
+
+        :param table: The table to insert into.
+        :param condition: The condition to update.
+        :param r: The document to replace.
+        """
+        schema = self.get_schema(self.db[table])
+
+        if isinstance(r, Document) and not schema.trivial:
+            schema = self.get_schema(self.db[table])
+            r = Document(r).encode(schema=schema, db=self.db)
+            if r.get(KEY_BLOBS) or r.get(KEY_FILES):
+                self.db.artifact_store.save_artifact(r)
+
+        try:
+            r.pop(KEY_BUILDS)
+        except KeyError:
+            pass
+        try:
+            r.pop(KEY_BLOBS)
+        except KeyError:
+            pass
+        try:
+            r.pop(KEY_FILES)
+        except KeyError:
+            pass
+        try:
+            r.pop(KEY_PATH)
+        except KeyError:
+            pass
+
+        vector_datatypes = {
+            k: self.vector_impl(dtype=v.dtype, shape=v.shape)
+            for k, v in schema.fields.items()
+            if isinstance(v, Vector)
+        }
+        if vector_datatypes:
+            for k in vector_datatypes:
+                if k in r:
+                    r[k] = vector_datatypes[k].encode_data(r[k], None)
+
+        if not self.json_native:
+            json_fields = [
+                k
+                for k in schema.fields
+                if getattr(schema.fields[k], 'dtype', None) == 'json'
+            ]
+            for k in json_fields:
+                if k in r:
+                    r[k] = json.dumps(r[k])
+
+        self.replace(table, condition=condition, r=r)
+        return
+
     @abstractmethod
     def replace(self, table: str, condition: t.Dict, r: t.Dict) -> t.List[str]:
         """Replace data.
@@ -169,7 +228,14 @@ class BaseDataBackend(ABC):
         :param r: The document to replace.
         """
 
-    def _update(self, table: str, condition: t.Dict, key: str, value: t.Any, datatype: BaseDataType | None = None):
+    def do_update(
+        self,
+        table: str,
+        condition: t.Dict,
+        key: str,
+        value: t.Any,
+        datatype: BaseDataType | None = None,
+    ):
         """Update data in the database.
 
         This method is a wrapper around the `update` method to ensure
@@ -179,11 +245,17 @@ class BaseDataBackend(ABC):
         :param condition: The condition to update.
         :param key: The key to update.
         :param value: The value to update.
+        :param datatype: The datatype to use for encoding the value.
         """
         if datatype is not None:
             value = datatype.encode_data(value, None)
             if datatype.dtype == 'json' and not self.json_native:
                 value = json.dumps(value)
+            elif isinstance(datatype, Vector):
+                vector_datatype = self.vector_impl(
+                    dtype=datatype.dtype, shape=datatype.shape
+                )
+                value = vector_datatype.encode_data(value, None)
         self.update(table, condition, key, value)
 
     @abstractmethod
@@ -268,11 +340,29 @@ class BaseDataBackend(ABC):
                 r['_source'] = str(r['_source'])
 
         if not self.json_native:
-            json_fields = [k for k in schema.fields if getattr(schema.fields[k], 'dtype', None) == 'json']
+            json_fields = [
+                k
+                for k in schema.fields
+                if getattr(schema.fields[k], 'dtype', None) == 'json'
+            ]
             for r in result:
                 for k in json_fields:
                     if k in r and isinstance(r[k], str):
                         r[k] = json.loads(r[k])
+
+        vector_datatypes = {
+            k: self.vector_impl(dtype=v.dtype, shape=v.shape)
+            for k, v in schema.fields.items()
+            if isinstance(v, Vector)
+        }
+
+        if vector_datatypes:
+            for r in result:
+                for k in vector_datatypes:
+                    if k in r and r[k] is not None:
+                        r[k] = vector_datatypes[k].decode_data(
+                            r[k], builds={}, db=self.db
+                        )
 
         if raw:
             return result
@@ -311,8 +401,13 @@ class BaseDataBackend(ABC):
 
         return base_schema
 
-    def _do_insert(self, table, documents, raw: bool = False):
+    def do_insert(self, table, documents, raw: bool = False):
+        """Insert data into the database.
 
+        :param table: The table to insert into.
+        :param documents: The documents to insert.
+        :param raw: If ``True``, insert raw documents.
+        """
         schema = self.get_schema(self.db[table])
 
         if not raw and not schema.trivial:
@@ -342,8 +437,23 @@ class BaseDataBackend(ABC):
                     pass
                 documents[i] = r
 
+        vector_datatypes = {
+            k: self.vector_impl(dtype=v.dtype, shape=v.shape)
+            for k, v in schema.fields.items()
+            if isinstance(v, Vector)
+        }
+        if vector_datatypes:
+            for r in documents:
+                for k in vector_datatypes:
+                    if k in r:
+                        r[k] = vector_datatypes[k].encode_data(r[k], None)
+
         if not self.json_native:
-            json_fields = [k for k in schema.fields if getattr(schema.fields[k], 'dtype', None) == 'json']
+            json_fields = [
+                k
+                for k in schema.fields
+                if getattr(schema.fields[k], 'dtype', None) == 'json'
+            ]
             for r in documents:
                 for k in json_fields:
                     if k in r:
@@ -489,6 +599,8 @@ class KeyedDatabackend(BaseDataBackend):
     :param plugin: Plugin implementing the databackend.
     :param flavour: Flavour of the databackend.
     """
+
+    json_native: bool = True
 
     @abstractmethod
     def __getitem__(self, key: t.Tuple[str, str, str]) -> t.Dict:

@@ -1,12 +1,10 @@
 from ibis.expr.datatypes import dtype
-from superduper import CFG
 from superduper.base.datatype import (
     ID,
     Array,
     BaseDataType,
     FieldType,
     FileItem,
-    Vector,
 )
 from superduper.base.schema import Schema
 
@@ -23,7 +21,7 @@ def _convert_field_type_to_ibis_type(field_type: FieldType):
     return dtype(ibis_type)
 
 
-def convert_schema_to_fields(schema: Schema):
+def convert_schema_to_fields(schema: Schema, json_native: bool) -> dict:
     """Return the raw fields.
 
     Get a dictionary of fields as keys and datatypes as values.
@@ -39,11 +37,9 @@ def convert_schema_to_fields(schema: Schema):
         else:
             assert isinstance(schema.fields[k], BaseDataType)
 
-            if not CFG.json_native and schema.fields[k].dtype == "json":
+            if not json_native and schema.fields[k].dtype == "json":
                 fields[k] = dtype("str")
-            elif isinstance(v, Array):
-                fields[k] = dtype("str")
-            elif isinstance(v, Vector) and isinstance(v.datatype_impl, Array):
+            elif isinstance(schema.fields[k], Array):
                 fields[k] = dtype("str")
             else:
                 fields[k] = dtype(schema.fields[k].dtype)

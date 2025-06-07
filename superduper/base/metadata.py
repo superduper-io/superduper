@@ -459,7 +459,7 @@ class MetaDataStore:
             ).encode()
             r['version'] = 0
 
-            self.db.databackend.insert('Table', [r])
+            self.db.databackend.do_insert('Table', [r], raw=True)
 
         r = self.get_component('Table', 'Table')
 

@@ -639,7 +639,6 @@ class Component(Base, metaclass=ComponentMeta):
         r = self.encode(
             defaults=defaults,
             metadata=metadata,
-            cfg=CFG(json_native=True),
             include_defaults=False,
         )
 

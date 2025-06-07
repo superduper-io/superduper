@@ -149,7 +149,6 @@ class Config(BaseConfig):
     :param log_hostname: Whether to include the hostname in the logs
     :param force_apply: Whether to force apply the configuration
     :param datatype_presets: Presets to be applied for default types of data
-    :param json_native: Whether the databackend supports json natively or not.
     :param log_colorize: Whether to colorize the logs
     :param bytes_encoding: (Deprecated)
     :param output_prefix: The prefix for the output table and output field key
@@ -181,7 +180,6 @@ class Config(BaseConfig):
 
     datatype_presets: DataTypePresets = dc.field(default_factory=DataTypePresets)
 
-    json_native: bool = True
     output_prefix: str = "_outputs__"
     vector_search_kwargs: t.Dict = dc.field(default_factory=dict)
 

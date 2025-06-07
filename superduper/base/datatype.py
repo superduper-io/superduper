@@ -432,26 +432,13 @@ class Vector(BaseVector):
     :param shape: Shape of array.
     """
 
-    @cached_property
-    def datatype_impl(self):
-        type_ = CFG.datatype_presets.vector
-        if type_ is None:
-            return NativeVector(shape=self.shape, dtype=self.dtype)
-
-        module = '.'.join(type_.split('.')[:-1])
-        cls = type_.split('.')[-1]
-        datatype = getattr(import_module(module), cls)
-        if inspect.isclass(datatype):
-            datatype = datatype(dtype=self.dtype, shape=self.shape)
-        return datatype
-
     def encode_data(self, item, context):
         """Encode the given item into a bytes-like object or reference.
 
         :param item: The object/instance to encode.
         :param context: A context object containing caches.
         """
-        return self.datatype_impl.encode_data(item, context)
+        return item
 
     def decode_data(self, item, builds, db):
         """Decode the item from `bytes`.
@@ -460,7 +447,7 @@ class Vector(BaseVector):
         :param builds: The build cache.
         :param db: The Datalayer.
         """
-        return self.datatype_impl.decode_data(item, builds, db)
+        return item
 
 
 class JSON(BaseDataType):

@@ -15,6 +15,7 @@ from superduper import CFG, logging
 from superduper.backends.base.data_backend import BaseDataBackend
 from superduper.base import exceptions
 from superduper.base.artifacts import FileSystemArtifactStore
+from superduper.base.datatype import Array, NativeVector
 from superduper.base.query import Query, QueryPart
 from superduper.base.schema import Schema
 
@@ -91,6 +92,13 @@ class IbisDataBackend(BaseDataBackend):
         # Get a connection to initialize
         self.reconnect()
 
+    @property
+    def vector_impl(self):
+        """Get the vector implementation based on the URI."""
+        if self.uri.startswith("snowflake"):
+            return NativeVector
+        return Array
+
     def reconnect(self):
         """Reconnect to the database client."""
         with self.connection_manager.get_connection() as conn:
@@ -138,7 +146,7 @@ class IbisDataBackend(BaseDataBackend):
         :param mapping: The mapping of the schema.
         """
         with self.connection_manager.get_connection() as conn:
-            mapping = convert_schema_to_fields(schema)
+            mapping = convert_schema_to_fields(schema, self.json_native)
             if primary_id not in mapping:
                 mapping[primary_id] = "string"
             try:
@@ -340,6 +348,13 @@ class SQLDatabackend(IbisDataBackend):
         super().__init__(uri, plugin, flavour)
         self._create_sqlalchemy_engine()
         self.sm = sessionmaker(bind=self.alchemy_engine)
+
+    @property
+    def json_native(self):
+        """Check if the database supports JSON natively."""
+        if self.uri.startswith("postgres"):
+            return True
+        return False
 
     def update(self, table, condition, key, value):
         """Update data in the database."""

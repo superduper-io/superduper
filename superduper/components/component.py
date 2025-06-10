@@ -198,6 +198,11 @@ class Component(Base, metaclass=ComponentMeta):
         self._original_parameters: t.Dict | None = None
         self.postinit()
 
+    def save(self):
+        """Save the component to the datalayer."""
+        assert self.db is not None, "Datalayer is not set"
+        self.db.apply(self, jobs=False, force=True)
+
     @property
     def metadata(self):
         """Get metadata of the component."""

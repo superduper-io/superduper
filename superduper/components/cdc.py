@@ -1,6 +1,8 @@
+import rich
 import typing as t
 
 import networkx as nx
+import rich.tree
 
 from superduper import CFG, Component
 
@@ -23,13 +25,13 @@ class CDC(Component):
         """Get tables of this component."""
         return [self.cdc_table]
 
-    def handle_update_or_same(self, other):
-        """Handle the case in which the component is update without breaking changes.
+    def _build_outputs_graph(self):
+        """Build the outputs graph of the component.
 
-        :param other: The other component to handle.
+        This method is used to build the outputs graph of the component.
+        It is called by the scheduler to build the outputs graph of the component.
         """
-        super().handle_update_or_same(other)
-        other.cdc_table = self.cdc_table
+        self.outputs_graph = build_streaming_graph(self.cdc_table, self.db)
 
     def cleanup(self):
         """Cleanup the component."""

@@ -23,6 +23,7 @@ class Template(Component):
     :param template_variables: Variables in the template.
     :param types: Types of variables in the template.
     :param schema: Schema of the template.
+    :param info: Information about the template.
     :param blobs: Blobs to be saved with the template.
     :param files: Files to be staged with the template.
     :param substitutions: dict of substitutions to be made in the template.
@@ -33,8 +34,10 @@ class Template(Component):
 
     template: st.JSON
     template_variables: t.Optional[t.List[str]] = None
+    # TODO: Remove types and schema, use info instead
     types: t.Optional[t.Dict] = None
     schema: t.Optional[t.Dict] = None
+    info: t.Optional[t.Dict] = dc.field(default_factory=dict)
     blobs: t.Any = dc.field(default_factory=dict)
     files: st.FileDict = dc.field(default_factory=dict)
     substitutions: dc.InitVar[t.Optional[t.Dict]] = None
@@ -168,22 +171,27 @@ class Template(Component):
     @ensure_setup
     def form_template(self):
         """Form to be diplayed to user."""
+        info = self.info.copy() if self.info else {}
+        if self.types:
+            info['types'] = self.types
+        if self.schema:
+            info['schema'] = self.schema
         return {
-            'types': self.types,
-            'schema': self.schema,
             'template': self.template,
             'build_template': self.identifier,
+            **self.info,
         }
 
     @property
     def default_values(self):
         default_values = {}
-        if self.types:
+        types = self.info.get('types', self.types)
+        if types:
             for k in self.template_variables:
-                if k not in self.types:
+                if k not in types:
                     continue
-                if 'default' in self.types[k]:
-                    default_values[k] = self.types[k]['default']
+                if 'default' in types[k]:
+                    default_values[k] = types[k]['default']
         return default_values
 
     @staticmethod

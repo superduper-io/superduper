@@ -58,6 +58,7 @@ jobs:
       matrix:
         os: [ "ubuntu-latest" ]
         python-version: ["3.10", "3.11"]
+        config: [ "default.yaml", "sql.yaml", "inmemory.yaml" ]
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -102,12 +103,8 @@ jobs:
 
     - name: Unit Testing
       run: |
-        make unit_testing pytest_arguments="--cov=superduper --cov-report=xml" SUPERDUPER_CONFIG=test/configs/default.yaml
-        make unit_testing pytest_arguments="--cov=superduper --cov-report=xml" SUPERDUPER_CONFIG=test/configs/sql.yaml
-        make unit_testing pytest_arguments="--cov=superduper --cov-report=xml" SUPERDUPER_CONFIG=test/configs/inmemory.yaml
+        make unit_testing pytest_arguments="--cov=superduper --cov-report=xml" SUPERDUPER_CONFIG=test/configs/${{ matrix.config }}
 
     - name: Usecase Testing
       run: |
-        make usecase_testing SUPERDUPER_CONFIG=test/configs/default.yaml
-        make usecase_testing SUPERDUPER_CONFIG=test/configs/sql.yaml
-        make usecase_testing SUPERDUPER_CONFIG=test/configs/inmemory.yaml
+        make usecase_testing SUPERDUPER_CONFIG=test/configs/${{ matrix.config }}

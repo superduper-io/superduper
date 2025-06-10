@@ -2,12 +2,14 @@
 
 import contextvars
 import dataclasses as dc
+import io
 import json
 import os
+import rich
 import shutil
 import typing as t
 from collections import OrderedDict, defaultdict
-from contextlib import contextmanager
+from contextlib import contextmanager, redirect_stdout
 from functools import wraps
 
 import networkx
@@ -187,7 +189,11 @@ class Component(Base, metaclass=ComponentMeta):
     db: dc.InitVar[t.Optional['Datalayer']] = None
 
     def __repr__(self):
-        return f'{self.__class__.__name__}:{self.identifier}'
+        rt = self._build_tree(1)
+        buffer = io.StringIO()
+        with redirect_stdout(buffer):
+            rich.print(rt)
+        return buffer.getvalue()
 
     def __post_init__(self, db: t.Optional['Datalayer'] = None):
         self.db: Datalayer = db
@@ -197,6 +203,30 @@ class Component(Base, metaclass=ComponentMeta):
 
         self._original_parameters: t.Dict | None = None
         self.postinit()
+
+    def _build_tree(self, depth: int, tree = None):
+        """Show the component."""
+        if tree is None:
+            from rich.tree import Tree
+            tree = Tree(f"{self.huuid}")
+        if depth == 0:
+            return tree
+
+        for k, v in self.dict(metadata=False).items():
+            if k in {'_path', 'uuid', 'identifier'}:
+                continue
+            if isinstance(v, Component):
+                subtree = tree.add(f"{k}: {v.huuid}")
+                v._build_tree(depth - 1, subtree)
+            else:
+                if v:
+                    tree.add(f"{k}: {v}")
+        return tree
+
+    def show(self, depth: int = -1):
+        """Show the component in a tree format."""
+        tree_repr = self._build_tree(depth)
+        rich.print(tree_repr)
 
     def save(self):
         """Save the component to the datalayer."""
@@ -289,14 +319,6 @@ class Component(Base, metaclass=ComponentMeta):
     def huuid(self):
         """Return a human-readable uuid."""
         return f'{self.__class__.__name__}:{self.identifier}:{self.uuid}'
-
-    def handle_update_or_same(self, other: 'Component'):
-        """Handle when a component is changed without breaking changes.
-
-        :param other: The other component to handle.
-        """
-        other.uuid = self.uuid
-        other.version = self.version
 
     def get_children_refs(self, deep: bool = False, only_initializing: bool = False):
         """Get all the children of the component.

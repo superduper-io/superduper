@@ -317,7 +317,9 @@ class Component(Base, metaclass=ComponentMeta):
                 return sum([_find_refs(v) for v in r.values()], [])
             if isinstance(r, list):
                 return sum([_find_refs(x) for x in r], [])
-            if isinstance(r, Component):
+            from superduper.base.datatype import ComponentRef
+
+            if isinstance(r, (Component, ComponentRef)):
                 if only_initializing and r.status.phase != STATUS_PENDING:
                     return []
                 else:

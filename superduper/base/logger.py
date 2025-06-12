@@ -3,10 +3,9 @@ import socket
 from sys import stderr
 
 from loguru import logger
-from loki_logger_handler.loki_logger_handler import LoguruFormatter, LokiLoggerHandler
 from tqdm import tqdm
 
-from superduper.base.config import LogLevel, LogType
+from superduper.base.config import LogLevel
 from superduper.base.configs import CFG
 
 __all__ = ('Logging',)
@@ -28,73 +27,62 @@ def patcher(record):
 
 
 logger = logger.patch(patcher)
+logger.level("USER", no=35)
 
 
 class Logging:
     """Logging class to handle logging for the superduper.io # noqa."""
 
-    # TODO remove Loki support
-    if CFG.logging_type == LogType.LOKI:  # Send logs to Loki
-        custom_handler = LokiLoggerHandler(
-            url=os.environ["LOKI_URI"],
-            labels={"application": "Test", "environment": "Develop"},
-            labelKeys={},
-            timeout=10,
-            defaultFormatter=LoguruFormatter(),
+    # Replace default logger with a custom SuperDuper format.
+    logger.remove()
+
+    # Enrich logger with additional information.
+    logger.configure(
+        extra={
+            "hostname": socket.gethostname(),
+        }
+    )
+
+    colorize = CFG.log_colorize
+    if colorize:
+        fmt = (
+            "<green>{time:YYYY-MMM-DD HH:mm:ss.SS}</green>"
+            "| <level>{level: <8}</level> "
+            "{hostname}"
+            "| <cyan>{extra[relpath]}</cyan>:<cyan>{line}</cyan>"
+            "| <level>{message}</level>"
         )
-
-        logger.configure(handlers=[{"sink": custom_handler, "serialize": True}])
-    else:
-        # Replace default logger with a custom SuperDuper format.
-        logger.remove()
-
-        # Enrich logger with additional information.
-        logger.configure(
-            extra={
-                "hostname": socket.gethostname(),
-            }
-        )
-
-        colorize = CFG.log_colorize
-        if colorize:
-            fmt = (
-                "<green>{time:YYYY-MMM-DD HH:mm:ss.SS}</green>"
-                "| <level>{level: <8}</level> "
-                "{hostname}"
-                "| <cyan>{extra[relpath]}</cyan>:<cyan>{line}</cyan>"
-                "| <level>{message}</level>"
+        if CFG.log_hostname:
+            fmt = fmt.replace(
+                "{hostname}",
+                "| <cyan>{extra[hostname]: <8}</cyan>",
             )
-            if CFG.log_hostname:
-                fmt = fmt.replace(
-                    "{hostname}",
-                    "| <cyan>{extra[hostname]: <8}</cyan>",
-                )
-            else:
-                fmt = fmt.replace("{hostname}", "")
         else:
-            fmt = (
-                "{time:YYYY-MMM-DD HH:mm:ss.SS}"
-                "| {level: <8} "
-                "| {extra[relpath]}:{line} "
-                "| {message}"
-            )
-        # DEBUG until WARNING are sent to stdout.
-        logger.add(
-            lambda msg: tqdm.write(msg, end=""),
-            format=fmt,
-            level=CFG.log_level,
-            filter=lambda record: record["level"].no < 40,
-            colorize=colorize,
+            fmt = fmt.replace("{hostname}", "")
+    else:
+        fmt = (
+            "{time:YYYY-MMM-DD HH:mm:ss.SS}"
+            "| {level: <8} "
+            "| {extra[relpath]}:{line} "
+            "| {message}"
         )
+    # DEBUG until WARNING are sent to stdout.
+    logger.add(
+        lambda msg: tqdm.write(msg, end=""),
+        format=fmt,
+        level=CFG.log_level,
+        filter=lambda record: record["level"].no < 40,
+        colorize=colorize,
+    )
 
-        # ERROR and above sent to stderr
-        # https://loguru.readthedocs.io/en/stable/api/logger.html
-        logger.add(
-            stderr,
-            format=fmt,
-            level=LogLevel.ERROR,
-            colorize=colorize,
-        )
+    # ERROR and above sent to stderr
+    # https://loguru.readthedocs.io/en/stable/api/logger.html
+    logger.add(
+        stderr,
+        format=fmt,
+        level=LogLevel.ERROR,
+        colorize=colorize,
+    )
 
     # Set Multi-Key loggers
     # Example: logging.info("param 1", "param 2", ..)
@@ -155,6 +143,16 @@ class Logging:
         """
         logger.opt(depth=1, exception=e).error(" ".join(map(str, (msg, *args))))
 
+    @staticmethod
+    def multikey_user(msg: str, *args):
+        """Log a message with the USER level.
+
+        :param msg: The message to log.
+        :param args: Additional arguments to log.
+        """
+        logger.opt(depth=1).log("USER", " ".join(map(str, (msg, *args))))
+
+    user = multikey_user
     debug = multikey_debug
     info = multikey_info
     success = multikey_success

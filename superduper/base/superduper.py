@@ -22,4 +22,5 @@ def superduper(item: str | None = None, **kwargs) -> t.Any:
         raise ValueError(f'{item} is not a valid connection string')
 
     kwargs['data_backend'] = item
+
     return build_datalayer(CFG, **kwargs)

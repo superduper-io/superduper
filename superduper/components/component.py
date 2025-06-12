@@ -5,7 +5,6 @@ import dataclasses as dc
 import io
 import json
 import os
-import rich
 import shutil
 import typing as t
 from collections import OrderedDict, defaultdict
@@ -13,6 +12,7 @@ from contextlib import contextmanager, redirect_stdout
 from functools import wraps
 
 import networkx
+import rich
 
 from superduper import logging
 from superduper.base.annotations import trigger
@@ -204,13 +204,16 @@ class Component(Base, metaclass=ComponentMeta):
         self._original_parameters: t.Dict | None = None
         self.postinit()
 
-    def _build_tree(self, depth: int, tree = None):
+    def _build_tree(self, depth: int, tree=None):
         """Show the component."""
         if tree is None:
             from rich.tree import Tree
+
             tree = Tree(f"{self.huuid}")
         if depth == 0:
             return tree
+
+        s = self.class_schema
 
         for k, v in self.dict(metadata=False).items():
             if k in {'_path', 'uuid', 'identifier'}:
@@ -218,13 +221,25 @@ class Component(Base, metaclass=ComponentMeta):
             if isinstance(v, Component):
                 subtree = tree.add(f"{k}: {v.huuid}")
                 v._build_tree(depth - 1, subtree)
+            elif str(s[k]) == 'ComponentList':
+                if v:
+                    subtree = tree.add(f"{k}")
+                    for i, item in enumerate(v):
+                        if isinstance(item, Component):
+                            subsubtree = subtree.add(f"[{i}] {item.huuid}")
+                            item._build_tree(depth - 1, subsubtree)
+                        else:
+                            subtree.add(f'[{i}] {item}')
             else:
                 if v:
                     tree.add(f"{k}: {v}")
         return tree
 
     def show(self, depth: int = -1):
-        """Show the component in a tree format."""
+        """Show the component in a tree format.
+
+        :param depth: Depth of the tree to show.
+        """
         tree_repr = self._build_tree(depth)
         rich.print(tree_repr)
 

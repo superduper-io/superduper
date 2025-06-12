@@ -39,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `outputs` parameter to `@trigger` to show outputs location and link streaming tasks
 - Remove `json_native` and `datatype_presets`
 - Lazy sub-component loading to increase performance
+- Default log-level USER
 
 ### New features
 
@@ -47,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add reconnection support for Snowflake vector search
 - Add scanning for leaked passwords on the CI
 - Simple detached-lifetime compute and vector-search implementations
+- Nicer print statement and `Component.show()` for full view
 
 ### Bug fixes
 

@@ -1,3 +1,4 @@
+# TODO remove
 import concurrent.futures
 import dataclasses as dc
 import inspect
@@ -6,7 +7,6 @@ from functools import reduce
 from logging import WARNING, getLogger
 
 from superduper import logging
-from superduper.components.component import ensure_setup
 from superduper.components.llm.prompter import Prompter
 from superduper.components.model import Model
 

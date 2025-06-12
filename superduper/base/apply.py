@@ -74,8 +74,8 @@ def apply(
         non_breaking_changes={},
     )
 
-    logging.info(f'Found {len(create_events)} create events to apply')
-    logging.info(f'Found {len(job_events)} jobs to apply')
+    logging.user(f'Found {len(create_events)} create events to apply')
+    logging.user(f'Found {len(job_events)} jobs to apply')
 
     if not jobs:
         logging.info('Skipping job execution because of the --no-jobs flag')
@@ -83,18 +83,19 @@ def apply(
 
     # this flags that the context is not needed anymore
     if not create_events:
-        logging.info('No changes needed, doing nothing!')
+        logging.user('No changes needed, doing nothing!')
         return object
 
     if diff:
-        logging.info('Found this diff:')
+        logging.user('Found this diff:')
         Console().print(dict_to_tree(diff, root=object.identifier), soft_wrap=True)
 
-    logging.info('Found these changes and/ or additions that need to be made:')
+    logging.user('Found these changes and/ or additions that need to be made:')
 
-    logging.info('-' * 100)
-    logging.info('TABLE EVENTS:')
-    logging.info('-' * 100)
+    if table_events:
+        logging.user('-' * 100)
+        logging.user('TABLE EVENTS:')
+        logging.user('-' * 100)
     steps = {
         table_event.huuid: str(i) for i, table_event in enumerate(table_events.values())
     }
@@ -102,49 +103,52 @@ def apply(
     for i, table_event in enumerate(table_events.values()):
         logging.info(f'[{i}]: {table_event.huuid}')
 
-    logging.info('-' * 100)
-    logging.info('METADATA EVENTS:')
-    logging.info('-' * 100)
+    if create_events:
+        logging.user('-' * 100)
+        logging.user('METADATA EVENTS:')
+        logging.user('-' * 100)
 
     steps = {c.data['uuid']: str(i) for i, c in enumerate(create_events.values())}
 
     for i, c in enumerate(create_events.values()):
         if c.parent:
             try:
-                logging.info(
+                logging.user(
                     f'[{i}]: {c.huuid}: {c.__class__.__name__} ~ [{steps[c.parent[1]]}]'
                 )
             except KeyError:
-                logging.info(f'[{i}]: {c.huuid}: {c.__class__.__name__}')
+                logging.user(f'[{i}]: {c.huuid}: {c.__class__.__name__}')
         else:
-            logging.info(f'[{i}]: {c.huuid}: {c.__class__.__name__}')
+            logging.user(f'[{i}]: {c.huuid}: {c.__class__.__name__}')
 
-    logging.info('-' * 100)
-    logging.info('PUT EVENTS:')
-    logging.info('-' * 100)
+    if put_events:
+        logging.user('-' * 100)
+        logging.user('PUT EVENTS:')
+        logging.user('-' * 100)
+
     steps = {p.huuid: str(i) for i, p in enumerate(put_events.values())}
 
     for i, p in enumerate(put_events.values()):
-        logging.info(f'[{i}]: {p.huuid}')
+        logging.user(f'[{i}]: {p.huuid}')
 
-    logging.info('-' * 100)
-    logging.info('JOBS EVENTS:')
-    logging.info('-' * 100)
+    if job_events:
+        logging.user('-' * 100)
+        logging.user('JOBS EVENTS:')
+        logging.user('-' * 100)
+
     steps = {j.job_id: str(i) for i, j in enumerate(job_events.values())}
 
-    if not job_events:
-        logging.info('No job events...')
-    else:
+    if job_events:
         for i, j in enumerate(job_events.values()):
             if j.dependencies:
-                logging.info(
+                logging.user(
                     f'[{i}]: {j.huuid}: {j.method} ~ '
                     f'[{",".join([steps[d] for d in j.dependencies])}]'
                 )
             else:
-                logging.info(f'[{i}]: {j.huuid}: {j.method}')
+                logging.user(f'[{i}]: {j.huuid}: {j.method}')
 
-    logging.info('-' * 100)
+    logging.user('-' * 100)
 
     events = [
         *list(table_events.values()),

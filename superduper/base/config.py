@@ -81,6 +81,7 @@ class LogLevel(str, Enum):
     SUCCESS = "SUCCESS"
     WARN = "WARN"
     ERROR = "ERROR"
+    USER = "USER"
 
 
 class LogType(str, Enum):
@@ -90,9 +91,6 @@ class LogType(str, Enum):
     # DEBUG, INFO, and WARN go to STDOUT.
     # ERROR goes to STDERR.
     SYSTEM = "SYSTEM"
-
-    # LOKI a format that is compatible with the Loki Log aggregation system.
-    LOKI = "LOKI"
 
 
 class BytesEncoding(str, Enum):
@@ -157,7 +155,7 @@ class Config(BaseConfig):
     retries: Retry = dc.field(default_factory=Retry)
     downloads: Downloads = dc.field(default_factory=Downloads)
 
-    log_level: LogLevel = LogLevel.INFO
+    log_level: LogLevel = LogLevel.USER
     logging_type: LogType = LogType.SYSTEM
     log_colorize: bool = True
     log_hostname: bool = True

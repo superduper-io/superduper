@@ -84,6 +84,7 @@ def build_datalayer(
     :param cfg: Configuration to use. If None, use ``superduper.CFG``.
     :param kwargs: keyword arguments to be adopted by the `CFG`
     """
+    logging.user('Building Datalayer...')
     # Configuration
     # ------------------------------
     # Use the provided configuration or fall back to the default configuration.
@@ -129,6 +130,7 @@ def build_datalayer(
         datalayer.cluster.initialize()
 
     show_configuration(cfg)
+    logging.user('Building Datalayer... DONE')
     return datalayer
 
 

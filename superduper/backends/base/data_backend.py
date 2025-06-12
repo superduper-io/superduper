@@ -475,6 +475,24 @@ class BaseDataBackend(ABC):
 
     def _encode_document_fields(self, document, schema):
         # Process vector fields
+        document = self._encode_vector(document, schema)
+
+        # Process JSON fields
+        if not self.json_native:
+            document = self._encode_json(document, schema)
+
+        return document
+
+    def _decode_document_fields(self, document, schema, db=None):
+        # Process vector fields
+        document = self._decode_vector(document, schema, db=db)
+        # Process JSON fields
+        if not self.json_native:
+            document = self._decode_json(document, schema)
+        return document
+
+    def _encode_vector(self, document, schema):
+        # Process vector fields
         vector_datatypes = {
             k: self.vector_impl(dtype=v.dtype, shape=v.shape)
             for k, v in schema.fields.items()
@@ -485,31 +503,9 @@ class BaseDataBackend(ABC):
             if k in document:
                 document[k] = vector_type.encode_data(document[k], None)
 
-        # Process JSON fields
-        if not self.json_native:
-            json_fields = [
-                k
-                for k in schema.fields
-                if getattr(schema.fields[k], 'dtype', None) == 'json'
-            ]
-            for k in json_fields:
-                if k in document:
-                    document[k] = json.dumps(document[k])
-
         return document
 
-    def _decode_document_fields(self, document, schema, db=None):
-        # Process JSON fields
-        if not self.json_native:
-            json_fields = [
-                k
-                for k in schema.fields
-                if getattr(schema.fields[k], 'dtype', None) == 'json'
-            ]
-            for k in json_fields:
-                if k in document and isinstance(document[k], str):
-                    document[k] = json.loads(document[k])
-
+    def _decode_vector(self, document, schema, db=None):
         # Process vector fields
         vector_datatypes = {
             k: self.vector_impl(dtype=v.dtype, shape=v.shape)
@@ -520,6 +516,32 @@ class BaseDataBackend(ABC):
         for k, vector_type in vector_datatypes.items():
             if k in document and document[k] is not None:
                 document[k] = vector_type.decode_data(document[k], builds={}, db=db)
+
+        return document
+
+    def _encode_json(self, document, schema):
+        # Process JSON fields
+        json_fields = [
+            k
+            for k in schema.fields
+            if getattr(schema.fields[k], 'dtype', None) == 'json'
+        ]
+        for k in json_fields:
+            if k in document:
+                document[k] = json.dumps(document[k])
+
+        return document
+
+    def _decode_json(self, document, schema):
+        # Process JSON fields
+        json_fields = [
+            k
+            for k in schema.fields
+            if getattr(schema.fields[k], 'dtype', None) == 'json'
+        ]
+        for k in json_fields:
+            if k in document and isinstance(document[k], str):
+                document[k] = json.loads(document[k])
 
         return document
 

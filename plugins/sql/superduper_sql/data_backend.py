@@ -146,7 +146,9 @@ class IbisDataBackend(BaseDataBackend):
         :param mapping: The mapping of the schema.
         """
         with self.connection_manager.get_connection() as conn:
-            mapping = convert_schema_to_fields(schema, self.json_native)
+            mapping = convert_schema_to_fields(
+                schema, self.json_native, self.vector_impl
+            )
             if primary_id not in mapping:
                 mapping[primary_id] = "string"
             try:
@@ -352,8 +354,9 @@ class SQLDatabackend(IbisDataBackend):
     @property
     def json_native(self):
         """Check if the database supports JSON natively."""
-        if self.uri.startswith("postgres"):
-            return True
+        # TODO: Fix me
+        # if self.uri.startswith("postgres"):
+        #     return True
         return False
 
     def update(self, table, condition, key, value):

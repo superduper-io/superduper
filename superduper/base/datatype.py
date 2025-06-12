@@ -921,6 +921,12 @@ class ComponentRef(Saveable):
     def reference(self):
         return f'&:component:{self.component}:{self.object}:{self.uuid}'
 
+    def __getattr__(self, item):
+        """Get the attribute from the component."""
+        if self.object is None:
+            self.setup()
+        return getattr(self.object, item)
+
 
 @dc.dataclass(kw_only=True)
 class Blob(Saveable):

@@ -356,3 +356,30 @@ def test_propagate_failure(db):
         f'Job/ObjectModel:model:{m.uuid}.predict'
         in db['ObjectModel'].get(uuid=m.uuid)['details']['failed_children']
     )
+
+
+class TestComponentRef(Component):
+    my_component: Component
+
+    def postinit(self):
+        print(self.my_component.my_dict)
+        pass
+
+
+def test_component_reference(db):
+    my_component = MyComponent(
+        identifier='my_component',
+        my_dict={'key': 'value'},
+        nested_list=[1, 2, 3],
+        a=lambda x: x * 2,
+    )
+
+    test_ref = TestComponentRef(
+        identifier='test_ref',
+        my_component=my_component,
+    )
+
+    db.apply(test_ref)
+
+    reloaded = db.load('TestComponentRef', 'test_ref')
+    assert reloaded.my_component.my_dict == {'key': 'value'}

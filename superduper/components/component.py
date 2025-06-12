@@ -336,11 +336,11 @@ class Component(Base, metaclass=ComponentMeta):
 
         r = self.dict().encode(leaves_to_keep=(Component, Saveable))
         out = [
-            v.setup()
+            v.setup() or v
             for v in r['_builds'].values()
             if isinstance(v, (Component, ComponentRef))
         ]
-        lookup = {}
+        lookup: t.Dict[int, "Component"] = {}
         for v in out:
             lookup[id(v)] = v
         if deep:

@@ -1,0 +1,104 @@
+_builds:
+  Chunker:chunker:
+    _path: rag_plugin.Chunker
+    chunk_size: 200
+  Listener:chunker:
+    _path: superduper.components.listener.Listener
+    cdc_table: <var:table_name>
+    flatten: true
+    key: x
+    model: ?Chunker:chunker
+    output_table: ?Table:_outputs__chunker__?(Listener:chunker.uuid)
+    select:
+      _path: superduper.base.query.parse_query
+      documents: []
+      query: <var:table_name>
+    upstream:
+    - ?Plugin:plugin-rag_plugin_py
+  Listener:embeddinglistener:
+    _path: superduper.components.listener.Listener
+    cdc_table: _outputs__chunker__?(Listener:chunker.uuid)
+    key: _outputs__chunker__?(Listener:chunker.uuid)
+    model: ?OpenAIEmbedding:text-embedding
+    output_table: ?Table:_outputs__embeddinglistener__?(Listener:embeddinglistener.uuid)
+    select:
+      _path: superduper.base.query.parse_query
+      documents: []
+      query: _outputs__chunker__?(Listener:chunker.uuid)
+    upstream:
+    - ?Listener:chunker
+  OpenAIChatCompletion:llm-model:
+    _path: superduper_openai.model.OpenAIChatCompletion
+    batch_size: 1
+    datatype: str
+    max_batch_size: 8
+    model: <var:llm_model>
+  OpenAIEmbedding:text-embedding:
+    _path: superduper_openai.model.OpenAIEmbedding
+    batch_size: 100
+    datatype: vector[float32:1536]
+    max_batch_size: 8
+    model: <var:embedding_model>
+  Plugin:plugin-rag_plugin_py:
+    _path: superduper.components.plugin.Plugin
+    cache_path: ~/.superduper/plugins
+    path: '&:file:446b58b3c3a9d3606f1688c44c70f80b64306a9eabfc902e89a8e599a03f7eda'
+  RAGModel:simple_rag:
+    _path: rag_plugin.RAGModel
+    key: _outputs__chunker__1862a8fc1629f85fe6
+    llm: ?OpenAIChatCompletion:llm-model
+    prompt_template: 'Use the following context snippets, these snippets are not ordered!,
+      Answer the question based on this context.
+
+      These snippets are samples from our internal data-repositories, and should be
+      used exclusively and as a matter of priority to answer the question. Please
+      answer in 20 words or less.
+
+      {context}
+
+      Here is the question: {query}'
+    select:
+      _path: superduper.base.query.parse_query
+      documents:
+      - _outputs__chunker__1862a8fc1629f85fe6: <var:query>
+      query: _outputs__chunker__1862a8fc1629f85fe6.select().like(documents[0], "vectorindex",
+        n=5)
+  Streamlit:simple-rag-demo:
+    _path: superduper.components.streamlit.Streamlit
+    demo_func: '&:blob:77efbad45890771cc16b980db3d7137f6383d0b0a557a28ac8841ccbd1d59c2c'
+  Table:<var:table_name>:
+    _path: superduper.components.table.Table
+    fields:
+      x: str
+    primary_id: id
+  Table:_outputs__chunker__?(Listener:chunker.uuid):
+    _path: superduper.components.table.Table
+    fields:
+      _outputs__chunker__?(Listener:chunker.uuid): str
+      _source: str
+    primary_id: id
+  Table:_outputs__embeddinglistener__?(Listener:embeddinglistener.uuid):
+    _path: superduper.components.table.Table
+    fields:
+      _outputs__embeddinglistener__?(Listener:embeddinglistener.uuid): vector[float32:1536]
+      _source: str
+    primary_id: id
+  VectorIndex:vectorindex:
+    _path: superduper.components.vector_index.VectorIndex
+    indexing_listener: ?Listener:embeddinglistener
+    measure: cosine
+_path: superduper.components.application.Application
+components:
+- ?Listener:chunker
+- ?VectorIndex:vectorindex
+- ?RAGModel:simple_rag
+- ?Streamlit:simple-rag-demo
+identifier: simple-rag-app
+upstream:
+- ?Table:<var:table_name>
+- ?Plugin:plugin-rag_plugin_py
+variables:
+  embedding_model: text-embedding-ada-002
+  id_field: _id
+  llm_model: gpt-3.5-turbo
+  table_name: docs

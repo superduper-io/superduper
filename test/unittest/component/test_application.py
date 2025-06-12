@@ -100,7 +100,6 @@ def test_wrap_as_application_from_db(db: "Datalayer"):
 @pytest.mark.skip
 def test_component_cache(db: 'Datalayer', capsys):
     from superduper import CFG
-
     CFG.log_level = 'INFO'
     m = ObjectModel('test', object=lambda x: x + 1)
     app = Application('test', components=[m])

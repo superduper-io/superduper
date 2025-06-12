@@ -237,7 +237,7 @@ class Component(Base, metaclass=ComponentMeta):
 
     def show(self, depth: int = -1):
         """Show the component in a tree format.
-
+        
         :param depth: Depth of the tree to show.
         """
         tree_repr = self._build_tree(depth)

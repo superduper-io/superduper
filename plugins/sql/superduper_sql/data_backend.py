@@ -354,9 +354,8 @@ class SQLDatabackend(IbisDataBackend):
     @property
     def json_native(self):
         """Check if the database supports JSON natively."""
-        # TODO: Fix me
-        # if self.uri.startswith("postgres"):
-        #     return True
+        if self.uri.startswith("postgres"):
+            return True
         return False
 
     def update(self, table, condition, key, value):
@@ -432,3 +431,15 @@ class SQLDatabackend(IbisDataBackend):
         except Exception as e:
             logging.debug(f"Error testing engine: {e}")
             return False
+
+    def _encode_document_fields(self, document, schema):
+        document = self._encode_vector(document, schema)
+        # Ibis need JSON to be encoded as string
+        document = self._encode_json(document, schema)
+        return document
+
+    def _decode_document_fields(self, document, schema, db=None):
+        document = self._decode_vector(document, schema, db=db)
+        if not self.json_native:
+            document = self._decode_json(document, schema)
+        return document

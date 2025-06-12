@@ -1,5 +1,4 @@
 import sys
-import traceback
 import types
 import typing as t
 from dataclasses import fields

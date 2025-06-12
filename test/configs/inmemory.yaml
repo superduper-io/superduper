@@ -3,5 +3,6 @@ metadata_store: "inmemory://"
 auto_schema: false
 force_apply: true
 json_native: false
+log_level: INFO
 datatype_presets:
   vector: superduper.base.datatype.Array

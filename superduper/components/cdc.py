@@ -1,10 +1,8 @@
-import rich
 import typing as t
 
 import networkx as nx
-import rich.tree
 
-from superduper import CFG, Component
+from superduper import Component
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer

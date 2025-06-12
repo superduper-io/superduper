@@ -1,2 +1,3 @@
 data_backend: 'sqlite://'
 force_apply: true
+log_level: INFO

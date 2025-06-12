@@ -1,6 +1,7 @@
-from rich.tree import Tree
-from rich import print as rprint
 import typing as t
+
+from rich import print as rprint
+from rich.tree import Tree
 
 from superduper import CFG
 from superduper.base.annotations import trigger
@@ -47,10 +48,12 @@ class Table(Component):
 
     def _build_outputs_graph(self, tree: Tree, event_type: str = 'insert'):
         """Show the outputs graph of the component."""
-        assert self.db is not None, "Datalayer must be set before building outputs graph"
+        assert (
+            self.db is not None
+        ), "Datalayer must be set before building outputs graph"
         db: 'Datalayer' = self.db
         components = db.metadata.show_cdcs(self.identifier)
-        for (component, identifier, uuid) in components:
+        for component, identifier, uuid in components:
             cdc = db.load(component=component, identifier=identifier, uuid=uuid)
             methods = cdc.get_triggers(event_type=event_type)
             for method in methods:
@@ -61,7 +64,7 @@ class Table(Component):
                 tab._build_outputs_graph(subtree, event_type=event_type)
         return tree
 
-    def show_cdcs(self, event_type: str = 'insert') -> Tree:
+    def show_cdcs(self, event_type: str = 'insert'):
         """Show the CDCs of the table in tree format.
 
         :param event_type: The type of event to show the CDCs {insert, update, delete}
@@ -69,6 +72,7 @@ class Table(Component):
         tree = Tree(self.identifier + f'[{event_type}]')
         self._build_outputs_graph(tree, event_type=event_type)
         rprint(tree)
+        return
 
     def create_table_events(self):
         """Create the table events."""

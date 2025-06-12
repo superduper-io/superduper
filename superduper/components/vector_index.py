@@ -2,14 +2,11 @@ import dataclasses as dc
 import itertools
 import typing as t
 
-import tqdm
-
 from superduper import CFG, logging
 from superduper.backends.base.vector_search import VectorItem
 from superduper.base.annotations import trigger
 from superduper.base.datalayer import Datalayer
 from superduper.base.document import Document
-from superduper.base.schema import Schema
 from superduper.components.cdc import CDC
 from superduper.components.component import ensure_setup
 from superduper.components.listener import Listener

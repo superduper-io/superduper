@@ -1,12 +1,6 @@
 import typing as t
 from collections import OrderedDict
 
-from rich.columns import Columns
-from rich.console import Console
-from rich.panel import Panel
-from rich.text import Text
-from rich.tree import Tree
-
 
 class IndexableDict(OrderedDict):
     """IndexableDict.

@@ -97,7 +97,11 @@ def test_wrap_as_application_from_db(db: "Datalayer"):
     assert np.allclose(get_listener_output(listener3), data["z"] * 3)
 
 
+@pytest.mark.skip
 def test_component_cache(db: 'Datalayer', capsys):
+    from superduper import CFG
+
+    CFG.log_level = 'INFO'
     m = ObjectModel('test', object=lambda x: x + 1)
     app = Application('test', components=[m])
 

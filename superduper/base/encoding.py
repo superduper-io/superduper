@@ -20,9 +20,9 @@ class EncodeContext:
     :param db: A Datalayer instance.
     :param leaves_to_keep: A sequence of Base instances to keep.
     :param metadata: Whether to include metadata.
-    :param defaults: Whether to include defaults.
     :param keep_variables: Whether to keep variables.
-    :param include_defaults: Whether to include default values.
+    :param defaults: Whether to include defaults.
+    :param export: Whether in export mode.
     """
 
     name: str = '__main__'
@@ -32,9 +32,9 @@ class EncodeContext:
     db: t.Optional['Datalayer'] = None
     leaves_to_keep: t.Sequence['Base'] = field(default_factory=tuple)
     metadata: bool = True
-    defaults: bool = True
     keep_variables: bool = False
-    include_defaults: bool = True
+    defaults: bool = True
+    export: bool = False
 
     def __call__(self, name: str):
         return EncodeContext(
@@ -47,5 +47,5 @@ class EncodeContext:
             metadata=self.metadata,
             defaults=self.defaults,
             keep_variables=self.keep_variables,
-            include_defaults=self.include_defaults,
+            export=self.export,
         )

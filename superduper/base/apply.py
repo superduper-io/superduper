@@ -96,12 +96,13 @@ def apply(
         logging.user('-' * 100)
         logging.user('TABLE EVENTS:')
         logging.user('-' * 100)
+
     steps = {
         table_event.huuid: str(i) for i, table_event in enumerate(table_events.values())
     }
 
     for i, table_event in enumerate(table_events.values()):
-        logging.info(f'[{i}]: {table_event.huuid}')
+        logging.user(f'[{i}]: {table_event.huuid}')
 
     if create_events:
         logging.user('-' * 100)

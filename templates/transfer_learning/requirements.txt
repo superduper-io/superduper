@@ -1,3 +1,0 @@
-superduper_sentence_transformers
-superduper_sklearn
-superduper_torch

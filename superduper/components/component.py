@@ -5,6 +5,7 @@ import dataclasses as dc
 import io
 import json
 import os
+import pathlib
 import shutil
 import typing as t
 from collections import OrderedDict, defaultdict
@@ -31,6 +32,21 @@ from superduper.misc.utils import hash_item
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
     from superduper.base.metadata import Job
+
+
+@contextmanager
+def build_context(vars_dict: dict[str, t.Any] | None):
+    """Context manager to set build variables for components.
+
+    :param vars_dict: Dictionary of variables to set for the build context.
+    """
+    token1 = build_vars_var.set(vars_dict or {})
+    token2 = context_swap.set({})
+    try:
+        yield
+    finally:
+        build_vars_var.reset(token1)
+        context_swap.reset(token2)
 
 
 def ensure_setup(func):
@@ -98,7 +114,6 @@ def _build_info_from_path(path: str):
         files = {}
         for file_id in os.listdir(os.path.join(path, "files")):
             sub_paths = os.listdir(os.path.join(path, "files", file_id))
-            # assert len(sub_paths) == 1, f"Multiple files found in {file_id}"
             file_name = next(
                 x for x in sub_paths if not x.startswith(".") or x.startswith("_")
             )
@@ -145,6 +160,9 @@ class ComponentMeta(BaseMeta):
 build_vars_var: contextvars.ContextVar[dict[str, t.Any]] = contextvars.ContextVar(
     "build_vars_var"
 )
+context_swap: contextvars.ContextVar[dict[str, t.Any]] = contextvars.ContextVar(
+    "context_swap"
+)
 
 
 def current_build_vars(default: t.Any | None = None) -> dict[str, t.Any] | None:
@@ -188,13 +206,6 @@ class Component(Base, metaclass=ComponentMeta):
 
     db: dc.InitVar[t.Optional['Datalayer']] = None
 
-    def __repr__(self):
-        rt = self._build_tree(1)
-        buffer = io.StringIO()
-        with redirect_stdout(buffer):
-            rich.print(rt)
-        return buffer.getvalue()
-
     def __post_init__(self, db: t.Optional['Datalayer'] = None):
         self.db: Datalayer = db
 
@@ -202,7 +213,11 @@ class Component(Base, metaclass=ComponentMeta):
         self.status, self.details = init_status()
 
         self._original_parameters: t.Dict | None = None
+
+        self._handle_variables()
         self.postinit()
+
+        assert self.identifier, "Identifier cannot be empty or None"
 
     def _build_tree(self, depth: int, tree=None):
         """Show the component."""
@@ -232,12 +247,22 @@ class Component(Base, metaclass=ComponentMeta):
                             subtree.add(f'[{i}] {item}')
             else:
                 if v:
-                    tree.add(f"{k}: {v}")
+                    if isinstance(v, dict):
+                        subtree = tree.add(k)
+                        for sub_k, sub_v in v.items():
+                            subtree.add(f"{sub_k}: {sub_v}")
+                    else:
+                        tree.add(f"{k}: {v}")
         return tree
+
+    def _show_repr(self, depth: int = -1):
+        with redirect_stdout(io.StringIO()) as buffer:
+            self.show(depth=depth)
+            return buffer.getvalue()
 
     def show(self, depth: int = -1):
         """Show the component in a tree format.
-        
+
         :param depth: Depth of the tree to show.
         """
         tree_repr = self._build_tree(depth)
@@ -590,22 +615,58 @@ class Component(Base, metaclass=ComponentMeta):
         leaf_keys = [k for k in r.keys(True) if isinstance(r[k], Base)]
         return {k: r[k] for k in leaf_keys}
 
-    def postinit(self):
-        """Post initialization method."""
-        if not self.identifier:
-            raise ValueError('identifier cannot be empty or None')
+    def _refresh(self):
+        def do_refresh(item):
+            if isinstance(item, list):
+                for x in item:
+                    do_refresh(x)
+            if isinstance(item, dict):
+                for v in item.values():
+                    do_refresh(v)
+            if isinstance(item, Component):
+                item._handle_variables()
+                item._refresh()
+
+        for k in self.class_schema.fields:
+            do_refresh(getattr(self, k))
+
+    def _handle_variables(self):
+        variables = build_vars_var.get(None)
+        context_swap_value = context_swap.get({})
+
+        if 'variables' in self.class_schema.fields and self.variables is not None:
+            with build_context(self.variables):
+                self._refresh()
+            return
+
+        if not variables:
+            return
+
         if not self._original_parameters:
             self._original_parameters = self.dict()
 
-        variables = build_vars_var.get(None)
-        if variables is None:
-            return
+        former_uuid = self.uuid
 
         for f in dc.fields(self):
             attr = getattr(self, f.name)
-            if isinstance(attr, (str, list, dict)) and '<var:' in str(attr):
-                built = _replace_variables(attr, **variables)
+            if isinstance(attr, (str, list, dict)):
+                built = _replace_variables(
+                    attr, uuid_swaps=context_swap_value, **variables
+                )
                 setattr(self, f.name, built)
+            elif isinstance(attr, Base):
+                built = _replace_variables(
+                    attr, uuid_swaps=context_swap_value, **variables
+                )
+                setattr(self, f.name, built)
+
+        if former_uuid != self.uuid:
+            context_swap_value[former_uuid] = self.uuid
+
+        context_swap.set(context_swap_value)
+
+    def postinit(self):
+        """Post initialization method."""
 
     def cleanup(self):
         """Method to clean the component."""
@@ -655,11 +716,12 @@ class Component(Base, metaclass=ComponentMeta):
         return self
 
     @staticmethod
-    def read(path: str):
+    def read(path: str, **variables) -> 'Component':
         """
         Read a `Component` instance from a directory created with `.export`.
 
         :param path: Path to the directory containing the component.
+        :param variables: Variables to set on loading the component.
 
         Expected directory structure:
         ```
@@ -668,14 +730,41 @@ class Component(Base, metaclass=ComponentMeta):
         |_files/*
         ```
         """
+
+        @contextmanager
+        def change_dir(destination):
+            prev_dir = os.getcwd()
+            os.chdir(destination)
+            try:
+                yield
+            finally:
+                os.chdir(prev_dir)
+
+        pathlike = pathlib.Path(path)
+        if not os.path.exists(str(pathlike / 'component.json')) and os.path.exists(
+            str(pathlike / 'build.ipynb')
+        ):
+            with change_dir(path):
+                import papermill
+
+                papermill.execute_notebook(
+                    './build.ipynb', '/tmp/build.ipynb', parameters={'APPLY': False}
+                )
+
         config_object = _build_info_from_path(path=path)
+        if variables and 'variables' not in config_object:
+            raise ValueError(
+                'This component does not support variables. '
+                'Please omit **kwargs or re-export the component with `variables`.'
+            )
+        if variables:
+            config_object['variables'].update(variables)
         return Component.decode(config_object)
 
     def export(
         self,
         path: t.Optional[str] = None,
-        defaults: bool = True,
-        metadata: bool = False,
+        defaults: bool = False,
         format: str = "json",
     ):
         """
@@ -683,7 +772,6 @@ class Component(Base, metaclass=ComponentMeta):
 
         :param path: Path to the directory to save the component.
         :param defaults: Whether to save default values.
-        :param metadata: Whether to save metadata.
         :param format: Format to save the component. Accepts `json` and `yaml`.
 
         Created directory structure:
@@ -705,8 +793,9 @@ class Component(Base, metaclass=ComponentMeta):
 
         r = self.encode(
             defaults=defaults,
-            metadata=metadata,
-            include_defaults=False,
+            metadata=False,
+            keep_variables=True,
+            export=True,
         )
 
         def rewrite_keys(r, keys):
@@ -792,3 +881,21 @@ class Component(Base, metaclass=ComponentMeta):
         breaking = hash_item(breaking_hashes)
         non_breaking = hash_item(non_breaking_hashes)
         return breaking[:32] + non_breaking[:32]
+
+    def use_variables(self, **variables) -> 'Component':
+        """Use variables in the component.
+
+        :param variables: Variables to use in the component.
+        """
+        if not hasattr(self, 'variables'):
+            raise ValueError(
+                'This component does not support variables. '
+                'Please omit **kwargs or re-export the component with `variables`.'
+            )
+        r = self.encode(
+            defaults=False,
+            metadata=False,
+            keep_variables=True,
+        )
+        r['variables'].update(variables)
+        return self.decode(r, db=self.db)  # type: ignore[arg-type]

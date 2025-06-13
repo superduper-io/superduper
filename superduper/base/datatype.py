@@ -121,12 +121,19 @@ class ComponentType(BaseDataType):
             context.builds[key] = item
             return '?' + key
 
+        r = None
+
         if context.keep_variables:
             r = item._original_parameters
-        else:
+            if r and not context.metadata:
+                for k in item.metadata_fields:
+                    if k in r:
+                        del r[k]
+
+        if r is None:
             r = item.dict(metadata=context.metadata)
 
-        if not context.include_defaults:
+        if not context.defaults:
             from superduper.base.document import Document
 
             for k, v in list(r.items()):

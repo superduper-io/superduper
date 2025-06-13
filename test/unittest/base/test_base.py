@@ -1,9 +1,8 @@
 import dataclasses as dc
-import json
 import typing as t
 from pprint import pprint
 
-from superduper import CFG, ObjectModel
+from superduper import Application, Model, ObjectModel, VectorIndex
 from superduper.base.base import Base
 from superduper.base.constant import KEY_BLOBS, KEY_BUILDS
 from superduper.base.document import Document
@@ -138,3 +137,61 @@ def test_find_variables(db):
     q_set = q.set_variables(test='my-value')
 
     assert q_set.variables == []
+
+
+class MyModel(Model):
+    model: str
+
+
+def test_replace_variables(db):
+
+    app = Application(
+        'test',
+        components=[
+            VectorIndex(
+                'test',
+                indexing_listener=Listener(
+                    'test',
+                    key='x',
+                    model=MyModel('test', model='<var:model>'),
+                    select=db['<var:table>'],
+                ),
+            )
+        ],
+        variables={'table': 'test', 'model': 'test_model'},
+        db=db,
+    )
+
+    assert '<var:table>' not in app._show_repr()
+    assert '<var:model>' not in app._show_repr()
+
+
+def test_mutated_references_with_variables(db):
+
+    m = MyModel('test', model='model')
+
+    l1 = Listener(
+        'test_listener_1',
+        key='x',
+        model=m,
+        select=db['<var:table>'],
+    )
+
+    l2 = Listener(
+        'test_listener_2',
+        key='y',
+        model=m,
+        select=db[l1.outputs],
+    )
+
+    app = Application(
+        'test',
+        components=[l1, l2],
+        variables={'table': 'test', 'model': 'test_model'},
+    )
+
+    app.show()
+
+    import pprint
+
+    pprint.pprint(app.encode(metadata=False, defaults=False, keep_variables=True))

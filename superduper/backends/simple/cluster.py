@@ -1,4 +1,3 @@
-import os
 import typing as t
 
 import click
@@ -71,7 +70,7 @@ class SimpleClusterBackend(Cluster):
         """Build the local cluster."""
         searcher_impl = load_plugin(CFG.vector_search_engine).VectorSearcher
 
-        return SimpleCluster(
+        return SimpleClusterBackend(
             scheduler=SimpleScheduler(),
             compute=SimpleComputeBackend(),
             vector_search=SimpleVectorSearch(

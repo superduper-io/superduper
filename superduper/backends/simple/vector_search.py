@@ -75,8 +75,11 @@ class SimpleVectorSearchClient(VectorSearchBackend):
         :param component: component class name.
         :param vector_index: vector index identifier.
         """
-        ...
-
+        return requests.get(
+            f'{self.uri}/vector_search/describe?'
+            f'component={component}&vector_index={vector_index}'
+        )
+        
     def put_component(self, component: str, uuid: str):
         """Add a component to the vector search service.
 
@@ -284,7 +287,7 @@ class SimpleVectorSearch(VectorSearchBackend):
         :param component: component class name.
         :param vector_index: vector index identifier.
         """
-        ...
+        return self.backend.describe(component=component, vector_index=vector_index)
 
     def drop(self):
         """Remove all components from the vector search service.

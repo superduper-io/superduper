@@ -246,6 +246,7 @@ class Model(Component, metaclass=ModelMeta):
 
     def postinit(self):
         """Post-initialization method."""
+        super().postinit()
         self._is_setup = False
         if self.datatype is None:
             annotation = self.predict.__annotations__.get('return')
@@ -264,7 +265,6 @@ class Model(Component, metaclass=ModelMeta):
 
         if not self.identifier:
             raise Exception('_Predictor identifier must be non-empty')
-        super().postinit()
 
     def cleanup(self):
         """Clean up when the model is deleted."""
@@ -562,9 +562,9 @@ class APIBaseModel(Model):
 
     def postinit(self):
         """Post-initialization method."""
+        super().postinit()
         if self.model is None:
             self.model = self.identifier
-        super().postinit()
 
     def predict_batches(self, dataset: t.List, *args, **kwargs) -> t.List:
         """Use multi-threading to predict on a series of data points.

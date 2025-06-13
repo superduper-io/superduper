@@ -32,9 +32,8 @@ class EncodeContext:
     db: t.Optional['Datalayer'] = None
     leaves_to_keep: t.Sequence['Base'] = field(default_factory=tuple)
     metadata: bool = True
-    defaults: bool = True
     keep_variables: bool = False
-    include_defaults: bool = True
+    defaults: bool = True
 
     def __call__(self, name: str):
         return EncodeContext(
@@ -47,5 +46,4 @@ class EncodeContext:
             metadata=self.metadata,
             defaults=self.defaults,
             keep_variables=self.keep_variables,
-            include_defaults=self.include_defaults,
         )

@@ -57,8 +57,8 @@ class VectorIndex(CDC):
 
     def postinit(self):
         """Post-initialization method."""
-        self.cdc_table = self.cdc_table or self.indexing_listener.outputs
         super().postinit()
+        self.cdc_table = self.indexing_listener.outputs
 
     def setup(self):
         """Set up the vector index."""

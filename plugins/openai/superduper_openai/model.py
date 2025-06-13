@@ -51,6 +51,7 @@ class _OpenAI(APIBaseModel):
         return method_wrapper(self.predict, item, self.signature)
 
     def postinit(self):
+        super().postinit()
         assert isinstance(self.client_kwargs, dict)
         if self.openai_api_key is not None:
             self.client_kwargs['api_key'] = self.openai_api_key
@@ -100,7 +101,6 @@ class OpenAIEmbedding(_OpenAI):
 
     """
 
-    signature: str = 'singleton'
     batch_size: int = 100
 
     @retry
@@ -145,7 +145,6 @@ class OpenAIChatCompletion(_OpenAI):
 
     """
 
-    signature: str = 'singleton'
     batch_size: int = 1
     prompt: str = ''
 

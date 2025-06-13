@@ -44,11 +44,11 @@ class Listener(CDC):
 
     def postinit(self):
         """Post initialization method."""
+        super().postinit()
         if not self.cdc_table and self.select:
             self.cdc_table = self.select.table
         if isinstance(self.key, tuple):
             self.key = list(self.key)
-        super().postinit()
 
     @property
     def output_table(self):

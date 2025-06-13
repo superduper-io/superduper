@@ -382,12 +382,12 @@ class Document(DeepKeyedDict):
 
         return sorted(list(set(_find_variables(self))))
 
-    def set_variables(self, **kwargs) -> 'Document':
+    def set_variables(self, uuid_swaps: t.Dict | None = None, **kwargs) -> 'Document':
         """Set free variables of self.
 
         :param kwargs: The vales to set the variables to `_replace_variables`.
         """
-        content = _replace_variables(self, **kwargs)
+        content = _replace_variables(self, uuid_swaps=uuid_swaps, **kwargs)
         return Document(**content)
 
     def __repr__(self) -> str:

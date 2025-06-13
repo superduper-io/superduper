@@ -145,6 +145,9 @@ class ComponentMeta(BaseMeta):
 build_vars_var: contextvars.ContextVar[dict[str, t.Any]] = contextvars.ContextVar(
     "build_vars_var"
 )
+context_swap: contextvars.ContextVar[dict[str, t.Any]] = contextvars.ContextVar(
+    "context_swap"
+)
 
 
 def current_build_vars(default: t.Any | None = None) -> dict[str, t.Any] | None:
@@ -188,13 +191,6 @@ class Component(Base, metaclass=ComponentMeta):
 
     db: dc.InitVar[t.Optional['Datalayer']] = None
 
-    def __repr__(self):
-        rt = self._build_tree(1)
-        buffer = io.StringIO()
-        with redirect_stdout(buffer):
-            rich.print(rt)
-        return buffer.getvalue()
-
     def __post_init__(self, db: t.Optional['Datalayer'] = None):
         self.db: Datalayer = db
 
@@ -234,6 +230,11 @@ class Component(Base, metaclass=ComponentMeta):
                 if v:
                     tree.add(f"{k}: {v}")
         return tree
+
+    def _show_repr(self, depth: int = -1):
+        with redirect_stdout(io.StringIO()) as buffer:
+            self.show(depth=depth)
+            return buffer.getvalue()
 
     def show(self, depth: int = -1):
         """Show the component in a tree format.
@@ -598,14 +599,25 @@ class Component(Base, metaclass=ComponentMeta):
             self._original_parameters = self.dict()
 
         variables = build_vars_var.get(None)
+        context_swap_value = context_swap.get({})
         if variables is None:
             return
 
+        former_uuid = self.uuid
+
         for f in dc.fields(self):
             attr = getattr(self, f.name)
-            if isinstance(attr, (str, list, dict)) and '<var:' in str(attr):
-                built = _replace_variables(attr, **variables)
+            if isinstance(attr, (str, list, dict)):
+                built = _replace_variables(attr, uuid_swaps=context_swap_value, **variables)
                 setattr(self, f.name, built)
+            elif isinstance(attr, Base):
+                built = _replace_variables(attr, uuid_swaps=context_swap_value, **variables)
+                setattr(self, f.name, built)
+        
+        if former_uuid != self.uuid:
+            context_swap_value[former_uuid] = self.uuid
+
+        context_swap.set(context_swap_value)
 
     def cleanup(self):
         """Method to clean the component."""
@@ -674,7 +686,7 @@ class Component(Base, metaclass=ComponentMeta):
     def export(
         self,
         path: t.Optional[str] = None,
-        defaults: bool = True,
+        defaults: bool = False,
         metadata: bool = False,
         format: str = "json",
     ):
@@ -706,7 +718,7 @@ class Component(Base, metaclass=ComponentMeta):
         r = self.encode(
             defaults=defaults,
             metadata=metadata,
-            include_defaults=False,
+            keep_variables=True,
         )
 
         def rewrite_keys(r, keys):

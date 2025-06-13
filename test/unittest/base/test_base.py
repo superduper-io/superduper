@@ -1,14 +1,14 @@
 import dataclasses as dc
-import json
 import typing as t
 from pprint import pprint
 
-from superduper import CFG, ObjectModel
+from superduper import ObjectModel
 from superduper.base.base import Base
 from superduper.base.constant import KEY_BLOBS, KEY_BUILDS
 from superduper.base.document import Document
 from superduper.components.component import Component
 from superduper.components.listener import Listener
+from superduper import Application, Model, VectorIndex
 
 
 class Test(Base):
@@ -138,3 +138,64 @@ def test_find_variables(db):
     q_set = q.set_variables(test='my-value')
 
     assert q_set.variables == []
+
+
+class MyModel(Model):
+    model: str
+
+
+def test_replace_variables(db):
+
+    app = Application(
+        'test',
+        components=[
+            VectorIndex(
+                'test',
+                indexing_listener=Listener(
+                    'test',
+                    key='x',
+                    model=MyModel('test', model='<var:model>'),
+                    select=db['<var:table>'],
+                )
+            )
+        ],
+        variables={'table': 'test', 'model': 'test_model'},
+        db=db,
+    )
+
+    assert '<var:table>' not in app._show_repr()
+    assert '<var:model>' not in app._show_repr()
+
+
+def test_mutated_references_with_variables(db):
+
+    m = MyModel('test', model='model')
+
+    l1 = Listener(
+        'test_listener_1',
+        key='x',
+        model=m,
+        select=db['<var:table>'],
+    )
+    former_l1_uuid = l1.uuid
+
+    l2 = Listener(
+        'test_listener_2',
+        key='y',
+        model=m,
+        select=db[l1.outputs],
+    )
+    former_l2_uuid = l2.uuid
+
+    app = Application(
+        'test',
+        components=[l1, l2],
+        variables={'table': 'test', 'model': 'test_model'},
+    )
+
+    app.show()
+
+    # import pdb; pdb.set_trace()
+
+    import pprint
+    pprint.pprint(app.encode(metadata=False, defaults=False, keep_variables=True))

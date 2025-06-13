@@ -3,7 +3,7 @@ from contextlib import contextmanager
 
 from superduper import CFG, logging
 
-from .component import Component, build_vars_var
+from .component import Component, build_vars_var, context_swap
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
@@ -16,11 +16,13 @@ def build_context(vars_dict: dict[str, t.Any] | None):
 
     :param vars_dict: Dictionary of variables to set for the build context.
     """
-    token = build_vars_var.set(vars_dict or {})
+    token1 = build_vars_var.set(vars_dict or {})
+    token2 = context_swap.set({})
     try:
         yield
     finally:
-        build_vars_var.reset(token)
+        build_vars_var.reset(token1)
+        context_swap.reset(token2)
 
 
 class Application(Component):

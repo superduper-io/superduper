@@ -385,6 +385,7 @@ class Document(DeepKeyedDict):
     def set_variables(self, uuid_swaps: t.Dict | None = None, **kwargs) -> 'Document':
         """Set free variables of self.
 
+        :param uuid_swaps: A dictionary of UUID swaps to use.
         :param kwargs: The vales to set the variables to `_replace_variables`.
         """
         content = _replace_variables(self, uuid_swaps=uuid_swaps, **kwargs)

@@ -1,7 +1,10 @@
 # TODO - test adding variables to identifier
 import re
 import typing as t
+<<<<<<< HEAD
 
+=======
+>>>>>>> 1a1b464b2 (Fixes for variables in `Component`)
 
 
 def _find_variables(r):
@@ -19,6 +22,9 @@ def _find_variables(r):
 
 
 def _replace_variables(x, uuid_swaps: t.Dict | None = None, **kwargs):
+    from superduper.base.base import Base
+    from superduper.components.component import Component
+
     from .document import Document
     from superduper.base.base import Base
     from superduper.components.component import Component
@@ -26,9 +32,14 @@ def _replace_variables(x, uuid_swaps: t.Dict | None = None, **kwargs):
     if uuid_swaps is None:
         uuid_swaps = {}
 
+    if uuid_swaps is None:
+        uuid_swaps = {}
+
     if isinstance(x, dict):
         return {
-            _replace_variables(k, uuid_swaps=uuid_swaps, **kwargs): _replace_variables(v, uuid_swaps=uuid_swaps, **kwargs)
+            _replace_variables(k, uuid_swaps=uuid_swaps, **kwargs): _replace_variables(
+                v, uuid_swaps=uuid_swaps, **kwargs
+            )
             for k, v in x.items()
         }
     if (

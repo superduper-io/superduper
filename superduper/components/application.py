@@ -9,22 +9,6 @@ if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
 
 
-# 3. The context-manager that temporarily sets the variable
-@contextmanager
-def build_context(vars_dict: dict[str, t.Any] | None):
-    """Context manager to set build variables for components.
-
-    :param vars_dict: Dictionary of variables to set for the build context.
-    """
-    token1 = build_vars_var.set(vars_dict or {})
-    token2 = context_swap.set({})
-    try:
-        yield
-    finally:
-        build_vars_var.reset(token1)
-        context_swap.reset(token2)
-
-
 class Application(Component):
     """
     A placeholder to hold list of components with associated funcionality.
@@ -32,8 +16,6 @@ class Application(Component):
     Components are sorted in a way that respects their mutual dependencies.
 
     :param components: List of components to group together and apply to `superduper`.
-    :param build_variables: Variables which were supplied to a template to build.
-    :param build_template: Template which was used to build.
     :param variables: Variables which are used inside the application.
     """
 
@@ -41,18 +23,7 @@ class Application(Component):
     component_cache: t.ClassVar[bool] = True
 
     components: t.List[Component]
-    build_variables: t.Dict | None = None
-    build_template: str | None = None
     variables: t.Dict | None = None
-
-    def postinit(self):
-        """Post-initialization method to set up the application."""
-        with build_context(self.variables):
-            for component in self.components:
-                # Might be just a ComponentRef
-                if isinstance(component, Component):
-                    component.postinit()
-            return super().postinit()
 
     @classmethod
     def build_from_db(cls, identifier, db: "Datalayer"):

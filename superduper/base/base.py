@@ -96,6 +96,7 @@ class Base(metaclass=BaseMeta):
     def set_variables(self, uuid_swaps: t.Dict | None = None, **kwargs) -> 'Base':
         """Set free variables of self.
 
+        :param uuid_swaps: Dictionary of UUID swaps to apply.
         :param kwargs: Keyword arguments to pass to `_replace_variables`.
         """
         from superduper.base.variables import _replace_variables
@@ -281,13 +282,15 @@ class Base(metaclass=BaseMeta):
         for k, v in kwargs.items():
             setattr(context, k, v)
 
+        r = None
         if context.keep_variables:
             r = self._original_parameters
-            if not context.metadata:
-                for k in self.metadata_fields:
-                    if k in r:
-                        del r[k]
-        else:
+            if r is not None:
+                if not context.metadata:
+                    for k in self.metadata_fields:
+                        if k in r:
+                            del r[k]
+        if r is None:
             r = self.dict(metadata=context.metadata)
 
         if not context.defaults:
@@ -403,6 +406,11 @@ class Base(metaclass=BaseMeta):
             metadata = getattr(self, 'metadata', {})
             for k, v in metadata.items():
                 r[k] = v
+        else:
+            for k in list(r.keys()):
+                if k in getattr(self, 'metadata_fields', {}):
+                    if k in r:
+                        del r[k]
 
         return Document(r, schema=self.class_schema)
 

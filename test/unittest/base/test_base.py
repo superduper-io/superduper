@@ -2,7 +2,11 @@ import dataclasses as dc
 import typing as t
 from pprint import pprint
 
+<<<<<<< HEAD
 from superduper import ObjectModel
+=======
+from superduper import Application, Model, ObjectModel, VectorIndex
+>>>>>>> 1a1b464b2 (Fixes for variables in `Component`)
 from superduper.base.base import Base
 from superduper.base.constant import KEY_BLOBS, KEY_BUILDS
 from superduper.base.document import Document
@@ -156,7 +160,7 @@ def test_replace_variables(db):
                     key='x',
                     model=MyModel('test', model='<var:model>'),
                     select=db['<var:table>'],
-                )
+                ),
             )
         ],
         variables={'table': 'test', 'model': 'test_model'},
@@ -177,7 +181,6 @@ def test_mutated_references_with_variables(db):
         model=m,
         select=db['<var:table>'],
     )
-    former_l1_uuid = l1.uuid
 
     l2 = Listener(
         'test_listener_2',
@@ -185,7 +188,6 @@ def test_mutated_references_with_variables(db):
         model=m,
         select=db[l1.outputs],
     )
-    former_l2_uuid = l2.uuid
 
     app = Application(
         'test',
@@ -195,7 +197,6 @@ def test_mutated_references_with_variables(db):
 
     app.show()
 
-    # import pdb; pdb.set_trace()
-
     import pprint
+
     pprint.pprint(app.encode(metadata=False, defaults=False, keep_variables=True))

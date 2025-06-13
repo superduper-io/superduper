@@ -346,10 +346,11 @@ class Datalayer:
 
     def apply(
         self,
-        object: t.Union[Component, t.Sequence[t.Any], t.Any],
+        object: Component,
         force: bool | None = None,
         wait: bool = False,
         jobs: bool = True,
+        **variables,
     ):
         """
         Add functionality in the form of components.
@@ -361,7 +362,11 @@ class Datalayer:
         :param force: Force apply.
         :param wait: Wait for apply events.
         :param jobs: Execute jobs.
+        :param variables: Additional variables to pass to the apply function.
         """
+        if variables:
+            object = object.use_variables(**variables)
+
         with self.metadata.cache():
             result = apply.apply(
                 db=self, object=object, force=force, wait=wait, jobs=jobs

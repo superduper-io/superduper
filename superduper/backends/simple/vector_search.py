@@ -79,7 +79,7 @@ class SimpleVectorSearchClient(VectorSearchBackend):
             f'{self.uri}/vector_search/describe?'
             f'component={component}&vector_index={vector_index}'
         )
-        
+
     def put_component(self, component: str, uuid: str):
         """Add a component to the vector search service.
 

@@ -155,7 +155,7 @@ class Logging:
     @staticmethod
     def multikey_user(msg: str, *args):
         """Log a message with the USER level.
-        
+
         :param msg: The message to log.
         :param args: Additional arguments to log.
         """

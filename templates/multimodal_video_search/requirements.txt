@@ -1,4 +1,0 @@
-git+https://github.com/openai/CLIP.git
-superduper_pillow
-superduper_torch
-opencv-python

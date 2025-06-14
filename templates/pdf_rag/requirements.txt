@@ -1,4 +1,0 @@
-plugins/openai
-plugins/sentence_transformers
-pdf2image
-unstructured[pdf]

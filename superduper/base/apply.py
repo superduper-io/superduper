@@ -1,9 +1,10 @@
-import json
 import time
 import typing as t
 
 import click
 from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
 
 from superduper import CFG, Component, logging
 from superduper.base import exceptions
@@ -18,11 +19,13 @@ if t.TYPE_CHECKING:
 
 _WAIT_TIMEOUT = 60
 
+console = Console()
+
 
 class HashingError(Exception):
     """Raised when hashing is not deterministic.
 
-    # noqa
+    #noqa
     """
 
     pass
@@ -35,36 +38,40 @@ def apply(
     wait: bool = False,
     jobs: bool = True,
 ) -> 'Component':
-    """
-    Add functionality in the form of components.
+    """Apply a `superduper.Component`.
 
-    Components are stored in the configured artifact store
-    and linked to the primary database through metadata.
-
-    :param db: Datalayer instance
-    :param object: Object to be stored.
-    :param force: List of jobs which should execute before component
-                  initialization begins.
-    :param wait: Blocks execution till create events finish.
-    :param jobs: Whether to execute jobs or not.
+    :param db: The Datalayer instance to use.
+    :param object: The component to apply.
+    :param force: Whether to force the application without confirmation.
+    :param wait: Whether to wait for the component to be created.
+    :param jobs: Whether to execute jobs after applying the component.
     """
     if not isinstance(object, Component):
         raise ValueError('Only components can be applied')
 
+    # Detect non‑deterministic UUIDs early -----------------------------------
     if object.uuid != object.uuid:
         raise HashingError(
             'The component you specified did not yield a deterministic hash. '
-            'This is a requirement for the object to be stored in the '
-            'system. Modify your classes and check `object.uuid`.'
+            'This is a requirement for the object to be stored in the system. '
+            'Modify your classes and check `object.uuid`.'
         )
 
     if force is None:
         force = db.cfg.force_apply
 
-    # This holds a record of the changes
-    diff: t.Dict = {}
+    diff: dict[str, t.Any] = {}
 
-    # context allows us to track the origin of the component creation
+    # -----------------------------------------------------------------------
+    # 1. Show the component that is about to be applied
+    # -----------------------------------------------------------------------
+    if CFG.log_level == 'USER':
+        console.print(Panel('Component to apply', style='bold green'))
+        object.show()
+
+    # -----------------------------------------------------------------------
+    # 2. Analyse what needs to change
+    # -----------------------------------------------------------------------
     table_events, create_events, put_events, job_events = _apply(
         db=db,
         object=object,
@@ -74,103 +81,91 @@ def apply(
         non_breaking_changes={},
     )
 
-    logging.user(f'Found {len(create_events)} create events to apply')
-    logging.user(f'Found {len(job_events)} jobs to apply')
-
+    # Skip job execution if required
     if not jobs:
         logging.info('Skipping job execution because of the --no-jobs flag')
         job_events = {}
 
-    # this flags that the context is not needed anymore
+    # Nothing to do? Exit early.
     if not create_events:
-        logging.user('No changes needed, doing nothing!')
+        console.print(Panel('No changes needed – doing nothing!', style='bold yellow'))
         return object
 
+    # -----------------------------------------------------------------------
+    # 3. Present the diff (if any) and the deployment plan
+    # -----------------------------------------------------------------------
     if diff:
-        logging.user('Found this diff:')
-        Console().print(dict_to_tree(diff, root=object.identifier), soft_wrap=True)
+        console.print(Panel('Diff vs current state', style='bold blue'))
+        console.print(dict_to_tree(diff, root=object.identifier), soft_wrap=True)
 
-    logging.user('Found these changes and/ or additions that need to be made:')
+    console.print(Panel('Deployment plan', style='bold blue'))
 
-    if table_events:
-        logging.user('-' * 100)
-        logging.user('TABLE EVENTS:')
-        logging.user('-' * 100)
+    # -----------------------------------------------------------------------
+    # 3a. Build a *single* consolidated table covering ALL events
+    # -----------------------------------------------------------------------
+    consolidated: list[tuple[str, str, str]] = []  # (idx, type, details)
+    idx = 0
 
-    steps = {
-        table_event.huuid: str(i) for i, table_event in enumerate(table_events.values())
-    }
+    for ev in table_events.values():
+        consolidated.append((str(idx), 'TABLE', ev.huuid))
+        idx += 1
 
-    for i, table_event in enumerate(table_events.values()):
-        logging.user(f'[{i}]: {table_event.huuid}')
+    for ev in create_events.values():
+        consolidated.append(
+            (str(idx), 'CREATE', f'{ev.huuid}: {ev.__class__.__name__}')
+        )
+        idx += 1
 
-    if create_events:
-        logging.user('-' * 100)
-        logging.user('METADATA EVENTS:')
-        logging.user('-' * 100)
+    for ev in put_events.values():
+        consolidated.append((str(idx), 'PUT', ev.huuid))
+        idx += 1
 
-    steps = {c.data['uuid']: str(i) for i, c in enumerate(create_events.values())}
+    for ev in job_events.values():
+        dep_str = f" deps→{','.join(ev.dependencies)}" if ev.dependencies else ''
+        consolidated.append((str(idx), 'JOB', f'{ev.huuid}: {ev.method}{dep_str}'))
+        idx += 1
 
-    for i, c in enumerate(create_events.values()):
-        if c.parent:
-            try:
-                logging.user(
-                    f'[{i}]: {c.huuid}: {c.__class__.__name__} ~ [{steps[c.parent[1]]}]'
-                )
-            except KeyError:
-                logging.user(f'[{i}]: {c.huuid}: {c.__class__.__name__}')
-        else:
-            logging.user(f'[{i}]: {c.huuid}: {c.__class__.__name__}')
+    tbl = Table(show_header=True, header_style='bold magenta')
+    tbl.add_column('#', style='cyan', no_wrap=True)
+    tbl.add_column('Event type', style='magenta')
+    tbl.add_column('Details', style='white')
 
-    if put_events:
-        logging.user('-' * 100)
-        logging.user('PUT EVENTS:')
-        logging.user('-' * 100)
+    for row in consolidated:
+        tbl.add_row(*row)
 
-    steps = {p.huuid: str(i) for i, p in enumerate(put_events.values())}
+    console.print(
+        Panel(tbl, title='Deployment plan – events overview', border_style='green')
+    )
 
-    for i, p in enumerate(put_events.values()):
-        logging.user(f'[{i}]: {p.huuid}')
-
-    if job_events:
-        logging.user('-' * 100)
-        logging.user('JOBS EVENTS:')
-        logging.user('-' * 100)
-
-    steps = {j.job_id: str(i) for i, j in enumerate(job_events.values())}
-
-    if job_events:
-        for i, j in enumerate(job_events.values()):
-            if j.dependencies:
-                logging.user(
-                    f'[{i}]: {j.huuid}: {j.method} ~ '
-                    f'[{",".join([steps[d] for d in j.dependencies])}]'
-                )
-            else:
-                logging.user(f'[{i}]: {j.huuid}: {j.method}')
-
-    logging.user('-' * 100)
-
-    events = [
-        *list(table_events.values()),
-        *list(create_events.values()),
-        *list(put_events.values()),
-        *list(job_events.values()),
-        Signal(context=object.uuid, msg='done'),
-    ]
-
+    # -----------------------------------------------------------------------
+    # 4. Confirm (unless --force) and publish the events
+    # -----------------------------------------------------------------------
     if not force:
         if not click.confirm(
-            '\033[1mPlease approve this deployment plan.\033[0m',
-            default=True,
+            '\033[1mPlease approve this deployment plan.\033[0m', default=True
         ):
             return object
-    assert db.cluster is not None
+
+    assert db.cluster is not None  # mypy‑friendliness
+
+    events = [
+        *table_events.values(),
+        *create_events.values(),
+        *put_events.values(),
+        *job_events.values(),
+        Signal(context=object.uuid, msg='done'),
+    ]
     db.cluster.scheduler.publish(events=events)
+
     if wait:
-        unique_create_events = list(create_events.values())
-        _wait_on_events(db, unique_create_events)
+        _wait_on_events(db, list(create_events.values()))
+
     return object
+
+
+# ---------------------------------------------------------------------------
+# Helper functions
+# ---------------------------------------------------------------------------
 
 
 def _wait_on_events(db, events):
@@ -191,10 +186,15 @@ def _wait_on_events(db, events):
         if remaining <= 0:
             return
         elif time_left == 0:
-            raise TimeoutError("Timeout error while waiting for create events.")
+            raise TimeoutError('Timeout while waiting for create events.')
         else:
             time.sleep(1)
             time_left -= 1
+
+
+# ---------------------------------------------------------------------------
+# Recursive helper to build up metadata / job / put / table events
+# ---------------------------------------------------------------------------
 
 
 def _apply(
@@ -225,16 +225,18 @@ def _apply(
 
     object.db = db
 
-    create_events = {}
-    table_events = {}
-    put_events = {}
+    create_events: dict[str, Create | Update] = {}
+    table_events: dict[str, t.Any] = {}
+    put_events: dict[str, PutComponent] = {}
     children = []
 
+    # ------------------------------------------------------------------
+    # Wrapper to recursively walk component trees
+    # ------------------------------------------------------------------
     def wrapper(child):
-        nonlocal create_events
-        nonlocal processed_components
+        nonlocal create_events, processed_components
 
-        t, c, p, j = _apply(
+        t_, c_, p_, j_ = _apply(
             db=db,
             object=child,
             context=context,
@@ -245,14 +247,17 @@ def _apply(
             processed_components=processed_components,
         )
 
-        job_events.update(j)
-        processed_components |= {j_.rsplit('.')[0] for j_ in j}
-        create_events.update(c)
-        table_events.update(t)
-        put_events.update(p)
+        job_events.update(j_)
+        processed_components |= {j__.rsplit('.')[0] for j__ in j_}
+        create_events.update(c_)
+        table_events.update(t_)
+        put_events.update(p_)
         children.append((child.component, child.identifier, child.uuid))
         return f'&:component:{child.huuid}'
 
+    # ------------------------------------------------------------------
+    # Decide whether this is a new / update / breaking / same component
+    # ------------------------------------------------------------------
     try:
         current = db.load(object.__class__.__name__, object.identifier)
         current.setup()
@@ -272,9 +277,7 @@ def _apply(
         object.version = 0
 
     if apply_status in {'update', 'breaking'}:
-
         diff = object.diff(current)
-
         if global_diff is not None:
             global_diff[object.identifier] = {
                 'status': apply_status,
@@ -282,38 +285,33 @@ def _apply(
                 'component': object.component,
             }
 
-    serialized = object.dict()
-
-    # This map function applies `wrapper` to anything
-    # "found" inside the `Document`, which is a `Component`
-    # The output document has the output of `wrapper`
-    # as replacement for those leaves which are `Component`
-    # instances.
+    # ------------------------------------------------------------------
+    # Serialize the component (recursively replacing child components)
+    # ------------------------------------------------------------------
+    serialized: Document = object.dict()
     serialized = serialized.map(wrapper, lambda x: isinstance(x, Component))
-    # Document(object.metadata).map(wrapper, lambda x: isinstance(x, Component))
     serialized = db._save_artifact(serialized.encode())
 
+    # ------------------------------------------------------------------
+    # Build create / update events depending on apply_status
+    # ------------------------------------------------------------------
     if apply_status == 'same':
         return table_events, create_events, put_events, job_events
 
-    elif apply_status == 'new':
-
+    if apply_status == 'new':
         metadata_event = Create(
             context=context,
-            path=object.__module__ + '.' + object.__class__.__name__,
+            path=f'{object.__module__}.{object.__class__.__name__}',
             data=serialized,
             parent=parent,
             children=children,
         )
-
         table_events.update(object.create_table_events())
-
         these_job_events = object.create_jobs(
             event_type='apply',
             jobs=list(job_events.values()),
             context=context,
         )
-
         for service in object.services:
             put_events[f'{object.huuid}/{service}'] = PutComponent(
                 component=object.component,
@@ -324,23 +322,19 @@ def _apply(
             )
 
     elif apply_status == 'breaking':
-
         metadata_event = Create(
             context=context,
-            path=object.__module__ + '.' + object.__class__.__name__,
+            path=f'{object.__module__}.{object.__class__.__name__}',
             data=serialized,
             parent=parent,
             children=children,
         )
-
         table_events.update(object.create_table_events())
-
         these_job_events = object.create_jobs(
             event_type='apply',
             jobs=list(job_events.values()),
             context=context,
         )
-
         for service in object.services:
             put_events[f'{object.huuid}/{service}'] = PutComponent(
                 component=object.component,
@@ -349,20 +343,15 @@ def _apply(
                 context=context,
                 service=service,
             )
-    else:
-        assert apply_status == 'update'
 
+    else:  # apply_status == 'update'
+        diff = object.diff(current)
         metadata_event = Update(
             context=context,
             component=object.__class__.__name__,
             data=serialized,
             parent=parent,
         )
-
-        # the requires flag, allows
-        # the developer to restrict jobs "on-update"
-        # to only be those jobs concerned with the
-        # change data
         these_job_events = object.create_jobs(
             event_type='apply',
             jobs=list(job_events.values()),
@@ -371,5 +360,6 @@ def _apply(
         )
 
     create_events[metadata_event.huuid] = metadata_event
-    job_events.update({jj.huuid: jj for jj in these_job_events})
+    job_events.update({j.huuid: j for j in these_job_events})
+
     return table_events, create_events, put_events, job_events

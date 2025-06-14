@@ -71,8 +71,17 @@ class Logging:
         lambda msg: tqdm.write(msg, end=""),
         format=fmt,
         level=CFG.log_level,
-        filter=lambda record: record["level"].no < 40,
+        filter=lambda record: record["level"].no < 4 and record["level"].name != 'USER',
         colorize=colorize,
+    )
+
+    USER_FMT = "{message}"  # just the text (colour OK)
+    logger.add(
+        lambda msg: tqdm.write(msg, end=""),
+        format=USER_FMT,
+        level="USER",  # min-level is USER…
+        filter=lambda r: r["level"].name == "USER",  # …and *only* USER passes
+        colorize=True,  # or use `colorize`
     )
 
     # ERROR and above sent to stderr

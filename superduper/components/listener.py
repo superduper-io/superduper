@@ -51,6 +51,11 @@ class Listener(CDC):
             self.key = list(self.key)
 
     @property
+    def managed_tables(self):
+        """Managed tables property."""
+        return [self.outputs]
+
+    @property
     def output_table(self):
         """Output table property."""
         return Table(

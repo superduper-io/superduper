@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remove `json_native` and `datatype_presets`
 - Lazy sub-component loading to increase performance
 - Default log-level USER
+- Teardown old deployments when creating new ones with `Deployment`
 
 ### New features
 

@@ -609,6 +609,11 @@ class Component(Base, metaclass=ComponentMeta):
         return local_jobs
 
     @property
+    def managed_tables(self):
+        """Get all the managed tables in the component."""
+        return []
+
+    @property
     def leaves(self):
         """Get all the leaves in the component."""
         r = self.dict()
@@ -685,7 +690,12 @@ class Component(Base, metaclass=ComponentMeta):
 
     def cleanup(self):
         """Method to clean the component."""
-        pass
+        # TODO deprecate in favour of dropping services and associated tables
+
+        for service in self.services:
+            getattr(self.db.cluster, service).drop_component(
+                component=self.component, identifier=self.identifier
+            )
 
     def setup(self):
         """Method to help initiate component field dependencies."""

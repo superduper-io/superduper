@@ -394,19 +394,22 @@ class SQLDatabackend(IbisDataBackend):
 
     def delete(self, table, condition):
         """Delete data from the database."""
-        with self.sm() as session:
-            metadata = MetaData()
+        try:
+            with self.sm() as session:
+                metadata = MetaData()
 
-            metadata.reflect(bind=session.bind)
-            table = Table(table, metadata, autoload_with=session.bind)
+                metadata.reflect(bind=session.bind)
+                table = Table(table, metadata, autoload_with=session.bind)
 
-            stmt = table.delete()
+                stmt = table.delete()
 
-            for col_name, value in condition.items():
-                stmt = stmt.where(table.c[col_name] == value)
+                for col_name, value in condition.items():
+                    stmt = stmt.where(table.c[col_name] == value)
 
-            session.execute(stmt)
-            session.commit()
+                session.execute(stmt)
+                session.commit()
+        except NoSuchTableError:
+            raise exceptions.NotFound("Table", table)
 
     def _create_sqlalchemy_engine(self):
         with self.connection_manager.get_connection() as conn:

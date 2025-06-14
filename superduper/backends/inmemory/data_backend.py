@@ -87,7 +87,10 @@ class InMemoryDatabackend(KeyedDatabackend):
         pass
 
     def __delitem__(self, key):
-        del self.data[key]
+        try:
+            del self.data[key]
+        except KeyError:
+            pass
 
     def __setitem__(self, key, value):
         self.data[key] = value

@@ -64,7 +64,9 @@ class LocalComputeBackend(ComputeBackend):
         """List all UUIDs on the compute."""
         return []
 
-    def drop_component(self, component: str, identifier: str):
+    def drop_component(
+        self, component: str, identifier: str | None = None, uuid: str | None = None
+    ):
         """Drop a component from the compute."""
 
     def put_component(self, component: str, uuid: str):

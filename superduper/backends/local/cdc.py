@@ -35,7 +35,9 @@ class LocalCDCBackend(CDCBackend):
     def put_component(self, component: str, uuid: str):
         pass
 
-    def drop_component(self, component, identifier):
+    def drop_component(
+        self, component, identifier: str | None = None, uuid: str | None = None
+    ):
         pass
 
     def initialize(self):

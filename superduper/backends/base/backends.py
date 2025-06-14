@@ -56,6 +56,7 @@ class Bookkeeping(ABC):
         class_name = self.__class__.__name__
         logging.info(f'[{class_name}] Adding component: {object.huuid}')
         tool = self.build_tool(object)
+
         if tool is None:
             logging.warn(
                 f'No tool found for component: {object.huuid} on {self.__class__.__name__}'
@@ -71,39 +72,57 @@ class Bookkeeping(ABC):
             object.identifier,
         )
         self.uuid_tool_mapping[object.uuid] = tool.identifier
+
         if tool.identifier in self.tools:
             logging.info(f'[{class_name}] Tool already exists: {tool.identifier}')
             return
+
         self.tool_uuid_mapping[tool.identifier].add(object.uuid)
         self.tools[tool.identifier] = tool
         tool.initialize(**kwargs)
         logging.info(f'[{class_name}] Tool initialized: {tool.identifier}')
         logging.info(f'[{class_name}] Component added: {object.huuid}')
 
-    def drop_component(self, component: str, identifier: str):
+    def drop_component(
+        self,
+        component: str,
+        identifier: t.Optional[str] = None,
+        uuid: t.Optional[str] = None,
+    ):
         """Drop the component from backend.
 
         :param component: Component name.
         :param identifier: Component identifier.
+        :param uuid: Component UUID.
         """
-        uuids = self.component_uuid_mapping[(component, identifier)]
-        tool_ids = []
-        for uuid in uuids:
-            del self.uuid_component_mapping[uuid]
+        if identifier is not None:
+            uuids = self.component_uuid_mapping[(component, identifier)]
+            tool_ids = []
+            for uuid in uuids:
+                del self.uuid_component_mapping[uuid]
+                tool_id = self.uuid_tool_mapping[uuid]
+                tool_ids.append(tool_id)
+                del self.uuid_tool_mapping[uuid]
+                try:
+                    self.tool_uuid_mapping[tool_id].remove(uuid)
+                except KeyError:
+                    logging.warn(
+                        f"KeyError: {tool_id} -> {uuid} not found in tool_uuid_mapping"
+                    )
+                    continue
+                if not self.tool_uuid_mapping[tool_id]:
+                    self.tools[tool_id].drop()
+                    del self.tools[tool_id]
+            del self.component_uuid_mapping[(component, identifier)]
+        else:
+            if uuid is None:
+                raise ValueError("Either identifier or uuid must be provided.")
+            component, identifier = self.uuid_component_mapping[uuid]
             tool_id = self.uuid_tool_mapping[uuid]
-            tool_ids.append(tool_id)
-            del self.uuid_tool_mapping[uuid]
-            try:
-                self.tool_uuid_mapping[tool_id].remove(uuid)
-            except KeyError:
-                logging.warn(
-                    f"KeyError: {tool_id} -> {uuid} not found in tool_uuid_mapping"
-                )
-                continue
-            if not self.tool_uuid_mapping[tool_id]:
+            if tool_id in self.tools:
                 self.tools[tool_id].drop()
                 del self.tools[tool_id]
-        del self.component_uuid_mapping[(component, identifier)]
+            del self.uuid_component_mapping[uuid]
 
     def drop(self):
         """Drop the backend."""
@@ -164,11 +183,14 @@ class BaseBackend(ABC):
         """
 
     @abstractmethod
-    def drop_component(self, component: str, identifier: str):
+    def drop_component(
+        self, component: str, identifier: str | None = None, uuid: str | None = None
+    ):
         """Drop the component from backend.
 
         :param component: Component name.
         :param identifier: Component identifier.
+        :param uuid: Component UUID.
         """
 
     @property

@@ -9,7 +9,7 @@ from rich.table import Table
 from superduper import CFG, Component, logging
 from superduper.base import exceptions
 from superduper.base.document import Document
-from superduper.base.event import Create, PutComponent, Signal, Update
+from superduper.base.event import Create, PutComponent, Signal, Teardown, Update
 from superduper.base.status import pending_status, running_status
 from superduper.misc.tree import dict_to_tree
 
@@ -75,7 +75,7 @@ def apply(
     # -----------------------------------------------------------------------
     # 2. Analyse what needs to change
     # -----------------------------------------------------------------------
-    table_events, create_events, put_events, job_events = _apply(
+    table_events, create_events, put_events, teardown_events, job_events = _apply(
         db=db,
         object=object,
         context=object.uuid,
@@ -124,6 +124,10 @@ def apply(
         idx += 1
 
     job_lookup: t.Dict = {}
+    for ev in teardown_events.values():
+        consolidated.append((str(idx), 'TEARDOWN', ev.huuid))
+        idx += 1
+
     for ev in job_events.values():
         int_dependencies = [str(job_lookup[job_id]) for job_id in ev.dependencies]
         dep_str = f" deps→{','.join(int_dependencies)}" if int_dependencies else ''
@@ -158,9 +162,11 @@ def apply(
         *table_events.values(),
         *create_events.values(),
         *put_events.values(),
+        *teardown_events.values(),
         *job_events.values(),
         Signal(context=object.uuid, msg='done'),
     ]
+
     db.cluster.scheduler.publish(events=events)
 
     if wait:
@@ -212,6 +218,7 @@ def _apply(
     parent: t.Optional[t.List] = None,
     global_diff: t.Dict | None = None,
     processed_components: t.Optional[t.Set] = None,
+    deprecated_context: str | None = None,
 ):
 
     object.status, object.details = pending_status()
@@ -221,19 +228,20 @@ def _apply(
         context = object.uuid
 
     if job_events and object.huuid in processed_components:
-        return {}, {}, {}, {}
+        return {}, {}, {}, {}, {}
 
     if job_events is None:
         job_events = {}
 
     if object.huuid in job_events:
-        return {}, {}, {}, {}
+        return {}, {}, {}, {}, {}
 
     object.db = db
 
     create_events: dict[str, Create | Update] = {}
     table_events: dict[str, t.Any] = {}
     put_events: dict[str, PutComponent] = {}
+    teardown_events: dict[str, Signal] = {}
     children = []
 
     # ------------------------------------------------------------------
@@ -242,7 +250,7 @@ def _apply(
     def wrapper(child):
         nonlocal create_events, processed_components
 
-        t_, c_, p_, j_ = _apply(
+        t_, c_, p_, td, j_ = _apply(
             db=db,
             object=child,
             context=context,
@@ -251,6 +259,7 @@ def _apply(
             global_diff=global_diff,
             non_breaking_changes=non_breaking_changes,
             processed_components=processed_components,
+            deprecated_context=deprecated_context,
         )
 
         job_events.update(j_)
@@ -258,6 +267,7 @@ def _apply(
         create_events.update(c_)
         table_events.update(t_)
         put_events.update(p_)
+        teardown_events.update(td)
         children.append((child.component, child.identifier, child.uuid))
         return f'&:component:{child.huuid}'
 
@@ -278,6 +288,8 @@ def _apply(
             apply_status = 'breaking'
             assert current.version is not None
             object.version = current.version + 1
+        if deprecated_context is None:
+            deprecated_context = current.uuid
     except exceptions.NotFound:
         apply_status = 'new'
         object.version = 0
@@ -302,7 +314,7 @@ def _apply(
     # Build create / update events depending on apply_status
     # ------------------------------------------------------------------
     if apply_status == 'same':
-        return table_events, create_events, put_events, job_events
+        return table_events, create_events, put_events, teardown_events, job_events
 
     if apply_status == 'new':
         metadata_event = Create(
@@ -324,6 +336,7 @@ def _apply(
                 identifier=object.identifier,
                 uuid=object.uuid,
                 context=context,
+                version=object.version,
                 service=service,
             )
 
@@ -336,6 +349,7 @@ def _apply(
             children=children,
         )
         table_events.update(object.create_table_events())
+
         these_job_events = object.create_jobs(
             event_type='apply',
             jobs=list(job_events.values()),
@@ -347,7 +361,27 @@ def _apply(
                 identifier=object.identifier,
                 uuid=object.uuid,
                 context=context,
+                version=object.version,
                 service=service,
+            )
+
+        d = db['Deployment']
+        assert deprecated_context is not None
+        try:
+            conflicting_deployments = d.filter(
+                d['uuid'] == current.uuid, d['context'] != deprecated_context
+            ).execute()
+        except exceptions.NotFound:
+            conflicting_deployments = []
+
+        if not conflicting_deployments:
+            teardown_events[f'{current.huuid}'] = Teardown(
+                component=current.component,
+                identifier=current.identifier,
+                uuid=current.uuid,
+                context=context,
+                services=current.services,
+                version=current.version,
             )
 
     else:  # apply_status == 'update'
@@ -368,4 +402,4 @@ def _apply(
     create_events[metadata_event.huuid] = metadata_event
     job_events.update({j.huuid: j for j in these_job_events})
 
-    return table_events, create_events, put_events, job_events
+    return table_events, create_events, put_events, teardown_events, job_events

@@ -3,7 +3,7 @@ import math
 import typing as t
 from abc import abstractmethod
 from collections import defaultdict
-from concurrent.futures import FIRST_EXCEPTION, ThreadPoolExecutor, as_completed, wait
+from concurrent.futures import FIRST_EXCEPTION, ThreadPoolExecutor, wait
 from traceback import format_exc
 
 import numpy
@@ -11,6 +11,7 @@ import pandas
 
 from superduper import logging
 from superduper.base import Base
+from superduper.base.exceptions import NotFound
 from superduper.base.metadata import STATUS_FAILED
 from superduper.base.schema import Schema
 from superduper.misc.importing import import_object
@@ -262,6 +263,7 @@ class PutComponent(Event):
     :param context: the component context of creation.
     :param component: the type of component to be created
     :param identifier: the identifier of the component to be created
+    :param version: the version of the component to be created
     :param uuid: the uuid of the component to be created
     :param service: the service to put the component on
     """
@@ -272,6 +274,7 @@ class PutComponent(Event):
     context: str
     component: str
     identifier: str
+    version: int
     uuid: str
     service: str
 
@@ -350,6 +353,16 @@ class PutComponent(Event):
 
         :param db: Datalayer instance.
         """
+        from superduper.base.metadata import Deployment
+
+        deployment = Deployment(
+            component=self.component,
+            uuid=self.uuid,
+            version=self.version,
+            identifier=self.identifier,
+            context=self.context,
+        )
+        db.metadata.create_deployment(deployment)
         logging.info(
             f'Putting {self.component}:'
             f'{self.identifier}:{self.uuid} on {self.service}'
@@ -363,6 +376,51 @@ class PutComponent(Event):
             f'{self.identifier}:{self.uuid} on {self.service}'
             '... DONE'
         )
+
+
+class Teardown(Event):
+    """
+    Class for component tear down events.
+
+    :param component: the type of component to be created
+    :param identifier: the identifier of the component to be deleted
+    :param uuid: the uuid of the component to be deleted
+    :param version: the version of the component to be deleted
+    :param context: the context of the component to be deleted
+    :param services: the services to be used for tear down
+    """
+
+    queue: t.ClassVar[str] = '_apply'
+
+    component: str
+    identifier: str
+    uuid: str
+    version: int
+    context: str | None = None
+    services: t.List[str] = dc.field(default_factory=list)
+
+    @property
+    def huuid(self):
+        """Return the hashed uuid."""
+        return f'{self.component}:{self.identifier}:{self.uuid}/teardown'
+
+    def execute(self, db: 'Datalayer'):
+        """Execute the tear down event.
+
+        :param db: Datalayer instance.
+        """
+        # TODO support multiple uuids per component
+        # TODO sort out dropping components without loading them
+        for service in self.services:
+            getattr(db.cluster, service).drop_component(
+                component=self.component,
+                uuid=self.uuid,
+            )
+
+        try:
+            db.metadata.teardown_deployment(uuid=self.uuid)
+        except NotFound:
+            pass
 
 
 class Delete(Event):
@@ -392,7 +450,17 @@ class Delete(Event):
         """
         try:
             object = db.load(component=self.component, identifier=self.identifier)
-            object.cleanup()
+
+            for service in object.services:
+                getattr(db.cluster, service).drop_component(
+                    component=self.component, identifier=self.identifier
+                )
+
+            managed_tables = object.managed_tables
+            for table in managed_tables:
+                db.databackend.drop_table(table)
+
+            db.metadata.delete_deployment(identifier=self.identifier)
             db.metadata.delete_component(self.component, self.identifier)
             artifact_ids = db.metadata.get_artifact_relations_for_component(
                 self.component, self.identifier

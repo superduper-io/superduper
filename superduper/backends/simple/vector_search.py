@@ -296,14 +296,16 @@ class SimpleVectorSearch(VectorSearchBackend):
         """
         return self.backend.drop()
 
-    def drop_component(self, component: str, identifier: str):
+    def drop_component(
+        self, component: str, identifier: str | None = None, uuid: str | None = None
+    ):
         """Remove a specific component from the vector search service.
 
         :param component: Component type
         :param identifier: Component identifier
         :return: Result from the drop operation
         """
-        return self.backend.drop_component(component, identifier)
+        return self.backend.drop_component(component, identifier=identifier, uuid=uuid)
 
     def build(self, app):
         """Set up FastAPI routes for this service.
@@ -349,14 +351,16 @@ class SimpleVectorSearch(VectorSearchBackend):
             return {"status": "ok"}
 
         @app.post("/vector_search/drop_component")
-        def drop_component(component: str, identifier: str):
+        def drop_component(
+            component: str, identifier: str | None = None, uuid: str | None = None
+        ):
             """Remove a specific component from the vector search service.
 
             :param component: Component type
             :param identifier: Component identifier
             :return: Status response
             """
-            self.backend.drop_component(component, identifier)
+            self.backend.drop_component(component, identifier=identifier, uuid=uuid)
             return {"status": "ok"}
 
         @app.post("/vector_search/put_component")

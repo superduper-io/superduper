@@ -665,6 +665,8 @@ class KeyedDatabackend(BaseDataBackend):
         :param condition: The condition to delete.
         """
         r_table = self._get_with_component_identifier('Table', table)
+        if r_table is None:
+            raise exceptions.NotFound("Table", table)
 
         if not r_table['is_component']:
             pid = self.primary_id(table)
@@ -693,7 +695,10 @@ class KeyedDatabackend(BaseDataBackend):
         :param table: The table to drop.
         """
         for k in self.keys(table, '*', '*'):
-            del self[k]
+            try:
+                del self[k]
+            except KeyError:
+                pass
 
     def execute_native(self, query):
         """Execute a native query provided as a str.
@@ -791,7 +796,9 @@ class KeyedDatabackend(BaseDataBackend):
         if not r_table['is_component']:
             pid = self.primary_id(table)
             if pid in condition:
-                docs = self.get_many(table, condition[pid])
+                docs = self.get_many(table, '*', condition[pid]) + self.get_many(
+                    table, condition[pid]
+                )
             else:
                 docs = self.get_many(table, '*')
             docs = self._do_filter(docs, condition)
@@ -966,8 +973,11 @@ class KeyedDatabackend(BaseDataBackend):
 
         if not is_component:
             pid = self.primary_id(query.table)
+
             if pid in filter_kwargs:
-                keys = self.keys(query.table, filter_kwargs[pid]['value'])
+                keys = self.keys(
+                    query.table, '*', filter_kwargs[pid]['value']
+                ) + self.keys(query.table, filter_kwargs[pid]['value'])
                 del filter_kwargs[pid]
             else:
                 keys = self.keys(query.table, '*')
@@ -1010,6 +1020,7 @@ class KeyedDatabackend(BaseDataBackend):
                     r for r in docs if r['version'] == filter_kwargs['version']['value']
                 ]
             else:
+
                 keys = self.keys(query.table, '*', '*')
                 docs = [self[k] for k in keys]
                 docs = [r for r in docs if do_test(r)]

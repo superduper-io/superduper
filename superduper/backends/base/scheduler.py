@@ -10,7 +10,14 @@ import networkx as nx
 from superduper import CFG, logging
 from superduper.backends.base.backends import BaseBackend
 from superduper.base.base import Base
-from superduper.base.event import Create, CreateTable, Event, PutComponent, Update
+from superduper.base.event import (
+    Create,
+    CreateTable,
+    Event,
+    PutComponent,
+    Teardown,
+    Update,
+)
 
 DependencyType = t.Union[t.Dict[str, str], t.Sequence[t.Dict[str, str]]]
 
@@ -157,6 +164,7 @@ def cluster_events(
     create_events = []
     job_events = []
     put_events = []
+    teardown_events = []
     for event in events:
         if isinstance(event, CreateTable):
             table_events.append(event)
@@ -164,9 +172,11 @@ def cluster_events(
             create_events.append(event)
         elif isinstance(event, Job):
             job_events.append(event)  # type: ignore[arg-type]
+        elif isinstance(event, Teardown):
+            teardown_events.append(event)
         elif isinstance(event, PutComponent):
             put_events.append(event)
-    return table_events, create_events, put_events, job_events
+    return table_events, create_events, put_events, teardown_events, job_events
 
 
 def consume_events(
@@ -187,7 +197,9 @@ def consume_events(
         logging.info(f'Consuming {len(events)} events on {table}.')
         consume_streaming_events(events=events, table=table, db=db)
     else:
-        table_events, create_events, put_events, job_events = cluster_events(events)
+        table_events, create_events, put_events, teardown_events, job_events = (
+            cluster_events(events)
+        )
 
         if table_events:
             start_time = time.time()
@@ -223,6 +235,18 @@ def consume_events(
             )
             logging.info(
                 f'Consumed {len(put_events)} `PutComponent` events in {time.time() - start_time:.2f}s'
+            )
+
+        if teardown_events:
+            start_time = time.time()
+            logging.info(f'Consuming {len(teardown_events)} `Teardown` events')
+            Teardown.batch_execute(
+                events=teardown_events,
+                db=db,
+                batch_size=batch_size,
+            )
+            logging.info(
+                f'Consumed {len(teardown_events)} `TeardownComponent` events in {time.time() - start_time:.2f}s'
             )
 
         if job_events:

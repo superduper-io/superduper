@@ -65,9 +65,12 @@ class ComputeBackend(BaseBackend):
         self._db = value
 
     @abstractmethod
-    def drop_component(self, component: str, identifier: str):
+    def drop_component(
+        self, component: str, identifier: str | None = None, uuid: str | None = None
+    ):
         """Drop the component from compute.
 
         :param component: Component name.
         :param identifier: Component identifier.
+        :param uuid: Component UUID.
         """

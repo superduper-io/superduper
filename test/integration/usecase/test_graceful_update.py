@@ -3,10 +3,11 @@ import typing as t
 
 import numpy
 
-from superduper import Listener, Model, VectorIndex, logging
+from superduper import Listener, Model, Table, VectorIndex, logging
 from superduper.base import Base
 from superduper.base.annotations import trigger
 from superduper.base.datalayer import Datalayer
+from superduper.base.status import STATUS_RUNNING, STATUS_UNINITIALIZED
 from superduper.components.model import Validation
 
 
@@ -88,3 +89,55 @@ def test(db: Datalayer):
     m = db.load('MyModel', 'my-model')
 
     assert m.metric_values == [0.1]
+
+
+def test_teardown(db):
+
+    m1 = MyModel('my-model', datatype='vector[int:20]', a=1, b=2)
+
+    db.apply(m1, force=True)
+
+    m2 = MyModel('my-model', datatype='vector[int:20]', a=2, b=2)
+
+    db.apply(m2, force=True)
+
+    assert db.show('MyModel', 'my-model') == [0, 1]
+
+    d1 = db['Deployment'].get(version=0)
+    d2 = db['Deployment'].get(version=1)
+
+    assert d1['status'] == STATUS_UNINITIALIZED
+    assert d2['status'] == STATUS_RUNNING
+
+    print(db['Deployment'].execute())
+
+
+def test_teardown_with_collision(db):
+
+    m1 = MyModel('my-model', datatype='vector[int:20]', a=1, b=2)
+
+    l1 = Listener(
+        'my-listener',
+        model=m1,
+        select=db['docs'],
+        key='x',
+        upstream=[Table('docs', fields={'x': 'str'})],
+    )
+
+    db.apply(l1, force=True)
+
+    m2 = MyModel('my-model', datatype='vector[int:20]', a=2, b=2)
+
+    db.apply(m2, force=True)
+
+    assert db.show('MyModel', 'my-model') == [0, 1]
+
+    d1 = db['Deployment'].get(version=0)
+    d2 = db['Deployment'].get(version=1)
+
+    # deploying a new version of the model should not teardown
+    # the version of the model involved in the listener
+    assert d1['status'] == STATUS_RUNNING
+    assert d2['status'] == STATUS_RUNNING
+
+    print(db['Deployment'].execute())

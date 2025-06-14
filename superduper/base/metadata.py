@@ -34,6 +34,26 @@ if t.TYPE_CHECKING:
     from superduper.base.event import CreateTable
 
 
+class Deployment(Base):
+    """Deployment table.
+
+    :param identifier: identifier of the deployment
+    :param uuid: UUID of the deployment
+    :param component: type of component
+    :param version: version of the component
+    :param status: status of the deployment
+    :param context: context of the deployment
+    """
+
+    primary_id: t.ClassVar[str] = 'uuid'
+    identifier: str
+    uuid: str = dc.field(default_factory=lambda: str(uuid.uuid4()))
+    component: str
+    version: int
+    status: str = STATUS_RUNNING
+    context: str
+
+
 class Job(Base):
     """Job table.
 
@@ -291,7 +311,7 @@ class Job(Base):
         """
         j = db['Job'].get(job_id=self.job_id)
         if j is None:
-            return STATUS_UNINITIALIZED
+            return STATUS_UNINITIALIZED, {}
         return j['status'], j['details']
 
     def run(self, db: 'Datalayer'):
@@ -934,6 +954,36 @@ class MetaDataStore:
         :param value: value to be updated
         """
         return self.db['Job'].update({'job_id': job_id}, key=key, value=value)
+
+    def create_deployment(
+        self,
+        deployment: Deployment,
+    ):
+        """Create a deployment in the metadata store.
+
+        :param deployment: Deployment object to be created.
+        """
+        return self.db.insert([deployment])
+
+    def delete_deployment(self, identifier: str):
+        """
+        Delete a deployment from the metadata store.
+
+        :param identifier: identifier of the deployment.
+        """
+        try:
+            return self.db['Deployment'].delete({'identifier': identifier})
+        except exceptions.NotFound:
+            pass
+
+    def teardown_deployment(self, uuid: str):
+        """Teardown a deployment in the metadata store.
+
+        :param uuid: UUID of the deployment.
+        """
+        return self.db['Deployment'].update(
+            {'uuid': uuid}, 'status', STATUS_UNINITIALIZED
+        )
 
     def create_job(self, info: t.Dict):
         """Create a job in the metadata store.

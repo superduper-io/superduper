@@ -420,7 +420,7 @@ class Datalayer:
         table_events = [e for e in events if e.component == 'Table']
         return non_table_events + table_events, potential_breakages
 
-    def remove(
+    def teardown(
         self,
         component: str,
         identifier: str,
@@ -428,13 +428,13 @@ class Datalayer:
         force: bool = False,
     ):
         """
-        Remove a component (version optional).
+        Teardown a component.
 
-        :param component: Cmponent to remove ('Model', 'Listener', etc.)
+        :param component: Component to teardown ('Model', 'Listener', etc.)
         :param identifier: Identifier of the component (refer to
                             `container.base.Component`).
-        :param recursive: Toggle to remove all descendants of the component.
-        :param force: Toggle to force remove the component.
+        :param recursive: Toggle to teardown all descendants of the component.
+        :param force: Toggle to force teardown the component.
         """
         events: t.List[Delete] = []
         self._build_remove(
@@ -468,6 +468,30 @@ class Datalayer:
                 f'Removing component [{i + 1}/{len(filtered_events)}] '
                 f'{e.component}:{e.identifier}... DONE'
             )
+
+    def remove(
+        self,
+        component: str,
+        identifier: str,
+        recursive: bool = False,
+        force: bool = False,
+    ):
+        """
+        Remove a component (version optional).
+
+        :param component: Cmponent to remove ('Model', 'Listener', etc.)
+        :param identifier: Identifier of the component (refer to
+                            `container.base.Component`).
+        :param recursive: Toggle to remove all descendants of the component.
+        :param force: Toggle to force remove the component.
+        """
+        logging.warn('The `remove` method is deprecated, use `teardown` instead.')
+        self.teardown(
+            component=component,
+            identifier=identifier,
+            recursive=recursive,
+            force=force,
+        )
 
     def _build_remove(
         self,

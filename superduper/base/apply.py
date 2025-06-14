@@ -120,9 +120,12 @@ def apply(
         consolidated.append((str(idx), 'PUT', ev.huuid))
         idx += 1
 
+    job_lookup = {}
     for ev in job_events.values():
-        dep_str = f" deps→{','.join(ev.dependencies)}" if ev.dependencies else ''
+        int_dependencies = [str(job_lookup[job_id]) for job_id in ev.dependencies]
+        dep_str = f" deps→{','.join(int_dependencies)}" if int_dependencies else ''
         consolidated.append((str(idx), 'JOB', f'{ev.huuid}: {ev.method}{dep_str}'))
+        job_lookup[ev.job_id] = len(consolidated) - 1
         idx += 1
 
     tbl = Table(show_header=True, header_style='bold magenta')

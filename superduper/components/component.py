@@ -624,6 +624,14 @@ class Component(Base, metaclass=ComponentMeta):
                 for v in item.values():
                     do_refresh(v)
             if isinstance(item, Component):
+                if item._original_parameters is not None:
+                    for k, v in item._original_parameters.items():
+                        try:
+                            setattr(item, k, v)
+                        except AttributeError:
+                            continue
+                    item._original_parameters = None
+
                 item._handle_variables()
                 item._refresh()
 
@@ -642,8 +650,7 @@ class Component(Base, metaclass=ComponentMeta):
         if not variables:
             return
 
-        if not self._original_parameters:
-            self._original_parameters = self.dict()
+        self._original_parameters = self.dict()
 
         former_uuid = self.uuid
 
@@ -765,10 +772,6 @@ class Component(Base, metaclass=ComponentMeta):
         self,
         path: t.Optional[str] = None,
         defaults: bool = False,
-<<<<<<< HEAD
-        metadata: bool = False,
-=======
->>>>>>> 1a1b464b2 (Fixes for variables in `Component`)
         format: str = "json",
     ):
         """
@@ -797,14 +800,9 @@ class Component(Base, metaclass=ComponentMeta):
 
         r = self.encode(
             defaults=defaults,
-<<<<<<< HEAD
-            metadata=metadata,
-            keep_variables=True,
-=======
             metadata=False,
             keep_variables=True,
             export=True,
->>>>>>> 1a1b464b2 (Fixes for variables in `Component`)
         )
 
         def rewrite_keys(r, keys):

@@ -2,11 +2,7 @@ import dataclasses as dc
 import typing as t
 from pprint import pprint
 
-<<<<<<< HEAD
-from superduper import ObjectModel
-=======
 from superduper import Application, Model, ObjectModel, VectorIndex
->>>>>>> 1a1b464b2 (Fixes for variables in `Component`)
 from superduper.base.base import Base
 from superduper.base.constant import KEY_BLOBS, KEY_BUILDS
 from superduper.base.document import Document

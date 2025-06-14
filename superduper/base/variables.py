@@ -1,10 +1,6 @@
 # TODO - test adding variables to identifier
 import re
 import typing as t
-<<<<<<< HEAD
-
-=======
->>>>>>> 1a1b464b2 (Fixes for variables in `Component`)
 
 
 def _find_variables(r):

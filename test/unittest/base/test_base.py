@@ -8,7 +8,6 @@ from superduper.base.constant import KEY_BLOBS, KEY_BUILDS
 from superduper.base.document import Document
 from superduper.components.component import Component
 from superduper.components.listener import Listener
-from superduper import Application, Model, VectorIndex
 
 
 class Test(Base):

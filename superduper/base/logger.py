@@ -71,7 +71,8 @@ class Logging:
         lambda msg: tqdm.write(msg, end=""),
         format=fmt,
         level=CFG.log_level,
-        filter=lambda record: record["level"].no < 4 and record["level"].name != 'USER',
+        filter=lambda record: record["level"].no < 40
+        and record["level"].name != 'USER',
         colorize=colorize,
     )
 

@@ -49,6 +49,8 @@ def apply(
     if not isinstance(object, Component):
         raise ValueError('Only components can be applied')
 
+    object.setup()
+
     # Detect non‑deterministic UUIDs early -----------------------------------
     if object.uuid != object.uuid:
         raise HashingError(

@@ -49,7 +49,8 @@ def apply(
     if not isinstance(object, Component):
         raise ValueError('Only components can be applied')
 
-    object.setup()
+    if object.version is not None:
+        object.setup()
 
     # Detect non‑deterministic UUIDs early -----------------------------------
     if object.uuid != object.uuid:
@@ -122,7 +123,7 @@ def apply(
         consolidated.append((str(idx), 'PUT', ev.huuid))
         idx += 1
 
-    job_lookup = {}
+    job_lookup: t.Dict = {}
     for ev in job_events.values():
         int_dependencies = [str(job_lookup[job_id]) for job_id in ev.dependencies]
         dep_str = f" deps→{','.join(int_dependencies)}" if int_dependencies else ''

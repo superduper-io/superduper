@@ -615,8 +615,11 @@ class Component(Base, metaclass=ComponentMeta):
         leaf_keys = [k for k in r.keys(True) if isinstance(r[k], Base)]
         return {k: r[k] for k in leaf_keys}
 
-    def _refresh(self):
+    def _refresh(self, uuid_swaps: t.Optional[dict[str, str]] = None, **variables):
         def do_refresh(item):
+            if isinstance(item, str):
+                if '<var:' in item:
+                    item = _replace_variables(item, uuid_swaps=uuid_swaps, **variables)
             if isinstance(item, list):
                 for x in item:
                     do_refresh(x)
@@ -633,10 +636,15 @@ class Component(Base, metaclass=ComponentMeta):
                     item._original_parameters = None
 
                 item._handle_variables()
-                item._refresh()
+                item._refresh(uuid_swaps=uuid_swaps, **variables)
+            return item
 
         for k in self.class_schema.fields:
-            do_refresh(getattr(self, k))
+            v = do_refresh(getattr(self, k))
+            try:
+                setattr(self, k, v)
+            except AttributeError:
+                pass
 
     def _handle_variables(self):
         variables = build_vars_var.get(None)
@@ -644,7 +652,7 @@ class Component(Base, metaclass=ComponentMeta):
 
         if 'variables' in self.class_schema.fields and self.variables is not None:
             with build_context(self.variables):
-                self._refresh()
+                self._refresh(uuid_swaps=context_swap_value, **self.variables)
             return
 
         if not variables:

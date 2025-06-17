@@ -218,6 +218,7 @@ class Datalayer:
         identifier: t.Optional[str] = None,
         version: t.Optional[int] = None,
         uuid: t.Optional[str] = None,
+        render: bool = True,
     ):
         """
         Show available functionality which has been added using ``self.add``.
@@ -228,6 +229,7 @@ class Datalayer:
         :param identifier: Identifying string to component.
         :param version: (Optional) Numerical version - specify for full metadata.
         :param uuid: (Optional) UUID of the component.
+        :param render: (Optional) Whether to render the output in a table format.
         """
         if uuid is not None:
             assert component is not None
@@ -236,41 +238,59 @@ class Datalayer:
         if identifier is None and version is not None:
             raise ValueError(f"Must specify {identifier} to go with {version}")
 
-        if component is None:
-            nt = namedtuple('nt', ('component', 'identifier', 'status'))
-            out = self.metadata.show_components()
-            out = sorted(list(set([nt(**x) for x in out])))
-            out = [x._asdict() for x in out]
-            return out
+        if version is not None:
+            assert component is not None
+            assert isinstance(identifier, str)
+            if version == -1:
+                return self.metadata.get_component(
+                    component=component, identifier=identifier, version=None
+                )
+            else:
+                return self.metadata.get_component(
+                    component=component, identifier=identifier, version=version
+                )
 
-        if identifier is None:
+        if component is None:
+
+            nt = namedtuple('nt', ('component', 'identifier', 'status'))
+            result = self.metadata.show_components()
+            result = sorted(list(set([nt(**x) for x in result])))
+            result = [x._asdict() for x in result]
+
+        elif identifier is None:
             try:
-                out = self.metadata.show_components(
+                result = self.metadata.show_components(
                     component=component,
                 )
             except exceptions.NotFound:
-                return []
-            return sorted(out)
+                result = []
 
-        if version is None:
+        elif version is None:
             try:
-                out = sorted(
+                result = sorted(
                     self.metadata.show_component_versions(
                         component=component, identifier=identifier
                     )
                 )
-                return out
             except exceptions.NotFound:
-                return []
+                result = []
 
-        if version == -1:
-            return self.metadata.get_component(
-                component=component, identifier=identifier, version=None
-            )
+        if result and render and isinstance(result[0], dict):
+            from rich.console import Console
+            from rich.panel import Panel
+            from rich.table import Table
 
-        return self.metadata.get_component(
-            component=component, identifier=identifier, version=version
-        )
+            tbl = Table(show_header=True, header_style='bold magenta')
+            columns = list(result[0].keys())
+            for col in columns:
+                tbl.add_column(col, style='cyan', no_wrap=True)
+            for row in result:
+                tbl.add_row(*[str(row[col]) for col in columns])
+
+            console = Console()
+            console.print(Panel(tbl, title='Components Overview', border_style='green'))
+
+        return result
 
     def pre_insert(
         self,

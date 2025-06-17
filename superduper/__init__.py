@@ -38,7 +38,6 @@ from .components.model import (
 from .components.plugin import Plugin
 from .components.streamlit import Streamlit
 from .components.table import Table
-from .components.template import Template
 from .components.vector_index import VectorIndex
 
 REQUIRES = [
@@ -68,8 +67,6 @@ __all__ = (
     'Plugin',
     'Schema',
     'Table',
-    'Application',
-    'Template',
     'Application',
     'Component',
     'trigger',

@@ -1,3 +1,4 @@
+import dataclasses as dc
 import time
 import typing as t
 
@@ -9,7 +10,15 @@ from rich.table import Table
 from superduper import CFG, Component, logging
 from superduper.base import exceptions
 from superduper.base.document import Document
-from superduper.base.event import Create, PutComponent, Signal, Teardown, Update
+from superduper.base.event import (
+    Create,
+    CreateTable,
+    Event,
+    PutComponent,
+    Signal,
+    Teardown,
+    Update,
+)
 from superduper.base.status import pending_status, running_status
 from superduper.misc.tree import dict_to_tree
 
@@ -28,7 +37,69 @@ class HashingError(Exception):
     #noqa
     """
 
-    pass
+
+@dc.dataclass
+class Plan:
+    """A deployment plan that contains a list of events to be executed.
+
+    This class is used to represent the deployment plan that will be executed
+    by the cluster scheduler.
+
+    :param events: A list of events to be executed.
+    """
+
+    events: t.List[t.Union[Event, 'Job']]
+
+    def execute(self, db):
+        """Execute the plan by publishing the events to the cluster scheduler.
+
+        :param db: The Datalayer instance to use.
+        """
+        db.cluster.scheduler.publish(events=self.events)
+
+    def show(self):
+        """Show the plan in a human-readable format."""
+        from superduper.base.metadata import Job
+
+        console.print(Panel('Deployment plan', style='bold blue'))
+
+        consolidated: list[tuple[str, str, str]] = []  # (idx, type, details)
+        idx = 0
+
+        job_lookup = {}
+
+        for idx, ev in enumerate(self.events):
+            if isinstance(ev, CreateTable):
+                consolidated.append((str(idx), 'TABLE', ev.huuid))
+            if isinstance(ev, Create):
+                consolidated.append((str(idx), 'CREATE', ev.huuid))
+            if isinstance(ev, PutComponent):
+                consolidated.append((str(idx), 'PUT', ev.huuid))
+            if isinstance(ev, Teardown):
+                consolidated.append((str(idx), 'TEARDOWN', ev.huuid))
+            if isinstance(ev, Job):
+                int_dependencies = [
+                    str(job_lookup[job_id]) for job_id in ev.dependencies
+                ]
+                dep_str = (
+                    f" deps→{','.join(int_dependencies)}" if int_dependencies else ''
+                )
+                consolidated.append(
+                    (str(idx), 'JOB', f'{ev.huuid}: {ev.method}{dep_str}')
+                )
+                job_lookup[ev.job_id] = len(consolidated) - 1
+
+        tbl = Table(show_header=True, header_style='bold magenta')
+        tbl.add_column('#', style='cyan', no_wrap=True)
+        tbl.add_column('Event type', style='magenta')
+        tbl.add_column('Details', style='white')
+
+        for row in consolidated:
+            tbl.add_row(*row)
+
+        console.print(
+            Panel(tbl, title='Deployment plan – events overview', border_style='green')
+        )
 
 
 def apply(
@@ -37,7 +108,8 @@ def apply(
     force: bool | None = None,
     wait: bool = False,
     jobs: bool = True,
-) -> 'Component':
+    do_apply: bool = True,
+):
     """Apply a `superduper.Component`.
 
     :param db: The Datalayer instance to use.
@@ -45,6 +117,7 @@ def apply(
     :param force: Whether to force the application without confirmation.
     :param wait: Whether to wait for the component to be created.
     :param jobs: Whether to execute jobs after applying the component.
+    :param do_apply: Whether to actually apply the component or just return the plan.
     """
     if not isinstance(object, Component):
         raise ValueError('Only components can be applied')
@@ -92,7 +165,7 @@ def apply(
     # Nothing to do? Exit early.
     if not create_events:
         console.print(Panel('No changes needed – doing nothing!', style='bold yellow'))
-        return object
+        return
 
     # -----------------------------------------------------------------------
     # 3. Present the diff (if any) and the deployment plan
@@ -100,61 +173,6 @@ def apply(
     if diff:
         console.print(Panel('Diff vs current state', style='bold blue'))
         console.print(dict_to_tree(diff, root=object.identifier), soft_wrap=True)
-
-    console.print(Panel('Deployment plan', style='bold blue'))
-
-    # -----------------------------------------------------------------------
-    # 3a. Build a *single* consolidated table covering ALL events
-    # -----------------------------------------------------------------------
-    consolidated: list[tuple[str, str, str]] = []  # (idx, type, details)
-    idx = 0
-
-    for ev in table_events.values():
-        consolidated.append((str(idx), 'TABLE', ev.huuid))
-        idx += 1
-
-    for ev in create_events.values():
-        consolidated.append(
-            (str(idx), 'CREATE', f'{ev.huuid}: {ev.__class__.__name__}')
-        )
-        idx += 1
-
-    for ev in put_events.values():
-        consolidated.append((str(idx), 'PUT', ev.huuid))
-        idx += 1
-
-    job_lookup: t.Dict = {}
-    for ev in teardown_events.values():
-        consolidated.append((str(idx), 'TEARDOWN', ev.huuid))
-        idx += 1
-
-    for ev in job_events.values():
-        int_dependencies = [str(job_lookup[job_id]) for job_id in ev.dependencies]
-        dep_str = f" deps→{','.join(int_dependencies)}" if int_dependencies else ''
-        consolidated.append((str(idx), 'JOB', f'{ev.huuid}: {ev.method}{dep_str}'))
-        job_lookup[ev.job_id] = len(consolidated) - 1
-        idx += 1
-
-    tbl = Table(show_header=True, header_style='bold magenta')
-    tbl.add_column('#', style='cyan', no_wrap=True)
-    tbl.add_column('Event type', style='magenta')
-    tbl.add_column('Details', style='white')
-
-    for row in consolidated:
-        tbl.add_row(*row)
-
-    console.print(
-        Panel(tbl, title='Deployment plan – events overview', border_style='green')
-    )
-
-    # -----------------------------------------------------------------------
-    # 4. Confirm (unless --force) and publish the events
-    # -----------------------------------------------------------------------
-    if not force:
-        if not click.confirm(
-            '\033[1mPlease approve this deployment plan.\033[0m', default=True
-        ):
-            return object
 
     assert db.cluster is not None  # mypy‑friendliness
 
@@ -167,12 +185,25 @@ def apply(
         Signal(context=object.uuid, msg='done'),
     ]
 
-    db.cluster.scheduler.publish(events=events)
+    plan = Plan(events=events)
 
-    if wait:
-        _wait_on_events(db, list(create_events.values()))
+    plan.show()
 
-    return object
+    # -----------------------------------------------------------------------
+    # 4. Confirm (unless --force) and publish the events
+    # -----------------------------------------------------------------------
+    if not force:
+        if not click.confirm(
+            '\033[1mPlease approve this deployment plan.\033[0m', default=True
+        ):
+            return plan
+
+    if do_apply:
+        plan.execute(db)
+        if wait:
+            _wait_on_events(db, list(create_events.values()))
+
+    return plan
 
 
 # ---------------------------------------------------------------------------

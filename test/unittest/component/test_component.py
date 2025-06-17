@@ -208,7 +208,7 @@ def test_remove_recursive(db):
         'c3',
     ]
 
-    db.remove('NewComponent', c3.identifier, recursive=True, force=True)
+    db.teardown('NewComponent', c3.identifier, recursive=True, force=True)
 
     len(db.show()) == 1
 

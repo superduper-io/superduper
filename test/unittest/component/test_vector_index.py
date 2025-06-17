@@ -40,7 +40,7 @@ def test_vector_index_cleanup(db):
 
     assert vector_index, uuid in db.cluster.vector_search.list()
 
-    db.remove('VectorIndex', vector_index, force=True)
+    db.teardown('VectorIndex', vector_index, force=True)
 
     assert vector_index, uuid not in db.cluster.vector_search.list()
 

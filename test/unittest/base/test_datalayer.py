@@ -210,7 +210,7 @@ def test_remove_multi_version(db):
     ]:
         db.apply(component)
 
-    db.remove('TestComponent', 'test', force=True)
+    db.teardown('TestComponent', 'test', force=True)
     # Wait for the db to update
     time.sleep(0.1)
     assert db.show('TestComponent', 'test') == []
@@ -325,7 +325,7 @@ def test_compound_component(db):
 
     m = db.load('ObjectModel', identifier='my-test-module')
 
-    db.remove('ObjectModel', 'my-test-module', force=True)
+    db.teardown('ObjectModel', 'my-test-module', force=True)
 
 
 def test_reload_dataset(db):
@@ -380,7 +380,7 @@ def test_delete_component_with_same_artifact(db):
     db.apply(model1)
     db.apply(model2)
 
-    db.remove('ObjectModel', 'model1', force=True)
+    db.teardown('ObjectModel', 'model1', force=True)
 
     model2 = db.load('ObjectModel', 'model2')
     model2.setup()
@@ -426,7 +426,7 @@ def test_remove_not_recursive(db: Datalayer):
 
     assert db.show('Container', 'container') == [0]
 
-    db.remove('Container', 'container')
+    db.teardown('Container', 'container')
 
     assert 'container' not in db.show('Container')
 
@@ -444,7 +444,7 @@ def test_remove_recursive(db: Datalayer):
 
     assert db.show('Container', 'container') == [0]
 
-    db.remove('Container', 'container', recursive=True)
+    db.teardown('Container', 'container', recursive=True)
 
     assert 'container' not in db.show('Container')
 
@@ -465,14 +465,14 @@ def test_remove_shared(db: Datalayer):
     assert db.show('Container', 'container2') == [0]
 
     with pytest.raises(Exception) as e:
-        db.remove('Container', 'container1', recursive=True)
+        db.teardown('Container', 'container1', recursive=True)
 
     assert 'container2' in str(e)
 
     # Check that the container is not removed, since a child failed
     assert 'container1' in db.show('Container')
 
-    db.remove('Container', 'container2', recursive=True, force=True)
+    db.teardown('Container', 'container2', recursive=True, force=True)
 
     assert 'container2' not in db.show('Container')
     assert 'container1' in db.show('Container')

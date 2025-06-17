@@ -51,6 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add scanning for leaked passwords on the CI
 - Simple detached-lifetime compute and vector-search implementations
 - Nicer print statement and `Component.show()` for full view
+- Get plan only (no apply) with `db.plan`
 
 ### Bug fixes
 

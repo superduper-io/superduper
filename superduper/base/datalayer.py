@@ -344,6 +344,37 @@ class Datalayer:
         except exceptions.AlreadyExists:
             logging.debug(f'{object} already exists, skipping...')
 
+    def plan(
+        self,
+        object: Component,
+        force: bool | None = None,
+        wait: bool = False,
+        jobs: bool = True,
+        **variables,
+    ):
+        """
+        Create a plan for adding functionality in the form of components.
+
+        :param object: Object to be stored.
+        :param force: Force apply.
+        :param wait: Wait for apply events.
+        :param jobs: Execute jobs.
+        :param variables: Additional variables to pass to the apply function.
+        """
+        if variables:
+            object = object.use_variables(**variables)
+
+        with self.metadata.cache():
+            plan = apply.apply(
+                db=self,
+                object=object,
+                force=force,
+                wait=wait,
+                jobs=jobs,
+                do_apply=False,
+            )
+        return plan
+
     def apply(
         self,
         object: Component,
@@ -368,10 +399,7 @@ class Datalayer:
             object = object.use_variables(**variables)
 
         with self.metadata.cache():
-            result = apply.apply(
-                db=self, object=object, force=force, wait=wait, jobs=jobs
-            )
-        return result
+            apply.apply(db=self, object=object, force=force, wait=wait, jobs=jobs)
 
     def _filter_deletions_by_cascade(self, events: t.List[Delete]):
         """

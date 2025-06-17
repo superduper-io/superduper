@@ -108,7 +108,7 @@ class LLMCallback(TrainerCallback):
             versions = []
         if len(versions) > args.save_total_limit:
             for version in versions[: -args.save_total_limit]:
-                self.db.remove("checkpoint", self.experiment_id, version, force=True)
+                self.db.teardown("checkpoint", self.experiment_id, version, force=True)
 
     def on_evaluate(self, args, state, control, **kwargs):
         """Event called after an evaluation.

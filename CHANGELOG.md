@@ -42,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Lazy sub-component loading to increase performance
 - Default log-level USER
 - Teardown old deployments when creating new ones with `Deployment`
+- Remove `Template` component after adding `.variables` feature
 
 ### New features
 

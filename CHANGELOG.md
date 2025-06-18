@@ -9,14 +9,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## MAIN
 
-#### Changed defaults / behaviours
+### Changed defaults / behaviours
+
+### New features
+
+### Bug fixes
+
+## [0.8.0](https://github.com/superduper-io/superduper/compare/0.8.0...0.7.0]) (2025-Jun-18)
+
+### Changed defaults / behaviours
+
+- Remove the dependencies property from `Component`
+- Fix the bug where the parent of dependent_tables was incorrect when deleting a component.
+- Add `outputs` parameter to `@trigger` to show outputs location and link streaming tasks
+- Remove `json_native` and `datatype_presets`
+- Lazy sub-component loading to increase performance
+- Default log-level USER
+- Teardown old deployments when creating new ones with `Deployment`
+- Remove `Template` component after adding `.variables` feature
+
+### New features
+
+- Nicer print statement and `Component.show()` for full view
+- Get plan only (no apply) with `db.plan`
+
 
 ### Bug fixes
 
 - Fix the vector datatype and json_native issue for PostgreSQL
 - Fix the missing dependency issue caused by component references.
 - Fix the `.variables` parameter at the top level
-
 - Add info to Template
 
 ## [0.7.0](https://github.com/superduper-io/superduper/compare/0.7.0...0.6.0])    (2025-May-26)
@@ -35,14 +57,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Propagate errors from `Job` upwards through `Component` hierarchy
 - Handle deletion in progress with status updates
 - Add postprocess in Template
-- Remove the dependencies property from `Component`
-- Fix the bug where the parent of dependent_tables was incorrect when deleting a component.
-- Add `outputs` parameter to `@trigger` to show outputs location and link streaming tasks
-- Remove `json_native` and `datatype_presets`
-- Lazy sub-component loading to increase performance
-- Default log-level USER
-- Teardown old deployments when creating new ones with `Deployment`
-- Remove `Template` component after adding `.variables` feature
 
 ### New features
 
@@ -51,8 +65,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add reconnection support for Snowflake vector search
 - Add scanning for leaked passwords on the CI
 - Simple detached-lifetime compute and vector-search implementations
-- Nicer print statement and `Component.show()` for full view
-- Get plan only (no apply) with `db.plan`
 
 ### Bug fixes
 

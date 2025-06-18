@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "superduper-framework"
 description = "Build compositional and declarative AI applications and agents"
 readme = "README.md"
-version = '0.8.0'
+version = '0.8.1'
 license = {file = "LICENSE"}
 maintainers = [{name = "superduper.io, Inc.", email = "opensource@superduper.com"}]
 keywords = [

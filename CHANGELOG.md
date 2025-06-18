@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Changed defaults / behaviours
 
+- Add offset parameter to limit query
+
 ### Bug fixes
 
 - Fix the vector datatype and json_native issue for PostgreSQL

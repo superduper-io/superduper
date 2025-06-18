@@ -253,7 +253,7 @@ class Create(Event):
     @property
     def huuid(self):
         """Return the hashed uuid."""
-        return f'{self.component}:' f'{self.data["identifier"]}:' f'{self.data["uuid"]}'
+        return f'{self.component}:{self.data["identifier"]}:{self.data["uuid"]}'
 
 
 class PutComponent(Event):
@@ -552,7 +552,7 @@ class Update(Event):
     @property
     def huuid(self):
         """Return the hashed uuid."""
-        return f'{self.component}' f'{self.data["identifier"]}:' f'{self.data["uuid"]}'
+        return f'{self.component}:{self.data["identifier"]}:{self.data["uuid"]}'
 
 
 def unpack_event(r):

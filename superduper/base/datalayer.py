@@ -506,6 +506,10 @@ class Datalayer:
                 f"the following components are using some components scheduled for deletion: {msg}",
             )
 
+        if not filtered_events and events:
+            logging.warn(f'No deletions to perform for {component}:{identifier}')
+            return False
+
         for i, e in enumerate(filtered_events):
             logging.info(
                 f'Removing component [{i + 1}/{len(filtered_events)}] '
@@ -516,6 +520,8 @@ class Datalayer:
                 f'Removing component [{i + 1}/{len(filtered_events)}] '
                 f'{e.component}:{e.identifier}... DONE'
             )
+
+        return True
 
     def remove(
         self,

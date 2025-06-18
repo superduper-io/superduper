@@ -368,7 +368,15 @@ class Document(DeepKeyedDict):
 
         for k in builds:
             if isinstance(builds[k], dict):  # and ('_path' in builds[k]):
-                builds[k]['identifier'] = k.split(':')[-1]
+                variables = re.findall('\<var\:[A-Za-z0-9_]+\>', k)
+                import copy
+                kk = copy.copy(k)
+                for i, v in enumerate(variables):
+                    kk = kk.replace(v, f'#{i}')
+                identifier = kk.split(':')[-1]
+                for i, v in enumerate(variables):
+                    identifier = identifier.replace(f'#{i}', v)
+                builds[k]['identifier'] = identifier
 
         assert schema is not None
         r = schema.decode_data(r, builds=builds, db=db)

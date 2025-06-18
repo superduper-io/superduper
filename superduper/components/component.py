@@ -644,6 +644,10 @@ class Component(Base, metaclass=ComponentMeta):
                 item._refresh(uuid_swaps=uuid_swaps, **variables)
             return item
 
+        if '<var:' in self.identifier:
+            self.identifier = _replace_variables(
+                self.identifier, uuid_swaps=uuid_swaps, **variables
+            )
         for k in self.class_schema.fields:
             v = do_refresh(getattr(self, k))
             try:

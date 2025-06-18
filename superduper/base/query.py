@@ -284,7 +284,7 @@ def bind(f):
 
 
 @bind
-def limit(self, n: int):
+def limit(self, n: int, offset: int = 0):
     """Limit the number of results returned by the query.
 
     # noqa
@@ -294,7 +294,11 @@ def limit(self, n: int):
     # always the last one
     assert not self.decomposition.limit
     assert not self.decomposition.get
-    return self + QueryPart('limit', (n,), {})
+    if offset:
+        kwargs = {"offset": offset}
+    else:
+        kwargs = {}
+    return self + QueryPart('limit', (n,), kwargs)
 
 
 def insert(self: 'Query', documents, raw: bool = False):

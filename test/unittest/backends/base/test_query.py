@@ -23,17 +23,17 @@ def test_insert(db):
 
 
 def test_atomic_parse(db):
-    q = db['docs']['x'] == 2
+    q = db["docs"]["x"] == 2
     r = q.dict()
 
-    parsed = parse_query(query=r['query'], documents=r['documents'], db=db)
+    parsed = parse_query(query=r["query"], documents=r["documents"], db=db)
 
     assert len(parsed) == 3
 
-    q = db['docs']['x'] == 'a'
+    q = db["docs"]["x"] == "a"
     r = q.dict()
 
-    parsed = parse_query(query=r['query'], documents=r['documents'], db=db)
+    parsed = parse_query(query=r["query"], documents=r["documents"], db=db)
 
     assert len(parsed) == 3
 
@@ -48,14 +48,13 @@ class UseToSave(Base):
 
 
 def test_encode_decode_data(db: Datalayer):
-
     data = [UseToSave(x=ToSave(i)) for i in range(10)]
 
     db.insert(data)
 
-    results = db['UseToSave'].execute()
+    results = db["UseToSave"].execute()
 
-    assert isinstance(results[0].unpack()['x'], ToSave)
+    assert isinstance(results[0].unpack()["x"], ToSave)
 
 
 class Document(Base):
@@ -63,14 +62,13 @@ class Document(Base):
 
 
 def test_filter_select(db):
-
     db.insert([Document(x=i) for i in range(10)])
 
-    t = db['Document']
+    t = db["Document"]
 
     pid = t.primary_id.execute()
 
-    q = t.filter(t['x'] == 2).select(pid)
+    q = t.filter(t["x"] == 2).select(pid)
 
     r = q.execute()[0]
 
@@ -78,88 +76,87 @@ def test_filter_select(db):
 
 
 def test_filter(db):
-
     db.insert([Document(x=i) for i in range(10)])
 
-    t = db['Document']
+    t = db["Document"]
 
     ######## ==
 
-    q = t.filter(t['x'] == 1)
+    q = t.filter(t["x"] == 1)
 
     results = q.execute()
 
     assert len(results) == 1
 
-    assert results[0]['x'] == 1
+    assert results[0]["x"] == 1
 
     ######## >
 
-    q = t.filter(t['x'] > 5)
+    q = t.filter(t["x"] > 5)
 
     results = q.execute()
 
-    assert all(r['x'] > 5 for r in results)
-    assert not any(r['x'] <= 5 for r in results)
+    assert all(r["x"] > 5 for r in results)
+    assert not any(r["x"] <= 5 for r in results)
 
     ######## >=
 
-    q = t.filter(t['x'] >= 5)
+    q = t.filter(t["x"] >= 5)
 
     results = q.execute()
 
-    assert all(r['x'] >= 5 for r in results)
-    assert not any(r['x'] < 5 for r in results)
+    assert all(r["x"] >= 5 for r in results)
+    assert not any(r["x"] < 5 for r in results)
 
     ######## <
 
-    q = t.filter(t['x'] < 5)
+    q = t.filter(t["x"] < 5)
 
     results = q.execute()
 
-    assert all(r['x'] < 5 for r in results)
-    assert not any(r['x'] >= 5 for r in results)
+    assert all(r["x"] < 5 for r in results)
+    assert not any(r["x"] >= 5 for r in results)
 
     ######## <=
 
-    q = t.filter(t['x'] <= 5)
+    q = t.filter(t["x"] <= 5)
 
     results = q.execute()
 
-    assert all(r['x'] <= 5 for r in results)
-    assert not any(r['x'] > 5 for r in results)
+    assert all(r["x"] <= 5 for r in results)
+    assert not any(r["x"] > 5 for r in results)
 
     ######## isin
 
-    q = t.filter(t['x'].isin([1, 3]))
+    q = t.filter(t["x"].isin([1, 3]))
 
     results = q.execute()
 
-    assert set(r['x'] for r in results) == {1, 3}
+    assert set(r["x"] for r in results) == {1, 3}
 
     ######## !=
 
-    q = t.filter(t['x'] != 5)
+    q = t.filter(t["x"] != 5)
 
     results = q.execute()
 
-    assert set(r['x'] for r in results) == {0, 1, 2, 3, 4, 6, 7, 8, 9}
+    assert set(r["x"] for r in results) == {0, 1, 2, 3, 4, 6, 7, 8, 9}
 
 
 def test_select_one_col(db):
     db.insert([Document(x=i) for i in range(10)])
 
-    q = db['Document'].select('x')
+    q = db["Document"].select("x")
 
     results = q.execute()
 
-    assert set(results[0].keys()) == {'x'}
+    assert set(results[0].keys()) == {"x"}
 
 
 def test_select_all_cols(db):
     db.insert([Document(x=i) for i in range(10)])
 
-    q = db['Document'].select()
+    q = db["Document"].select()
 
     results = q.execute()
 
@@ -169,15 +166,14 @@ def test_select_all_cols(db):
 def test_select_table(db):
     db.insert([Document(x=i) for i in range(10)])
 
-    results = db['Document'].execute()
+    results = db["Document"].execute()
     assert len(results) == 10
 
 
 def test_ids(db):
-
     db.insert([Document(x=i) for i in range(10)])
 
-    results = db['Document'].ids()
+    results = db["Document"].ids()
 
     assert len(results) == 10
 
@@ -187,29 +183,29 @@ def test_ids(db):
 def test_subset(db):
     db.insert([Document(x=i) for i in range(10)])
 
-    ids = db['Document'].ids()
-    results = db['Document'].subset(ids[:5])
+    ids = db["Document"].ids()
+    results = db["Document"].subset(ids[:5])
 
-    pid = db['Document'].primary_id.execute()
+    pid = db["Document"].primary_id.execute()
 
     assert set([r[pid] for r in results]) == set(ids[:5])
 
     db.apply(
         Table(
-            '_outputs__a__123456789',
-            fields={'_outputs__a__123456789': 'int', '_source': 'str'},
+            "_outputs__a__123456789",
+            fields={"_outputs__a__123456789": "int", "_source": "str"},
         )
     )
 
-    db['_outputs__a__123456789'].insert(
-        [{'_outputs__a__123456789': i + 2, '_source': id} for i, id in enumerate(ids)]
+    db["_outputs__a__123456789"].insert(
+        [{"_outputs__a__123456789": i + 2, "_source": id} for i, id in enumerate(ids)]
     )
 
-    results = db['Document'].outputs('a__123456789').subset(ids[:5])
+    results = db["Document"].outputs("a__123456789").subset(ids[:5])
 
     assert set([r[pid] for r in results]) == set(ids[:5])
 
-    assert 'x' in results[0]
+    assert "x" in results[0]
 
 
 def test_outputs(db):
@@ -217,19 +213,19 @@ def test_outputs(db):
 
     db.apply(
         Table(
-            '_outputs__a__123456789',
-            fields={'_outputs__a__123456789': 'int', '_source': 'str'},
+            "_outputs__a__123456789",
+            fields={"_outputs__a__123456789": "int", "_source": "str"},
         )
     )
 
-    db['_outputs__a__123456789'].insert(
-        [{'_outputs__a__123456789': i + 2, '_source': id} for i, id in enumerate(ids)]
+    db["_outputs__a__123456789"].insert(
+        [{"_outputs__a__123456789": i + 2, "_source": id} for i, id in enumerate(ids)]
     )
-    outputs = db['Document'].outputs('a__123456789').execute()
+    outputs = db["Document"].outputs("a__123456789").execute()
     print(outputs)
 
     for r in outputs:
-        assert r['x'] + 2 == r['_outputs__a__123']
+        assert r["x"] + 2 == r["_outputs__a__123"]
 
 
 class Special(Base):
@@ -286,7 +282,7 @@ def test_read(db):
     # Test filter select
     table = db["Special"]
     primary_id = table.primary_id
-    select = table.select("x", "y", "n").filter(table['y'] == 1, table['n'] > 5)
+    select = table.select("x", "y", "n").filter(table["y"] == 1, table["n"] > 5)
     results = list(select.execute())
     assert len(results) == 3
     assert [6, 8, 10] == [r["n"] for r in results]
@@ -319,7 +315,7 @@ def test_like(db):
         .execute()
     )
 
-    scores = [r['score'] for r in out]
+    scores = [r["score"] for r in out]
 
     primary_id = table.primary_id.execute()
 
@@ -350,7 +346,7 @@ def test_like(db):
         .execute()
     )
 
-    scores = [r['score'] for r in out]
+    scores = [r["score"] for r in out]
 
     assert len(out) == 4
 
@@ -359,9 +355,29 @@ def test_like(db):
 
 def test_parse_outputs_query(db):
     q = parse_query(
-        query='_outputs__listener1__9bc4a01366f24603.select()',
+        query="_outputs__listener1__9bc4a01366f24603.select()",
         documents=[],
         db=db,
     )
 
     assert len(q) == 2
+
+
+def test_limit(db):
+    pass
+
+    this_list = []
+    for i in range(10):
+        this_list.append(This(this=f"test {i}"))
+    db.insert(this_list)
+
+    limit_2 = db["This"].select().limit(2).execute()
+
+    assert len(limit_2) == 2
+    assert limit_2[0]["this"] == "test 0"
+    assert limit_2[1]["this"] == "test 1"
+
+    offset_2 = db["This"].select().limit(2, offset=2).execute()
+    assert len(offset_2) == 2
+    assert offset_2[0]["this"] == "test 2"
+    assert offset_2[1]["this"] == "test 3"

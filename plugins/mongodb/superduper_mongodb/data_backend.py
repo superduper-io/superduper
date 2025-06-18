@@ -179,11 +179,12 @@ class MongoDBDataBackend(BaseDataBackend):
 
         limit = self._get_limit(query)
         if limit:
-            return list(
-                collection.find(
-                    self._mongo_filter(query), self._get_project(query)
-                ).limit(limit)
-            )
+            native_query = collection.find(
+                self._mongo_filter(query), self._get_project(query)
+            ).limit(limit)
+            if skip := self._get_skip(query):
+                native_query = native_query.skip(skip)
+            return list(native_query)
 
         return list(
             collection.find(self._mongo_filter(query), self._get_project(query))
@@ -263,6 +264,15 @@ class MongoDBDataBackend(BaseDataBackend):
         except AttributeError:
             return
 
+    @staticmethod
+    def _get_skip(query):
+        try:
+            out = query.decomposition.limit.kwargs
+            offset = out.get('offset', None)
+            return offset
+        except AttributeError:
+            return None
+
     def _outputs(self, query):
         pipeline = []
 
@@ -321,6 +331,9 @@ class MongoDBDataBackend(BaseDataBackend):
 
         if self._get_limit(query):
             pipeline.append({"$limit": self._get_limit(query)})
+
+        if self._get_skip(query):
+            pipeline.append({"$skip": self._get_skip(query)})
 
         try:
             import json

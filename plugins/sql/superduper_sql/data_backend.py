@@ -1,3 +1,4 @@
+import json
 import threading
 import time
 import typing as t
@@ -258,14 +259,24 @@ class IbisDataBackend(BaseDataBackend):
             query = self._build_native_query(conn, query)
             output_table = conn.table(f"{CFG.output_prefix}{predict_id}")
             q = query.anti_join(output_table, output_table["_source"] == query[pid])
-            rows = q.execute().to_dict(orient="records")
+            rows = self._to_records(q.execute())
             return [r[pid] for r in rows]
 
     def select(self, query):
         """Select data from the database."""
         with self.connection_manager.get_connection() as conn:
             native_query = self._build_native_query(conn, query)
-            return native_query.execute().to_dict(orient="records")
+            return self._to_records(native_query.execute())
+
+    def _to_records(self, df):
+        """Get records from the database based on the query.
+
+        This ensures that the returned data can be serialized to JSON
+        without introducing any special data types. (nan, inf, -inf)
+        """
+        json_data = df.to_json(orient="records", date_format="iso", force_ascii=False)
+        records = json.loads(json_data)
+        return records
 
     def _build_native_query(self, conn, query):
         try:
@@ -340,7 +351,7 @@ class IbisDataBackend(BaseDataBackend):
         :param query: The query to execute.
         """
         with self.connection_manager.get_connection() as conn:
-            return pandas.DataFrame(conn.raw_sql(query)).to_dict(orient="records")
+            return self._to_records(pandas.DataFrame(conn.raw_sql(query)))
 
 
 class SQLDatabackend(IbisDataBackend):

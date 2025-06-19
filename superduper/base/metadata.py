@@ -1271,7 +1271,8 @@ class MetaDataStore:
         :param uuid: unique identifier of the object.
         :param info: dictionary containing information about the object.
         """
-        self.db[component].replace({'uuid': uuid}, info)
+        info.pop("_path")
+        self.db[component].replace({'uuid': uuid}, info, raw=True)
 
     def get_component_parents(self, component: str, identifier: str):
         """

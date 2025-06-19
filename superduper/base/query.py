@@ -318,13 +318,7 @@ def update(self, condition: t.Dict, key: str, value: t.Any):
     # noqa
     """
     db = route_db(self.db, self.table)
-    s = self.db.metadata.get_schema(self.table)
-    datatype = None
-    if isinstance(s[key], BaseDataType):
-        datatype = s[key]
-    out = db.databackend.do_update(
-        self.table, condition, key=key, value=value, datatype=datatype
-    )
+    out = db.databackend.do_update(self.table, condition, key=key, value=value)
 
     # FIXME: Access to a protected member _post_query of a class
     self.db._post_query(self.table, ids=out, type_='update')
@@ -341,7 +335,7 @@ def delete(self, condition: t.Dict):
     return out
 
 
-def replace(self, condition: t.Dict, r: t.Dict | Document):
+def replace(self, condition: t.Dict, r: t.Dict | Document, raw: bool = False):
     """Update documents in the table.
 
     # noqa
@@ -368,7 +362,7 @@ def replace(self, condition: t.Dict, r: t.Dict | Document):
     #     r = s.encode_data(r)
 
     db = route_db(self.db, self.table)
-    out = db.databackend.do_replace(self.table, condition, r)
+    out = db.databackend.do_replace(self.table, condition, r, raw=raw)
 
     self.db._post_query(self.table, ids=out, type_='update')
     return out

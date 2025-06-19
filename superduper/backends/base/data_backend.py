@@ -161,7 +161,7 @@ class BaseDataBackend(ABC):
         :param documents: The documents to insert.
         """
 
-    def do_replace(self, table: str, condition: t.Dict, r: t.Dict):
+    def do_replace(self, table: str, condition: t.Dict, r: t.Dict, raw: bool = False):
         """Replace data in the database.
 
         This method is a wrapper around the `replace` method to ensure
@@ -170,35 +170,14 @@ class BaseDataBackend(ABC):
         :param table: The table to insert into.
         :param condition: The condition to update.
         :param r: The document to replace.
+        :param raw: If ``True``, replace raw documents.
         """
-        schema = self.get_schema(self.db[table])
-
-        if isinstance(r, Document) and not schema.trivial:
-            schema = self.get_schema(self.db[table])
-            r = Document(r).encode(schema=schema, db=self.db)
-            if r.get(KEY_BLOBS) or r.get(KEY_FILES):
-                self.db.artifact_store.save_artifact(r)
-
-        try:
-            r.pop(KEY_BUILDS)
-        except KeyError:
-            pass
-        try:
-            r.pop(KEY_BLOBS)
-        except KeyError:
-            pass
-        try:
-            r.pop(KEY_FILES)
-        except KeyError:
-            pass
-        try:
-            r.pop(KEY_PATH)
-        except KeyError:
-            pass
-
-        r = self._encode_document_fields(r, schema)
-
-        self.replace(table, condition=condition, r=r)
+        r = self._preprocess_documents(table, [r], raw=raw)[0]
+        self.replace(
+            table,
+            condition=condition,
+            r=r,
+        )
         return
 
     @abstractmethod
@@ -216,7 +195,6 @@ class BaseDataBackend(ABC):
         condition: t.Dict,
         key: str,
         value: t.Any,
-        datatype: BaseDataType | None = None,
     ):
         """Update data in the database.
 
@@ -227,18 +205,9 @@ class BaseDataBackend(ABC):
         :param condition: The condition to update.
         :param key: The key to update.
         :param value: The value to update.
-        :param datatype: The datatype to use for encoding the value.
         """
-        if datatype is not None:
-            value = datatype.encode_data(value, None)
-            if datatype.dtype == 'json' and not self.json_native:
-                value = json.dumps(value)
-            elif isinstance(datatype, Vector):
-                vector_datatype = self.vector_impl(
-                    dtype=datatype.dtype, shape=datatype.shape
-                )
-                value = vector_datatype.encode_data(value, None)
-        self.update(table, condition, key, value)
+        r = self._preprocess_documents(table, [{key: value}])[0]
+        self.update(table, condition, key, r[key])
 
     @abstractmethod
     def update(self, table: str, condition: t.Dict, key: str, value: t.Any):
@@ -367,6 +336,17 @@ class BaseDataBackend(ABC):
         :param documents: The documents to insert.
         :param raw: If ``True``, insert raw documents.
         """
+        documents = self._preprocess_documents(table, documents, raw=raw)
+        out = self.insert(table, documents)
+        return [str(x) for x in out]
+
+    def _preprocess_documents(self, table, documents, raw: bool = False):
+        """Insert data into the database.
+
+        :param table: The table to insert into.
+        :param documents: The documents to insert.
+        :param raw: If ``True``, insert raw documents.
+        """
         schema = self.get_schema(self.db[table])
 
         if not raw and not schema.trivial:
@@ -397,8 +377,7 @@ class BaseDataBackend(ABC):
                 documents[i] = r
 
         documents = [self._encode_document_fields(r, schema) for r in documents]
-        out = self.insert(table, documents)
-        return [str(x) for x in out]
+        return documents
 
     def pre_like(self, query: Query, **kwargs):
         """Perform a pre-like query.

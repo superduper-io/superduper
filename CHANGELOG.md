@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix the vector datatype and json_native issue for PostgreSQL
 - Fix the missing dependency issue caused by component references.
 - Fix the `.variables` parameter at the top level
+- Fix the to_records feature in ibis
+- Fix the execution of datatype in replace and update operations.
 
 - Add info to Template
 

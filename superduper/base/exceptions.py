@@ -1,6 +1,9 @@
 import sys
 from enum import Enum
 from http import HTTPStatus
+from http.client import UNAUTHORIZED
+
+import httpx
 
 from superduper import logging
 

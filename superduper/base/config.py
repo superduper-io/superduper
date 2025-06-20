@@ -116,6 +116,19 @@ class Downloads(BaseConfig):
     timeout: t.Optional[int] = None
 
 
+
+
+@dc.dataclass
+class Runtime:
+    """
+    Runtime provides information about the execution environment.
+    :param plugin_name: the name of the runtime plugin
+    :param plugin_kwargs: The arguments to pass to the runtime plugin
+    """
+    plugin_name: str
+    plugin_kwargs: t.Dict
+
+
 @dc.dataclass
 class Config(BaseConfig):
     """The data class containing all configurable superduper values.
@@ -138,6 +151,7 @@ class Config(BaseConfig):
     :param bytes_encoding: (Deprecated)
     :param output_prefix: The prefix for the output table and output field key
     :param vector_search_kwargs: The keyword arguments to pass to the vector search
+    :param runtime: The execution environment where services are running
     """
 
     envs: dc.InitVar[t.Optional[t.Dict[str, str]]] = None
@@ -165,6 +179,8 @@ class Config(BaseConfig):
 
     output_prefix: str = "_outputs__"
     vector_search_kwargs: t.Dict = dc.field(default_factory=dict)
+
+    runtime: Runtime = Runtime(plugin_name="local", plugin_kwargs={})
 
     def __post_init__(self, envs):
         if envs is not None:

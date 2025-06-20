@@ -46,16 +46,15 @@ class Plan:
     by the cluster scheduler.
 
     :param events: A list of events to be executed.
+    :param db: The Datalayer instance to use for executing the plan.
     """
 
     events: t.List[t.Union[Event, 'Job']]
+    db: 'Datalayer'
 
-    def execute(self, db):
-        """Execute the plan by publishing the events to the cluster scheduler.
-
-        :param db: The Datalayer instance to use.
-        """
-        db.cluster.scheduler.publish(events=self.events)
+    def apply(self):
+        """Execute the plan by publishing the events to the cluster scheduler."""
+        self.db.cluster.scheduler.publish(events=self.events)
 
     def show(self):
         """Show the plan in a human-readable format."""
@@ -185,21 +184,21 @@ def apply(
         Signal(context=object.uuid, msg='done'),
     ]
 
-    plan = Plan(events=events)
+    plan = Plan(events=events, db=db)
 
     plan.show()
 
     # -----------------------------------------------------------------------
     # 4. Confirm (unless --force) and publish the events
     # -----------------------------------------------------------------------
-    if not force:
-        if not click.confirm(
-            '\033[1mPlease approve this deployment plan.\033[0m', default=True
-        ):
-            return plan
 
     if do_apply:
-        plan.execute(db)
+        if not force:
+            if not click.confirm(
+                '\033[1mPlease approve this deployment plan.\033[0m', default=True
+            ):
+                return plan
+        plan.apply()
         if wait:
             _wait_on_events(db, list(create_events.values()))
 

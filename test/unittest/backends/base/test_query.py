@@ -364,8 +364,6 @@ def test_parse_outputs_query(db):
 
 
 def test_limit(db):
-    pass
-
     this_list = []
     for i in range(10):
         this_list.append(This(this=f"test {i}"))

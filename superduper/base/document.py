@@ -370,6 +370,7 @@ class Document(DeepKeyedDict):
             if isinstance(builds[k], dict):  # and ('_path' in builds[k]):
                 variables = re.findall('\<var\:[A-Za-z0-9_]+\>', k)
                 import copy
+
                 kk = copy.copy(k)
                 for i, v in enumerate(variables):
                     kk = kk.replace(v, f'#{i}')

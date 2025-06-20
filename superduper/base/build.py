@@ -11,8 +11,8 @@ from superduper.base.artifacts import (
     FileSystemArtifactStore,
 )
 from superduper.base.config import Config
+from superduper.base.config_settings import ConfigSettings
 from superduper.base.datalayer import Datalayer
-from superduper.base.metadata import MetaDataStore
 from superduper.misc.anonymize import anonymize_url
 from superduper.misc.importing import load_plugin
 

@@ -81,7 +81,8 @@ class ConfigSettings:
     environ: t.Optional[t.Dict] = None
     base: t.Optional[str] = None
 
-    @cached_property
+    # @cached_property
+    @property
     def config(self) -> t.Any:
         """Read a configuration using defaults as basis."""
         parent = self.cls().dict()

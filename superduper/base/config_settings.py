@@ -1,7 +1,6 @@
 import os
 import typing as t
 from dataclasses import dataclass
-from functools import cached_property
 from pathlib import Path
 from warnings import warn
 
@@ -19,7 +18,10 @@ CONFIG_FILE = os.environ.get('SUPERDUPER_CONFIG')
 USER_CONFIG: str = (
     str(Path(CONFIG_FILE).expanduser())
     if CONFIG_FILE
-    else (f'{HOME}/.superduper/config.yaml' if HOME else None)
+    else (
+        f'{os.getcwd()}/superduper.yaml' if os.path.exists(os.getcwd() + '/superduper.yaml')
+        else (f'{HOME}/.superduper/config.yaml' if HOME else None)
+    )
 )
 PREFIX = 'SUPERDUPER_'
 ROOT = Path(__file__).parents[2]
@@ -65,11 +67,7 @@ def load_secrets(secrets_dir: str | None = None):
         os.environ[env_name] = content
 
 
-<<<<<<< HEAD
-def load_user_config():
-=======
 def load_user_config(base: t.Dict | None = None):
->>>>>>> 23136a364 (Fix loading envs in correct order)
     kwargs = {}
     if USER_CONFIG is not None:
         try:
@@ -80,11 +78,8 @@ def load_user_config(base: t.Dict | None = None):
                 raise ConfigError(
                     f'Could not find config file: {USER_CONFIG}'
                 ) from e
-<<<<<<< HEAD
-=======
     if base is not None:
         kwargs = config_dicts.combine_configs((base, kwargs))
->>>>>>> 23136a364 (Fix loading envs in correct order)
     return kwargs
 
 
@@ -116,7 +111,7 @@ class ConfigSettings:
         env = config_dicts.environ_to_config_dict(prefix, parent, env)
         env = config_dicts.combine_configs((load_user_config(), env))
 
-        secrets_volume = env.get('secrets_volume') or parent.get('secrets_volume') or kwargs.get('secrets_volume')
+        secrets_volume = env.get('secrets_volume') or parent.get('secrets_volume')
 
         if secrets_volume:
             secrets_volume = os.path.expanduser(secrets_volume)

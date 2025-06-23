@@ -721,7 +721,7 @@ class Component(Base, metaclass=ComponentMeta):
             if isinstance(item, list):
                 return [_setup(i) for i in item]
 
-            from superduper.base.datatype import Saveable, ComponentRef
+            from superduper.base.datatype import ComponentRef, Saveable
 
             if isinstance(item, ComponentRef):
                 item.component_cache = self._use_component_cache

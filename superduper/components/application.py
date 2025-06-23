@@ -17,6 +17,7 @@ class Application(Component):
 
     :param components: List of components to group together and apply to `superduper`.
     :param variables: Variables which are used inside the application.
+    :param template: Template to use for the application.
     """
 
     breaks: t.ClassVar[t.Sequence[str]] = ('components',)

@@ -8,7 +8,6 @@ from superduper import logging
 from superduper.base.base import Base
 from superduper.components.component import Component
 
-
 ORDER = [
     'str',
     'int',

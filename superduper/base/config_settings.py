@@ -19,7 +19,8 @@ USER_CONFIG: str = (
     str(Path(CONFIG_FILE).expanduser())
     if CONFIG_FILE
     else (
-        f'{os.getcwd()}/superduper.yaml' if os.path.exists(os.getcwd() + '/superduper.yaml')
+        f'{os.getcwd()}/superduper.yaml'
+        if os.path.exists(os.getcwd() + '/superduper.yaml')
         else (f'{HOME}/.superduper/config.yaml' if HOME else None)
     )
 )
@@ -67,7 +68,7 @@ def load_secrets(secrets_dir: str | None = None):
         os.environ[env_name] = content
 
 
-def load_user_config(base: t.Dict | None = None):
+def _load_user_config(base: t.Dict | None = None):
     kwargs = {}
     if USER_CONFIG is not None:
         try:
@@ -75,9 +76,7 @@ def load_user_config(base: t.Dict | None = None):
                 kwargs = yaml.safe_load(f)
         except FileNotFoundError as e:
             if USER_CONFIG != f'{HOME}/.superduper/config.yaml':
-                raise ConfigError(
-                    f'Could not find config file: {USER_CONFIG}'
-                ) from e
+                raise ConfigError(f'Could not find config file: {USER_CONFIG}') from e
     if base is not None:
         kwargs = config_dicts.combine_configs((base, kwargs))
     return kwargs
@@ -109,11 +108,11 @@ class ConfigSettings:
             prefix = PREFIX + self.base.upper() + '_'
 
         env = config_dicts.environ_to_config_dict(prefix, parent, env)
-        env = config_dicts.combine_configs((load_user_config(), env))
+        env = config_dicts.combine_configs((_load_user_config(), env))
 
         secrets_volume = env.get('secrets_volume') or parent.get('secrets_volume')
 
-        if secrets_volume:
+        if secrets_volume:   # type: ignore[arg-type]
             secrets_volume = os.path.expanduser(secrets_volume)
 
         if secrets_volume and os.path.isdir(secrets_volume):
@@ -124,7 +123,7 @@ class ConfigSettings:
         elif secrets_volume:
             warn(f"Warning: The path '{secrets_volume}' is not a valid directory.")
 
-        kwargs = load_user_config()
+        kwargs = _load_user_config()
         if self.base:
             kwargs = kwargs.get(self.base, {})
         kwargs = config_dicts.combine_configs((parent, kwargs, env))

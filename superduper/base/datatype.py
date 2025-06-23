@@ -900,6 +900,7 @@ class ComponentRef(Saveable):
     :param component: Component class name.
     :param uuid: UUID of the component.
     :param object: The component object, if already loaded.
+    :param component_cache: Whether to use the component cache.
     """
 
     component: str

@@ -19,7 +19,7 @@ from superduper.base.event import (
     Teardown,
     Update,
 )
-from superduper.base.status import pending_status, running_status
+from superduper.base.status import STATUS_UNINITIALIZED, pending_status, running_status
 from superduper.misc.tree import dict_to_tree
 
 if t.TYPE_CHECKING:
@@ -251,7 +251,8 @@ def _apply(
     deprecated_context: str | None = None,
 ):
 
-    object.status, object.details = pending_status()
+    if object.status == STATUS_UNINITIALIZED:
+        object.status, object.details = pending_status()
 
     processed_components = processed_components or set()
     if context is None:

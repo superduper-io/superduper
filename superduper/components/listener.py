@@ -58,9 +58,12 @@ class Listener(CDC):
     @property
     def output_table(self):
         """Output table property."""
-        return Table(
-            self.outputs, fields={self.outputs: self.model.datatype, '_source': 'str'}
+        t = Table(
+            self.outputs,
+            fields={self.outputs: self.model.datatype, '_source': 'str'},
         )
+        t.status = 'running'
+        return t
 
     @property
     def predict_id(self):

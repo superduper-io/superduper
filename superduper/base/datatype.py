@@ -180,7 +180,6 @@ class ComponentType(BaseDataType):
                 uuid=uuid,
                 db=db,
             )
-            # return db.load(component=component, uuid=uuid)
         elif isinstance(item, str):
             raise ValueError(f'Unknown reference type {item} for a base instance')
 
@@ -906,6 +905,7 @@ class ComponentRef(Saveable):
     component: str
     uuid: str
     object: t.Optional[Component] = None
+    component_cache: bool = True
 
     def setup(self):
         """Initialize the component reference."""
@@ -915,6 +915,7 @@ class ComponentRef(Saveable):
             component=self.component,
             identifier=self.identifier,
             uuid=self.uuid,
+            component_cache=self.component_cache,
         )
         self.object.setup()
         return self.object

@@ -213,6 +213,7 @@ class Component(Base, metaclass=ComponentMeta):
         self.status, self.details = init_status()
 
         self._original_parameters: t.Dict | None = None
+        self._use_component_cache: bool = True
 
         self._handle_variables()
         self.postinit()
@@ -720,7 +721,10 @@ class Component(Base, metaclass=ComponentMeta):
             if isinstance(item, list):
                 return [_setup(i) for i in item]
 
-            from superduper.base.datatype import Saveable
+            from superduper.base.datatype import Saveable, ComponentRef
+
+            if isinstance(item, ComponentRef):
+                item.component_cache = self._use_component_cache
 
             if isinstance(item, Saveable):
                 item.setup()

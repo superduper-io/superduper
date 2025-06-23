@@ -600,7 +600,7 @@ class Datalayer:
         out: t.List[Component] = []
         for identifier in identifiers:
             try:
-                c = self.load(component, identifier)
+                c = self.load(component, identifier, **kwargs)
                 applies = True
                 for k, v in kwargs.items():
                     if getattr(c, k) != v:
@@ -712,6 +712,7 @@ class Datalayer:
                 builds=info.get('_builds', {}),
                 db=self,
             )
+            c._use_component_cache = component_cache
         else:
             raise ValueError(
                 'Must provide either `uuid` or `component` and `identifier`'

@@ -65,7 +65,11 @@ def load_secrets(secrets_dir: str | None = None):
         os.environ[env_name] = content
 
 
+<<<<<<< HEAD
 def load_user_config():
+=======
+def load_user_config(base: t.Dict | None = None):
+>>>>>>> 23136a364 (Fix loading envs in correct order)
     kwargs = {}
     if USER_CONFIG is not None:
         try:
@@ -76,6 +80,11 @@ def load_user_config():
                 raise ConfigError(
                     f'Could not find config file: {USER_CONFIG}'
                 ) from e
+<<<<<<< HEAD
+=======
+    if base is not None:
+        kwargs = config_dicts.combine_configs((base, kwargs))
+>>>>>>> 23136a364 (Fix loading envs in correct order)
     return kwargs
 
 
@@ -95,7 +104,6 @@ class ConfigSettings:
     environ: t.Optional[t.Dict] = None
     base: t.Optional[str] = None
 
-    # @cached_property
     @property
     def config(self) -> t.Any:
         """Read a configuration using defaults as basis."""
@@ -122,6 +130,8 @@ class ConfigSettings:
             warn(f"Warning: The path '{secrets_volume}' is not a valid directory.")
 
         kwargs = load_user_config()
+        if self.base:
+            kwargs = kwargs.get(self.base, {})
         kwargs = config_dicts.combine_configs((parent, kwargs, env))
 
         return _dataclass_from_dict(self.cls, kwargs)

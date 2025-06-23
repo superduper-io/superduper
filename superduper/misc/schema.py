@@ -9,6 +9,16 @@ from superduper.base.base import Base
 from superduper.components.component import Component
 
 
+ORDER = [
+    'str',
+    'int',
+    'float',
+    'bool',
+    'json',
+    'dill',
+]
+
+
 def gather_mro_globals(cls):
     """Return a merged dictionary of the module global from the MRO of `cls`.
 

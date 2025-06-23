@@ -65,6 +65,20 @@ def load_secrets(secrets_dir: str | None = None):
         os.environ[env_name] = content
 
 
+def load_user_config():
+    kwargs = {}
+    if USER_CONFIG is not None:
+        try:
+            with open(USER_CONFIG) as f:
+                kwargs = yaml.safe_load(f)
+        except FileNotFoundError as e:
+            if USER_CONFIG != f'{HOME}/.superduper/config.yaml':
+                raise ConfigError(
+                    f'Could not find config file: {USER_CONFIG}'
+                ) from e
+    return kwargs
+
+
 @dataclass(frozen=True)
 class ConfigSettings:
     """Helper class to read a configuration from a dataclass.
@@ -92,8 +106,9 @@ class ConfigSettings:
             prefix = PREFIX + self.base.upper() + '_'
 
         env = config_dicts.environ_to_config_dict(prefix, parent, env)
+        env = config_dicts.combine_configs((load_user_config(), env))
 
-        secrets_volume = env.get('secrets_volume') or parent.get('secrets_volume')
+        secrets_volume = env.get('secrets_volume') or parent.get('secrets_volume') or kwargs.get('secrets_volume')
 
         if secrets_volume:
             secrets_volume = os.path.expanduser(secrets_volume)
@@ -106,19 +121,7 @@ class ConfigSettings:
         elif secrets_volume:
             warn(f"Warning: The path '{secrets_volume}' is not a valid directory.")
 
-        kwargs = {}
-        if USER_CONFIG is not None:
-            try:
-                with open(USER_CONFIG) as f:
-                    kwargs = yaml.safe_load(f)
-            except FileNotFoundError as e:
-                if USER_CONFIG != f'{HOME}/.superduper/config.yaml':
-                    raise ConfigError(
-                        f'Could not find config file: {USER_CONFIG}'
-                    ) from e
-            if self.base:
-                kwargs = kwargs.get(self.base, {})
-
+        kwargs = load_user_config()
         kwargs = config_dicts.combine_configs((parent, kwargs, env))
 
         return _dataclass_from_dict(self.cls, kwargs)

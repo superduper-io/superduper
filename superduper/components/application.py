@@ -24,6 +24,7 @@ class Application(Component):
 
     components: t.List[Component]
     variables: t.Dict | None = None
+    template: t.Optional[str] = None
 
     @classmethod
     def build_from_db(cls, identifier, db: "Datalayer"):

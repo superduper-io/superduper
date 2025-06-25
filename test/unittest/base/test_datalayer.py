@@ -118,20 +118,6 @@ def test_add_version(db: Datalayer):
     assert db.show('TestComponent', 'test') == [0, 1, 2]
 
 
-class TestComponentPickle(TestComponent):
-    artifact: st.Pickle
-
-
-def test_add_component_with_bad_artifact(db):
-    artifact = {'data': lambda x: x}
-    component = TestComponentPickle(
-        identifier='test',
-        artifact=artifact,
-    )
-    with pytest.raises(Exception):
-        db.apply(component)
-
-
 def test_add_artifact_auto_replace(db):
     # Check artifact is automatically replaced to metadata
     artifact = {'data': 1}

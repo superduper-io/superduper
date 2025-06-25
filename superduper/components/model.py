@@ -22,13 +22,11 @@ from superduper.components.metric import Metric
 from superduper.misc import typing as st
 from superduper.misc.importing import isreallyinstance
 from superduper.misc.schema import (
-    _map_type_to_superduper,
+    Annotation,
     _safe_resolve_annotation,
-    process as process_annotation,
 )
 
 if t.TYPE_CHECKING:
-    from superduper.backends.base.cluster import Cluster
     from superduper.base.datalayer import Datalayer
     from superduper.components.dataset import Dataset
 
@@ -258,10 +256,7 @@ class Model(Component, metaclass=ModelMeta):
                 annotation = _safe_resolve_annotation(
                     annotation, {**module_globals, **superduper_globals}
                 )
-                inferred_annotation, iterable = process_annotation(annotation)
-                self.datatype = _map_type_to_superduper(
-                    self.__class__.__name__, 'predict', inferred_annotation, iterable
-                )
+                self.datatype = Annotation.build(annotation).datatype
 
         if not self.identifier:
             raise Exception('_Predictor identifier must be non-empty')

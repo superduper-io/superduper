@@ -92,6 +92,16 @@ class Decomposition:
             return self.outputs.args
         return []
 
+    @property
+    def columns(self):
+        if self.select:
+            cols = self.select.args
+        else:
+            cols = self.db.metadata.get_columns(self.table)
+        if self.outputs:
+            cols.extend([CFG.output_prefix + x for x in self.outputs.args])
+        return cols
+        
     def to_query(self):
         """Convert decomposition back to a ``Query``."""
         if self.db is None:

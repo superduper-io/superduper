@@ -1,5 +1,6 @@
 import dataclasses as dc
 import itertools
+import time
 import typing as t
 
 from superduper import CFG, logging
@@ -232,20 +233,27 @@ class VectorIndex(CDC):
             raise ValueError(f'len(model={models}) != len(keys={keys})')
         within_ids = ids or ()
 
+        logging.info('Building vector for search')
+        start = time.time()
         h = self.get_vector(
             like=like,
             models=models,
             keys=keys,
             outputs=outputs,
         )[0]
+        logging.info(f'Building vector for search ... DONE ({time.time() - start}s)')
 
-        return self.db.cluster.vector_search.find_nearest_from_array(
+        logging.info('Comparing vectors')
+        start = time.time()
+        results = self.db.cluster.vector_search.find_nearest_from_array(
             component=self.component,
             vector_index=self.identifier,
             h=h,
             n=n,
             within_ids=within_ids,
         )
+        logging.info(f'Comparing vectors ... DONE ({time.time() - start}s)')
+        return results
 
     def cleanup(self):
         """Clean up the vector index."""

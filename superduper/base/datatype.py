@@ -10,7 +10,6 @@ import pickle
 import re
 import typing as t
 from abc import abstractmethod
-from functools import cached_property
 from importlib import import_module
 from pathlib import Path
 

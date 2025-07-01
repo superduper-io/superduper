@@ -769,10 +769,17 @@ class Datalayer:
         if not isinstance(like, Document):
             assert isinstance(like, dict)
             like = Document(like)
-        # TODO deprecate
-        # like = self._get_content_for_filter(like)
+
         logging.info('Getting vector-index')
-        vector_index = self.load('VectorIndex', vector_index)
+        import time
+        start = time.time()
+
+        from superduper.components.vector_index import VectorIndex
+
+        vector_index: VectorIndex = self.load('VectorIndex', vector_index)
+
+        logging.info(f'Getting vector-index in {time.time() - start}s ... DONE')
+
         if outputs is None:
             outs: t.Dict = {}
         else:

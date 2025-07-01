@@ -1,4 +1,5 @@
 import dataclasses as dc
+from functools import lru_cache
 import importlib
 import inspect
 import typing as t
@@ -14,6 +15,9 @@ from superduper.misc.serialization import asdict
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
+
+
+REGISTRY = {}
 
 
 class BaseMeta(type):
@@ -79,11 +83,17 @@ class BaseMeta(type):
         return cls
 
 
+
 class Base(metaclass=BaseMeta):
     """Base class for all superduper classes."""
 
     verbosity: t.ClassVar[int] = 0
     set_post_init: t.ClassVar[t.Sequence[str]] = ()
+
+    def __init_subclass__(cls):
+        full_path = f"{cls.__module__}.{cls.__name__}"
+        REGISTRY[full_path] = cls
+        return super().__init_subclass__()
 
     @lazy_classproperty
     def _new_fields(cls):
@@ -139,11 +149,21 @@ class Base(metaclass=BaseMeta):
 
         :param path: Import path to the class.
         """
+        if path in REGISTRY:
+            return REGISTRY[path]
+
+        from superduper import logging
+        logging.info(f'Importing: {path}')
         parts = path.split('.')
         cls = parts[-1]
         module = '.'.join(parts[:-1])
+        import time
+        start = time.time()
         module = importlib.import_module(module)
-        return getattr(module, cls)
+        logging.info(f'Imported {path} in {time.time() - start:.2f} seconds')
+        out = getattr(module, cls)
+        REGISTRY[path] = out
+        return out
 
     @staticmethod
     def get_cls_from_blob(blob_ref, db):

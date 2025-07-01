@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix the to_records feature in ibis
 - Fix the execution of datatype in replace and update operations.
 - Fix auto schema inference for nested JSON types
-
+- Optimize vector search performance by improving component caching and UUID mapping
 - Add info to Template
 
 ## [0.7.0](https://github.com/superduper-io/superduper/compare/0.7.0...0.6.0])    (2025-May-26)

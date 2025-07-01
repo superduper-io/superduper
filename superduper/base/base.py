@@ -1,8 +1,8 @@
 import dataclasses as dc
-from functools import lru_cache
 import importlib
 import inspect
 import typing as t
+from functools import lru_cache
 
 from superduper.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES
 from superduper.base.encoding import EncodeContext
@@ -83,7 +83,6 @@ class BaseMeta(type):
         return cls
 
 
-
 class Base(metaclass=BaseMeta):
     """Base class for all superduper classes."""
 
@@ -153,11 +152,13 @@ class Base(metaclass=BaseMeta):
             return REGISTRY[path]
 
         from superduper import logging
+
         logging.info(f'Importing: {path}')
         parts = path.split('.')
         cls = parts[-1]
         module = '.'.join(parts[:-1])
         import time
+
         start = time.time()
         module = importlib.import_module(module)
         logging.info(f'Imported {path} in {time.time() - start:.2f} seconds')

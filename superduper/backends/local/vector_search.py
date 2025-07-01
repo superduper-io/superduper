@@ -121,10 +121,20 @@ class LocalVectorSearchBackend(VectorSearchBackend):
         )
 
     def __getitem__(self, item):
-        c = self.db.load(*item)
-        if c.uuid not in self.uuid_tool_mapping:
+        if item not in self.component_uuid_mapping:
+            c = self.db.load(*item)
             self.put_component(c.component, c.uuid)
-        return self.get_tool(c.uuid)
+            uuid = c.uuid
+        else:
+            uuids = self.component_uuid_mapping[item]
+            if not uuids:
+                raise exceptions.NotFound(
+                    f'No vectors found for {item}. '
+                    'Please check if the vector index is initialized.'
+                )
+            uuid = list(uuids)[0]
+
+        return self.get_tool(uuid)
 
 
 class InMemoryVectorSearcher(BaseVectorSearcher):

@@ -56,6 +56,8 @@ class VectorIndex(CDC):
     metric_values: t.Optional[t.Dict] = dc.field(default_factory=dict)
     cdc_table: str = ''
 
+    component_cache: t.ClassVar[bool] = True
+
     def postinit(self):
         """Post-initialization method."""
         super().postinit()

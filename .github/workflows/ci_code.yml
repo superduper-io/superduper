@@ -71,29 +71,26 @@ jobs:
     # We cache both the pip packages and the installation dir.
     # If the pyproject remains unchanged, we re-use the existing installation dir.
     # If the pyproject has changed, we reinstall everything using the cached pip packages.
-    - name: Cache Pip Packages
-      id: setup-python
+    - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-        cache: 'pip' # caching pip dependencies
-
-    - name: Cache Python Installation
-      uses: actions/cache@v4
+      
+    - name: Cache pip
+      uses: actions/cache@v3
       with:
-        path: ${{ env.pythonLocation }} # Cache the whole python installation dir.
-        key: ${{ matrix.os }}_python-${{ matrix.python-version }}_${{ hashFiles('pyproject.toml', '*/pyproject.toml') }}
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('**/pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-${{ matrix.python-version }}-
+          ${{ runner.os }}-pip-
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .[test]
+        pip install plugins/mongodb plugins/openai plugins/sql
       #---------------------------------------------------
 
-    - name: Install superduper-framework
-      run: |
-        # Install core and testsuite dependencies on the cached python environment.
-        python -m pip install '.[test]'
-        # TODO: We currently need a default plugin to run tests using MongoDB. 
-        # Once the local file database is complete, we may need to update this section.
-        python -m pip install plugins/mongodb
-        python -m pip install plugins/openai
-        python -m pip install plugins/sql
 
 
     - name: Lint and type-check

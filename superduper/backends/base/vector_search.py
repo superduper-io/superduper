@@ -310,6 +310,7 @@ def cosine(x, y):
     x = x / numpy.linalg.norm(x, axis=1)[:, None]
     # y which implies all vectors in vectordatabase
     # has normalized vectors.
+    y = y / numpy.linalg.norm(y, axis=1)[:, None]
     return dot(x, y)
 
 

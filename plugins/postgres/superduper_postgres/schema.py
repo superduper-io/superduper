@@ -1,4 +1,4 @@
-import re
+from superduper.base.datatype import Vector
 from superduper.base.schema import Schema
 
 
@@ -22,9 +22,8 @@ def superduper_to_postgres_schema(schema: Schema, primary_id: str = 'id') -> dic
             out[f] = 'JSONB'
         elif str(schema[f]).lower() == 'bool':
             out[f] = 'BOOLEAN'
-        elif re.match('^Vector\[\d+\]$', str(schema[f])):
-            dimensions = re.search(r'\d+', str(schema[f])).group(0)
-            out[f] = f'VECTOR({dimensions})'
+        elif isinstance(schema[f], Vector):
+            out[f] = f'VECTOR({schema[f].shape})'
         else:
             if schema[f].dtype == 'str':
                 out[f] = 'TEXT'

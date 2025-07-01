@@ -22,6 +22,7 @@ from superduper.base.base import Base
 from superduper.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES, KEY_PATH
 from superduper.base.datatype import BaseDataType
 from superduper.base.document import Document, _unpack
+from superduper.base.schema import Schema
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
@@ -86,6 +87,11 @@ class Decomposition:
     outputs: QueryPart | None = None
     op: Op | None = None
 
+    def __post_init__(self):
+        """Post-initialization."""
+        self._columns = None
+        self._schema = None
+
     @property
     def predict_ids(self):
         if self.outputs:
@@ -93,13 +99,31 @@ class Decomposition:
         return []
 
     @property
+    def schema(self):
+        """Get the schema of the query."""
+        base_schema = self.db.metadata.get_schema(self.table)
+        if self.outputs:
+            for predict_id in self.outputs.args:
+                base_schema += self.db.metadata.get_schema(CFG.output_prefix + predict_id)
+        cols = self.columns
+        new_schema = {}
+        for c in cols:
+            if str(c) not in base_schema.fields:
+                continue
+            new_schema[c] = base_schema[c]
+        return Schema(new_schema)
+
+    @property
     def columns(self):
+        if self._columns is not None:
+            return self._columns
         if self.select:
             cols = self.select.args
         else:
             cols = self.db.metadata.get_columns(self.table)
         if self.outputs:
             cols.extend([CFG.output_prefix + x for x in self.outputs.args])
+        self._columns = cols
         return cols
         
     def to_query(self):

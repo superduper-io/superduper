@@ -10,6 +10,7 @@ import numpy as np
 import psycopg2
 from psycopg2.extras import execute_values
 
+from superduper.base.datatype import Vector
 from superduper_postgres.query import map_superduper_query_to_postgres_query
 from superduper_postgres.schema import superduper_to_postgres_schema
 from superduper import CFG, logging
@@ -212,16 +213,33 @@ class PostgresDataBackend(BaseDataBackend):
             WHERE table_schema = 'public' AND table_name = '{table_name}';
         """)]
 
-    def _handle_json_columns(self, raw_documents, table_name):
-        s = self.db.metadata.get_schema(table_name)
+    def _handle_json_columns(self, raw_documents, schema):
         json_fields = [
-            f for f in s.fields if getattr(s[f], 'dtype', None) == 'json'
+            f for f in schema.fields if getattr(schema[f], 'dtype', None) == 'json'
         ]
         for f in json_fields:
             for r in raw_documents:
                 if f not in r:
                     continue
                 r[f] = json.dumps(r[f])
+
+    def _handle_vector_columns(self, raw_documents, schema):
+        vector_fields = [
+            f for f in schema.fields if isinstance(schema[f], Vector)
+        ]
+        assert len(vector_fields) <= 1, "Only one vector field is supported per table."
+        field = vector_fields[0] if vector_fields else None
+        if field is None:
+            return
+
+        for r in raw_documents:
+            if field not in r:
+                continue
+            if not isinstance(r[field], list):
+                assert isinstance(r[field], np.ndarray)
+                assert len(r[field].shape) == 1, "Vector field must be a 1D array."
+                r[field] = r[field].tolist()
+            r[field] = f'{r[field]}'
 
     def insert(self, table_name, raw_documents, primary_id: str | None = None):
         """Insert data into the database.
@@ -239,7 +257,9 @@ class PostgresDataBackend(BaseDataBackend):
         cols = self._get_columns(table_name)
         def get_row(row):
             return [row[col] if col in row else None for col in cols]
-        self._handle_json_columns(raw_documents, table_name)
+        s = self.db.metadata.get_schema(table_name)
+        self._handle_vector_columns(raw_documents, schema=s)
+        self._handle_json_columns(raw_documents, schema=s)
         values = [get_row(r) for r in raw_documents]
         cols = ', '.join(f'"{c}"' for c in cols)
         with self.session.cursor() as cur:
@@ -249,7 +269,7 @@ class PostgresDataBackend(BaseDataBackend):
                     cur, sql, values
                 )
             except Exception as e:
-                logging.error(f"Error executing query: {e}")
+                logging.error(f"Error executing query: {sql} {e}")
                 logging.error(traceback.format_exc())
                 self.session.rollback()
                 raise e
@@ -401,8 +421,17 @@ class PostgresDataBackend(BaseDataBackend):
             results = self._run_query(q)
         except Exception as e:
             print(traceback.format_exc())
-            import pdb; pdb.set_trace()
+            raise e
+
         results = [{col: v for col, v in zip(cols, result)} for result in results]
+        output_schema = query.decomposition.schema
+        vector_datatype = next(
+            (k for k in output_schema.fields.keys() if isinstance(output_schema[k], Vector)), None
+        )
+        if vector_datatype:
+            for r in results:
+                if vector_datatype in r:
+                    r[vector_datatype] = eval(r[vector_datatype])
         return results
 
     def execute_native(self, query: str):

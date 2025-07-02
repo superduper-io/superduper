@@ -418,7 +418,7 @@ class ArtifactRelations(Base):
     :param artifact_id: UUID of component version
     """
 
-    primary_id: t.ClassVar[str] = 'relation'
+    primary_id: t.ClassVar[str] = 'relation_id'
     relation_id: str
     component: str
     identifier: str
@@ -449,7 +449,7 @@ class MetaDataStore:
         self.parent_db = parent_db
         self.primary_ids = {
             "Table": "uuid",
-            "ParentChildAssociations": "uuid",
+            "ParentChildAssociations": "id",
             "ArtifactRelations": "relation_id",
             "Job": "job_id",
         }
@@ -478,7 +478,6 @@ class MetaDataStore:
                 path='superduper.components.table.Table',
             ).encode()
             r['version'] = 0
-
             self.db.databackend.do_insert('Table', [r], raw=True)
 
         r = self.get_component('Table', 'Table')
@@ -527,6 +526,20 @@ class MetaDataStore:
             return True
 
         return table in self.db.databackend.list_tables()
+
+    def get_columns(self, table: str):
+        """Get the columns of a table.
+
+        :param table: table name.
+        """
+        if table in metaclasses:
+            out = list(metaclasses[table].class_schema.fields.keys())
+        else:
+            r = self.get_component('Table', table)
+            out = list(r['fields'].keys())
+        pid = self.get_primary_id(table)
+        out = [pid] + out
+        return out
 
     def get_primary_id(self, table: str):
         """Get the primary id of a table.

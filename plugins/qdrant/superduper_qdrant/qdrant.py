@@ -28,31 +28,44 @@ class QdrantVectorSearcher(BaseVectorSearcher):
 
     def __init__(
         self,
-        uuid: str,
+        identifier: str,
         dimensions: int,
         measure: t.Optional[str] = None,
+        component: str = 'VectorIndex',
     ):
         config_dict = deepcopy(CFG.vector_search_kwargs)
-        self.vector_name: t.Optional[str] = config_dict.pop("vector_name", None)
+        try:
+            plugin, uri = CFG.vector_search_engine.split("://")
+            if uri:
+                config_dict['location'] = uri
+        except ValueError as e:
+            if 'not enough values to unpack' in str(e):
+                plugin = CFG.vector_search_engine
+            else:
+                raise e
+
+        assert plugin == "qdrant", "Only 'qdrant' vector search engine is supported in QdrantVectorSearcher."
+
         # Use an in-memory instance by default
         # https://github.com/qdrant/qdrant-client#local-mode
         config_dict = config_dict or {"location": ":memory:"}
         self.client = QdrantClient(**config_dict)
-        self.collection_name = uuid
+        self.identifier = identifier
         self.measure = measure
 
-        self.collection_name = re.sub("\W+", "", uuid)
-        if not self.client.collection_exists(self.collection_name):
+        self.identifier = re.sub("\W+", "", identifier)
+        if not self.client.collection_exists(self.identifier):
             measure = (
                 measure.name if isinstance(measure, VectorIndexMeasureType) else measure
             )
             distance = self._distance_mapping(measure)
             self.client.create_collection(
-                collection_name=self.collection_name,
+                collection_name=self.identifier,
                 vectors_config=models.VectorParams(size=dimensions, distance=distance),
             )
+        self.component = component
 
-    def initialize(self, db):
+    def initialize(self):
         """Initialize the vector index.
 
         :param db: Datalayer instance
@@ -60,7 +73,7 @@ class QdrantVectorSearcher(BaseVectorSearcher):
         pass
 
     def __len__(self):
-        return self.client.get_collection(self.collection_name).vectors_count
+        return self.client.get_collection(self.identifier).vectors_count
 
     def _create_collection(self):
         measure = (
@@ -70,7 +83,7 @@ class QdrantVectorSearcher(BaseVectorSearcher):
         )
         distance = self._distance_mapping(measure)
         self.client.create_collection(
-            collection_name=self.collection_name,
+            collection_name=self.identifier,
             vectors_config=models.VectorParams(size=self.dimensions, distance=distance),
         )
 
@@ -84,20 +97,16 @@ class QdrantVectorSearcher(BaseVectorSearcher):
         for item in items:
             point = models.PointStruct(
                 id=self._convert_id(item.id),
-                vector=(
-                    {self.vector_name: item.vector.tolist()}
-                    if self.vector_name
-                    else item.vector.tolist()
-                ),
+                vector=item.vector.tolist(),
                 payload={ID_PAYLOAD_KEY: item.id},
             )
             points.append(point)
-        self.client.upsert(collection_name=self.collection_name, points=points)
+        self.client.upsert(collection_name=self.identifier, points=points)
 
     def drop(self):
         """Drop the vector index."""
-        if self.client.collection_exists(self.collection_name):
-            self.client.delete_collection(self.collection_name)
+        if self.client.collection_exists(self.identifier):
+            self.client.delete_collection(self.identifier)
 
     def delete(self, ids: t.Sequence[str]) -> None:
         """Delete vectors from the index.
@@ -105,7 +114,7 @@ class QdrantVectorSearcher(BaseVectorSearcher):
         :param ids: List of IDs to delete
         """
         self.client.delete(
-            collection_name=self.collection_name,
+            collection_name=self.identifier,
             points_selector=models.Filter(
                 must=[
                     models.FieldCondition(
@@ -160,12 +169,12 @@ class QdrantVectorSearcher(BaseVectorSearcher):
             )
 
         search_result = self.client.query_points(
-            collection_name=self.collection_name,
+            collection_name=self.identifier,
             query=query,
             limit=n,
             query_filter=query_filter,
             with_payload=[ID_PAYLOAD_KEY],
-            using=self.vector_name,
+            using=None,
         ).points
 
         ids = [hit.payload[ID_PAYLOAD_KEY] for hit in search_result if hit.payload]

@@ -244,6 +244,12 @@ class FileSystemArtifactStore(ArtifactStore):
 
         with open(path, 'wb') as f:
             f.write(serialized)
+
+        # Flush the copied file to disk
+        # with open(path, 'rb') as dest_file:
+        #     dest_file.flush()
+        #     os.fsync(dest_file.fileno())
+
         os.chmod(path, 0o777)
 
     def get_bytes(self, file_id: str) -> bytes:
@@ -273,8 +279,19 @@ class FileSystemArtifactStore(ArtifactStore):
         logging.info(f"Copying file {file_path} to {save_path}")
         if path.is_dir():
             shutil.copytree(file_path, save_path)
+
+            for root, _, files in os.walk(save_path):
+                for f in files:
+                    full_path = os.path.join(root, f)
+                    with open(full_path, 'rb') as dest_file:
+                        os.fsync(dest_file.fileno())
         else:
             shutil.copy(file_path, save_path)
+
+            with open(save_path, 'rb') as dest_file:
+                dest_file.flush()
+                os.fsync(dest_file.fileno())
+
         os.chmod(save_path, 0o777)
         return file_id
 

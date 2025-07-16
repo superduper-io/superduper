@@ -247,11 +247,10 @@ class Job(Base):
         )
         for idep in self.inverse_dependencies:
             job = db['Job'].get(job_id=idep, decode=True)
-            if job.status != STATUS_FAILED:
+            if job is None:
+                continue
+            elif job.status != STATUS_FAILED:
                 logging.info(f'Setting downstream job {idep} status to failed')
-                if job is None:
-                    continue
-
                 job.set_failed(
                     db, reason=f"Upstream dependency {self.job_id} failed", message=None
                 )

@@ -32,7 +32,9 @@ class LocalCluster(Cluster):
     @classmethod
     def build(cls, CFG, **kwargs):
         """Build the local cluster."""
-        searcher_impl = load_plugin(CFG.vector_search_engine.split('://')[0]).VectorSearcher
+        searcher_impl = load_plugin(
+            CFG.vector_search_engine.split('://')[0]
+        ).VectorSearcher
 
         return LocalCluster(
             scheduler=LocalScheduler(),

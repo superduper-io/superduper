@@ -106,13 +106,14 @@ class Logging:
         logger.opt(depth=1).debug(" ".join(map(str, (msg, *args))))
 
     @staticmethod
-    def multikey_info(msg: str, *args):
+    def multikey_info(msg: str, *args, depth: int = 1):
         """Log a message with the INFO level.
 
         :param msg: The message to log.
         :param args: Additional arguments to log.
+        :param depth: The depth of the log message in the stack.
         """
-        logger.opt(depth=1).info(" ".join(map(str, (msg, *args))))
+        logger.opt(depth=depth).info(" ".join(map(str, (msg, *args))))
 
     @staticmethod
     def multikey_success(msg: str, *args):

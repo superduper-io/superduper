@@ -44,7 +44,9 @@ class QdrantVectorSearcher(BaseVectorSearcher):
             else:
                 raise e
 
-        assert plugin == "qdrant", "Only 'qdrant' vector search engine is supported in QdrantVectorSearcher."
+        assert (
+            plugin == "qdrant"
+        ), "Only 'qdrant' vector search engine is supported in QdrantVectorSearcher."
 
         # Use an in-memory instance by default
         # https://github.com/qdrant/qdrant-client#local-mode

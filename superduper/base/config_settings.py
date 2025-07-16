@@ -49,6 +49,7 @@ def load_secrets(secrets_dir: str | None = None):
 
     if not os.path.isdir(secrets_dir):
         warn(f"Warning: The path '{secrets_dir}' is not a valid directory.")
+        return
 
     for key_dir in os.listdir(secrets_dir):
         key_path = os.path.join(secrets_dir, key_dir)

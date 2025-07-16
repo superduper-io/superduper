@@ -607,6 +607,9 @@ class Component(Base, metaclass=ComponentMeta):
                 dep_job = lookup[dep]
                 if job.job_id not in dep_job.dependencies:
                     dep_job.inverse_dependencies.append(job.job_id)
+
+        for job in lookup.values():
+            job.inverse_dependencies = list(set(job.inverse_dependencies))
         return local_jobs
 
     @property

@@ -282,7 +282,7 @@ class BaseDataBackend(ABC):
         except IndexError:
             return None
 
-    def _wrap_results(self, query: Query, result, raw: bool = False):
+    def _wrap_results(self, query: Query, result, schema, raw: bool = False):
         pid = self.primary_id(query.table)
         for r in result:
             if pid in r:
@@ -290,11 +290,10 @@ class BaseDataBackend(ABC):
             if '_source' in r:
                 r['_source'] = str(r['_source'])
 
+        result = [self._decode_document_fields(r, schema, db=self.db) for r in result]
+
         if raw:
             return result
-
-        schema = self.get_schema(query)
-        result = [self._decode_document_fields(r, schema, db=self.db) for r in result]
 
         return [Document.decode(r, schema=schema, db=self.db) for r in result]
 
@@ -306,13 +305,15 @@ class BaseDataBackend(ABC):
         """
         query = query if '.outputs' not in str(query) else query.complete_uuids(self.db)
 
+        schema = self.get_schema(query)
+
         if query.decomposition.pre_like:
             return self.pre_like(query, raw=raw)
 
         if query.decomposition.post_like:
             return self.post_like(query, raw=raw)
 
-        return self._wrap_results(query, self.select(query), raw=raw)
+        return self._wrap_results(query, self.select(query), schema=schema, raw=raw)
 
     def get_schema(self, query) -> 'Schema':
         """Get the schema of a query.

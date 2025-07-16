@@ -97,9 +97,13 @@ class QdrantVectorSearcher(BaseVectorSearcher):
         """
         points = []
         for item in items:
+            if hasattr(item.vector, "tolist"):
+                vector = item.vector.tolist()
+            else:
+                vector = item.vector
             point = models.PointStruct(
                 id=self._convert_id(item.id),
-                vector=item.vector.tolist(),
+                vector=vector,
                 payload={ID_PAYLOAD_KEY: item.id},
             )
             points.append(point)

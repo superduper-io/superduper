@@ -246,14 +246,17 @@ class Job(Base):
             f'Setting job status for inverse dependencies to failed: {self.inverse_dependencies}'
         )
         for idep in self.inverse_dependencies:
-            logging.info(f'Setting downstream job {idep} status to failed')
             job = db['Job'].get(job_id=idep, decode=True)
-            if job is None:
-                continue
+            if job.status != STATUS_FAILED:
+                logging.info(f'Setting downstream job {idep} status to failed')
+                if job is None:
+                    continue
 
-            job.set_failed(
-                db, reason=f"Upstream dependency {self.job_id} failed", message=None
-            )
+                job.set_failed(
+                    db, reason=f"Upstream dependency {self.job_id} failed", message=None
+                )
+            else:
+                logging.info(f'Downstream job {idep} already failed, skipping')
         logging.info(f'Setting job status {self.job_id} to failed... DONE')
 
         db.metadata.set_component_failed(

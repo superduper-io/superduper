@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Optimize vector search performance by improving component caching and UUID mapping
 - Add info to Template
 - Fix the secrets-error
+- Fix job failure propagation logic and prevent duplicate inverse dependencies
 
 ## [0.7.0](https://github.com/superduper-io/superduper/compare/0.7.0...0.6.0])    (2025-May-26)
 

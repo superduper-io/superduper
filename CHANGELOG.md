@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Changed defaults / behaviours
 
 - Add offset parameter to limit query
+- Add depth parameter to logging.info
 
 ### Bug fixes
 
@@ -23,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix auto schema inference for nested JSON types
 - Optimize vector search performance by improving component caching and UUID mapping
 - Add info to Template
+- Fix the secrets-error
 
 ## [0.7.0](https://github.com/superduper-io/superduper/compare/0.7.0...0.6.0])    (2025-May-26)
 

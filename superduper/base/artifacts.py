@@ -293,6 +293,9 @@ class FileSystemArtifactStore(ArtifactStore):
                 os.fsync(dest_file.fileno())
 
         os.chmod(save_path, 0o777)
+        assert os.path.exists(
+            save_path
+        ), f"Failed to copy directory {file_path} to {save_path}"
         return file_id
 
     def get_file(self, file_id: str) -> str:

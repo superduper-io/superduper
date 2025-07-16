@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add offset parameter to limit query
 - Add depth parameter to logging.info
+- Add assertion to verify directory copy in FileSystemArtifactStore
 
 ### Bug fixes
 

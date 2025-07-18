@@ -651,12 +651,14 @@ class Datalayer:
         else:
             if component_cache and (component, identifier) in self._component_cache:
                 assert isinstance(identifier, str)
-                if self._component_cache[
+                cache_uuid = self._component_cache[
                     (component, identifier)
-                ].uuid == self.metadata.get_latest_uuid(
+                ].uuid
+                latest_uuid = self.metadata.get_latest_uuid(
                     component=component,
                     identifier=identifier,
-                ):
+                )
+                if cache_uuid == latest_uuid:
                     logging.debug(f'Found {component, identifier} in cache...')
                     return self._component_cache[(component, identifier)]
                 else:

@@ -81,6 +81,27 @@ def test(db):
     for r in results:
         assert r[list.outputs] == r['number'] + 1
 
+    vector_table = Table(
+        'vector_table',
+        fields={
+            'id': 'str',
+            'vector': 'vector[float:3]',
+        },
+        primary_id='id',
+    )
+
+    db.apply(vector_table)
+
+    import numpy
+    db['vector_table'].insert(
+        [
+            {'vector': numpy.random.rand(3)}
+            for _ in range(10)  
+        ]
+    )
+    retrieved_vectors = db['vector_table'].execute()
+    assert isinstance(retrieved_vectors[0]['vector'], numpy.ndarray)
+
     db.databackend.drop_table('documents')
 
     assert 'documents' not in db.databackend.list_tables()
@@ -88,3 +109,4 @@ def test(db):
     db.databackend.drop(force=True)
 
     assert not db.databackend.list_tables()
+

@@ -36,6 +36,8 @@ class QdrantVectorSearcher(BaseVectorSearcher):
         config_dict = deepcopy(CFG.vector_search_kwargs)
         try:
             plugin, uri = CFG.vector_search_engine.split("://")
+            if not uri.startswith("http"):
+                uri = f"http://{uri}"
             if uri:
                 config_dict['location'] = uri
         except ValueError as e:

@@ -5,7 +5,7 @@ from copy import deepcopy
 
 import numpy as np
 from qdrant_client import QdrantClient, models
-from superduper import CFG
+from superduper import CFG, logging
 from superduper.backends.base.vector_search import (
     BaseVectorSearcher,
     VectorIndexMeasureType,
@@ -36,7 +36,7 @@ class QdrantVectorSearcher(BaseVectorSearcher):
         config_dict = deepcopy(CFG.vector_search_kwargs)
         try:
             plugin, uri = CFG.vector_search_engine.split("://")
-            if not uri.startswith("http"):
+            if not uri.startswith("http") and uri != ":memory:":
                 uri = f"http://{uri}"
             if uri:
                 config_dict['location'] = uri
@@ -53,6 +53,8 @@ class QdrantVectorSearcher(BaseVectorSearcher):
         # Use an in-memory instance by default
         # https://github.com/qdrant/qdrant-client#local-mode
         config_dict = config_dict or {"location": ":memory:"}
+        if '6334' in config_dict['location']:
+            config_dict["prefer_grpc"] = True
         self.client = QdrantClient(**config_dict)
         self.identifier = identifier
         self.measure = measure
@@ -109,6 +111,7 @@ class QdrantVectorSearcher(BaseVectorSearcher):
                 payload={ID_PAYLOAD_KEY: item.id},
             )
             points.append(point)
+        logging.info(f"Adding {len(points)} points to Qdrant index '{self.identifier}'")
         self.client.upsert(collection_name=self.identifier, points=points)
 
     def drop(self):

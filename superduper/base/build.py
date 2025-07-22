@@ -146,6 +146,7 @@ def show_configuration(cfg):
         ('DataBackend', anonymize_url(cfg.data_backend)),
         ('ArtifactStore', anonymize_url(cfg.artifact_store)),
         ('Metadata', anonymize_url(cfg.metadata_store)),
+        ('VectorSearch', anonymize_url(cfg.vector_search_engine)),
     ]
     for key, value in key_values:
         if value:

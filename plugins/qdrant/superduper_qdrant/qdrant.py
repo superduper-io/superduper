@@ -114,7 +114,13 @@ class QdrantVectorSearcher(BaseVectorSearcher):
             )
             points.append(point)
         logging.info(f"Adding {len(points)} points to Qdrant index '{self.identifier}'")
-        self.client.upsert(collection_name=self.identifier, points=points)
+        batch_size = 50
+        for i in range(0, len(points), batch_size):
+            batch_points = points[i:i + batch_size]
+            logging.debug(f"Upserting batch of {len(batch_points)} points")
+            if not batch_points:
+                continue
+            self.client.upsert(collection_name=self.identifier, points=batch_points)
 
     def drop(self):
         """Drop the vector index."""

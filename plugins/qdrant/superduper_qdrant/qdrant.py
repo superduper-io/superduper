@@ -99,6 +99,8 @@ class QdrantVectorSearcher(BaseVectorSearcher):
         :param items: List of vectors to add
         :param cache: Cache vectors (not used in Qdrant implementation).
         """
+        if not items:
+            return
         points = []
         for item in items:
             if hasattr(item.vector, "tolist"):

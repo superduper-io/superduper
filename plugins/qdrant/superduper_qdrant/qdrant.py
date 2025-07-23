@@ -11,6 +11,35 @@ from superduper.backends.base.vector_search import (
     VectorIndexMeasureType,
     VectorItem,
 )
+from superduper.misc.retry import Retry
+
+# Import gRPC exceptions if available
+try:
+    import grpc
+    from qdrant_client.http.exceptions import (
+        ResponseHandlingException,
+        UnexpectedResponse,
+    )
+
+    # Common exceptions to retry on
+    QDRANT_RETRY_EXCEPTIONS = [
+        grpc.RpcError,
+        ResponseHandlingException,
+        UnexpectedResponse,
+        ConnectionError,
+        TimeoutError,
+    ]
+
+    # Try to add the InactiveRpcError if available
+    try:
+        QDRANT_RETRY_EXCEPTIONS.append(grpc._channel._InactiveRpcError)
+    except AttributeError:
+        pass
+
+    QDRANT_RETRY_EXCEPTIONS = tuple(QDRANT_RETRY_EXCEPTIONS)
+except ImportError:
+    # Fallback if gRPC or Qdrant exceptions are not available
+    QDRANT_RETRY_EXCEPTIONS = (ConnectionError, TimeoutError)
 
 ID_PAYLOAD_KEY = "_id"
 
@@ -24,6 +53,7 @@ class QdrantVectorSearcher(BaseVectorSearcher):
     :param h: Seed vectors ``numpy.ndarray``
     :param index: list of IDs
     :param measure: measure to assess similarity
+    :param batch_size: Number of vectors to upsert in a single batch (default: 512)
     """
 
     def __init__(
@@ -32,6 +62,7 @@ class QdrantVectorSearcher(BaseVectorSearcher):
         dimensions: int,
         measure: t.Optional[str] = None,
         component: str = 'VectorIndex',
+        batch_size: int = 512,
     ):
         config_dict = deepcopy(CFG.vector_search_kwargs)
         try:
@@ -55,9 +86,13 @@ class QdrantVectorSearcher(BaseVectorSearcher):
         config_dict = config_dict or {"location": ":memory:"}
         if '6334' in config_dict['location']:
             config_dict["prefer_grpc"] = True
+            # Set a longer timeout for gRPC connections to avoid DEADLINE_EXCEEDED
+            if "timeout" not in config_dict:
+                config_dict["timeout"] = 60  # 60 seconds timeout
         self.client = QdrantClient(**config_dict)
         self.identifier = identifier
         self.measure = measure
+        self.batch_size = batch_size
 
         self.identifier = re.sub("\W+", "", identifier)
         if not self.client.collection_exists(self.identifier):
@@ -113,8 +148,31 @@ class QdrantVectorSearcher(BaseVectorSearcher):
                 payload={ID_PAYLOAD_KEY: item.id},
             )
             points.append(point)
-        logging.info(f"Adding {len(points)} points to Qdrant index '{self.identifier}'")
-        self.client.upsert(collection_name=self.identifier, points=points)
+
+        total_points = len(points)
+        total_batches = (total_points + self.batch_size - 1) // self.batch_size
+
+        logging.info(
+            f"Adding {total_points} points to Qdrant index '{self.identifier}' "
+            f"in {total_batches} batches (batch_size={self.batch_size})"
+        )
+
+        # Process points in batches with retry logic
+        for batch_idx, i in enumerate(range(0, total_points, self.batch_size), 1):
+            batch = points[i : i + self.batch_size]
+            batch_size = len(batch)
+
+            logging.info(
+                f"Processing batch {batch_idx}/{total_batches} "
+                f"({batch_size} points, {i}/{total_points} completed)"
+            )
+
+            self._upsert_batch_with_retry(batch, batch_idx, total_batches)
+
+        logging.info(
+            f"✓ Successfully added all {total_points} points to Qdrant index "
+            f"'{self.identifier}' in {total_batches} batches"
+        )
 
     def drop(self):
         """Drop the vector index."""
@@ -214,3 +272,34 @@ class QdrantVectorSearcher(BaseVectorSearcher):
         This allows us to overwrite the same point with the original ID.
         """
         return str(uuid.uuid5(uuid.NAMESPACE_DNS, _id))
+
+    def _upsert_batch_with_retry(
+        self, batch: t.List[models.PointStruct], batch_idx: int, total_batches: int
+    ) -> None:
+        """
+        Upsert a batch of points with retry logic.
+
+        :param batch: List of PointStruct objects to upsert
+        :param batch_idx: Current batch index (1-based)
+        :param total_batches: Total number of batches
+        """
+        # Create a retry decorator instance for Qdrant-specific exceptions
+        retry = Retry(exception_types=QDRANT_RETRY_EXCEPTIONS)
+
+        @retry
+        def _do_upsert():
+            self.client.upsert(collection_name=self.identifier, points=batch)
+            logging.debug(
+                f"Successfully upserted batch {batch_idx}/{total_batches} "
+                f"({len(batch)} points)"
+            )
+
+        try:
+            _do_upsert()
+            logging.info(f"✓ Batch {batch_idx}/{total_batches} completed successfully")
+        except Exception as e:
+            logging.error(
+                f"✗ Failed to upsert batch {batch_idx}/{total_batches} "
+                f"after retries: {e}"
+            )
+            raise

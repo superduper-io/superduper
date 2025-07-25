@@ -638,6 +638,7 @@ class Datalayer:
         :param overrides: [Optional] Dictionary of overrides to apply to the component.
         :param component_cache: [Optional] Whether to use the component cache.
         """
+        use_component_cache = component_cache and CFG.use_component_cache
         if version is not None:
             assert component is not None
             assert identifier is not None
@@ -649,7 +650,7 @@ class Datalayer:
             uuid = info['uuid']
             info.update(overrides or {})
         else:
-            if component_cache and (component, identifier) in self._component_cache:
+            if use_component_cache and (component, identifier) in self._component_cache:
                 assert isinstance(identifier, str)
                 if self._component_cache[
                     (component, identifier)
@@ -669,7 +670,8 @@ class Datalayer:
                     ]
                     del self._component_cache[(component, identifier)]
             elif (
-                not component_cache and (component, identifier) in self._component_cache
+                not use_component_cache
+                and (component, identifier) in self._component_cache
             ):
                 logging.info(
                     f'Found {component, identifier} in cache but '
@@ -680,7 +682,7 @@ class Datalayer:
             uuid = huuid.split(':')[-1]
 
         if uuid is not None:
-            if uuid in self._uuid_component_cache and component_cache:
+            if uuid in self._uuid_component_cache and use_component_cache:
                 logging.debug(f'Found {component, uuid} in cache...')
                 return self._uuid_component_cache[uuid]
             info = self.metadata.get_component_by_uuid(
@@ -712,13 +714,13 @@ class Datalayer:
                 builds=info.get('_builds', {}),
                 db=self,
             )
-            c._use_component_cache = component_cache
+            c._use_component_cache = use_component_cache
         else:
             raise ValueError(
                 'Must provide either `uuid` or `component` and `identifier`'
             )
 
-        if getattr(c, 'component_cache', False):
+        if getattr(c, 'component_cache', False) and use_component_cache:
             self._component_cache[(c.component, c.identifier)] = c
             self._uuid_component_cache[c.uuid] = c
         return c

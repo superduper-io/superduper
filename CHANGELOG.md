@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add depth parameter to logging.info
 - Add assertion to verify directory copy in FileSystemArtifactStore
 - Batch the Qdrant requests and add a retry to the config of Qdrant
+- Add use_component_cache to config
 
 ### Bug fixes
 

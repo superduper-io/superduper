@@ -239,14 +239,12 @@ class Create(Event):
             )
 
         except Exception as e:
-            db.metadata.set_component_status(
+            db.metadata.set_component_failed(
                 component=self.component,
                 uuid=self.data['uuid'],
-                details_update={
-                    'phase': STATUS_FAILED,
-                    'reason': f'Failed to create: {str(e)}',
-                    'message': format_exc(),
-                },
+                reason=f'Failed to create: {str(e)}',
+                message=str(format_exc()),
+                context=self.context,
             )
             raise e
 
@@ -265,7 +263,7 @@ class PutComponent(Event):
     :param identifier: the identifier of the component to be created
     :param version: the version of the component to be created
     :param uuid: the uuid of the component to be created
-    :param service: the service to put the component on
+    :param services: the services to put the component on
     """
 
     queue: t.ClassVar[str] = '_apply'
@@ -276,7 +274,7 @@ class PutComponent(Event):
     identifier: str
     version: int
     uuid: str
-    service: str
+    services: t.List[str]
 
     @property
     def cls(self):
@@ -285,7 +283,7 @@ class PutComponent(Event):
 
     @property
     def huuid(self):
-        return f'{self.component}:{self.identifier}:{self.uuid}/{self.service}'
+        return f'{self.component}:{self.identifier}:{self.uuid}'
 
     @classmethod
     def batch_execute(
@@ -363,19 +361,20 @@ class PutComponent(Event):
             context=self.context,
         )
         db.metadata.create_deployment(deployment)
-        logging.info(
-            f'Putting {self.component}:'
-            f'{self.identifier}:{self.uuid} on {self.service}'
-        )
-        getattr(db.cluster, self.service).put_component(
-            component=self.component,
-            uuid=self.uuid,
-        )
-        logging.info(
-            f'Putting {self.component}:'
-            f'{self.identifier}:{self.uuid} on {self.service}'
-            '... DONE'
-        )
+        for service in self.services:
+            logging.info(
+                f'Putting {self.component}:'
+                f'{self.identifier}:{self.uuid} on {service}'
+            )
+            getattr(db.cluster, service).put_component(
+                component=self.component,
+                uuid=self.uuid,
+            )
+            logging.info(
+                f'Putting {self.component}:'
+                f'{self.identifier}:{self.uuid} on {service}'
+                '... DONE'
+            )
 
 
 class Teardown(Event):

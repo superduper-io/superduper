@@ -361,15 +361,14 @@ def _apply(
             jobs=list(job_events.values()),
             context=context,
         )
-        for service in object.services:
-            put_events[f'{object.huuid}/{service}'] = PutComponent(
-                component=object.component,
-                identifier=object.identifier,
-                uuid=object.uuid,
-                context=context,
-                version=object.version,
-                service=service,
-            )
+        put_events[object.huuid] = PutComponent(
+            component=object.component,
+            identifier=object.identifier,
+            uuid=object.uuid,
+            context=context,
+            version=object.version,
+            services=object.services,
+        )
 
     elif apply_status == 'breaking':
         metadata_event = Create(
@@ -386,15 +385,14 @@ def _apply(
             jobs=list(job_events.values()),
             context=context,
         )
-        for service in object.services:
-            put_events[f'{object.huuid}/{service}'] = PutComponent(
-                component=object.component,
-                identifier=object.identifier,
-                uuid=object.uuid,
-                context=context,
-                version=object.version,
-                service=service,
-            )
+        put_events[object.huuid] = PutComponent(
+            component=object.component,
+            identifier=object.identifier,
+            uuid=object.uuid,
+            context=context,
+            version=object.version,
+            services=object.services,
+        )
 
         d = db['Deployment']
         assert deprecated_context is not None

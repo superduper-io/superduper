@@ -27,7 +27,7 @@ requires-python = ">=3.10"
 dynamic = ["version"]
 dependencies = [
   "snowflake-snowpark-python[localtest]",
-  "snowflake-connector-python",
+  "snowflake-connector-python==3.15.0",
   "snowflake-sqlalchemy",
   "watchdog>=6.0.0",
   "ibis-framework[snowflake]",

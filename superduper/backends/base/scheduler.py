@@ -65,7 +65,7 @@ class JobFutureException(Exception):
     """
 
 
-def consume_streaming_events(events, table, db):
+def consume_streaming_events(events, table, db, batch_execute=False):
     """
     Consumer work from streaming events.
 
@@ -74,6 +74,7 @@ def consume_streaming_events(events, table, db):
     :param events: list of events.
     :param table: table on which events were found.
     :param db: Datalayer instance.
+    :param batch_execute: Whether to execute events in batch.
     """
     out = defaultdict(lambda: [])
     for event in events:
@@ -86,6 +87,7 @@ def consume_streaming_events(events, table, db):
             ids=ids,
             table=table,
             db=db,
+            batch_execute=batch_execute
         )
 
 
@@ -100,7 +102,7 @@ class Future:
     job_id: str
 
 
-def _consume_event_type(event_type, ids, table, db: 'Datalayer'):
+def _consume_event_type(event_type, ids, table, db: 'Datalayer', batch_execute: bool = False):
     # contains all components triggered by the table
     # and all components triggered by the output of these components etc.
     # "uuid" -> dict("trigger_method": future)
@@ -142,11 +144,14 @@ def _consume_event_type(event_type, ids, table, db: 'Datalayer'):
         jobs += sub_jobs
         logging.info(f'Streaming with {component.component}:{component.identifier}')
 
-    for job in jobs:
-        job.execute(db)
+    if batch_execute:
+        db.cluster.compute.submit_jobs(jobs)
+    else:
+        for job in jobs:
+            job.execute(db)
 
-    assert db.cluster is not None
-    db.cluster.compute.release_futures(context)
+        assert db.cluster is not None
+        db.cluster.compute.release_futures(context)
 
 
 def cluster_events(
@@ -184,6 +189,7 @@ def consume_events(
     table: str,
     db: 'Datalayer',
     batch_size: int | None = None,
+    batch_execute: bool = False,
 ):
     """
     Consume events from table queue.
@@ -192,10 +198,11 @@ def consume_events(
     :param table: Queue Table.
     :param db: Datalayer instance.
     :param batch_size: Batch size for processing events.
+    :param batch_execute: Whether to execute events in batch.
     """
     if table != '_apply':
         logging.info(f'Consuming {len(events)} events on {table}.')
-        consume_streaming_events(events=events, table=table, db=db)
+        consume_streaming_events(events=events, table=table, db=db, batch_execute=batch_execute)
     else:
         table_events, create_events, put_events, teardown_events, job_events = (
             cluster_events(events)
@@ -252,8 +259,13 @@ def consume_events(
         if job_events:
             start_time = time.time()
             logging.info(f'Consuming {len(job_events)} jobs (`Job`)')
-            for job in job_events:
-                job.execute(db)
+            if batch_execute:
+                logging.info('Using batch execution for jobs.')
+                db.cluster.compute.submit_jobs(job_events)
+                logging.info('Using batch execution for jobs... DONE')
+            else:
+                for job in job_events:
+                    job.execute(db)
 
             logging.info(
                 f'Consumed {len(job_events)} jobs (`Job`) in {time.time() - start_time:.2f}s'

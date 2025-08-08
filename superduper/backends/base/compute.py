@@ -6,8 +6,7 @@ from superduper.misc.importing import isreallysubclass
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
-    from superduper.base.event import Job
-    from superduper.components.component import Component
+    from superduper.base.metadata import Job
 
 
 class ComputeBackend(BaseBackend):
@@ -74,3 +73,10 @@ class ComputeBackend(BaseBackend):
         :param identifier: Component identifier.
         :param uuid: Component UUID.
         """
+
+    def submit_jobs(self, jobs: t.List['Job']):
+        """Submit jobs to the compute backend.
+
+        :param jobs: List of jobs to submit.
+        """
+        raise NotImplementedError

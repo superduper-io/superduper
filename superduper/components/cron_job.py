@@ -1,6 +1,7 @@
 import typing as t
 
 from superduper import Component, logging
+from superduper.base.metadata import Job
 from superduper.components.component import ensure_setup
 
 
@@ -14,6 +15,22 @@ class CronJob(Component):
 
     schedule: str = '0 0 * * *'
     services: t.ClassVar[t.Sequence[str]] = ('crontab',)
+    compute_kwargs: t.Dict | None = None
+
+    def run_on_compute(self):
+        """Run the job on compute."""
+        logging.info(f"Running cron job {self.identifier} on compute.")
+        job = Job(
+            context=self.uuid,
+            uuid=self.uuid,
+            identifier=self.identifier,
+            component=self.component,
+            args=(),
+            kwargs={},
+            method='run',
+            compute_kwargs=self.compute_kwargs,
+        )
+        self.db.cluster.compute.submit(job)
 
     def run_and_propagate_failure(self):
         """Run the job and propagate failure to the crontab service."""

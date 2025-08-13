@@ -17,9 +17,10 @@ class JobWrapper:
     :param scheduler: LocalScheduler instance.
     """
 
-    def __init__(self, job, scheduler):
+    def __init__(self, job, scheduler, on_compute: bool = False):
         self.job = job
         self.scheduler = scheduler
+        self.on_compute = on_compute
 
     @property
     def identifier(self):
@@ -39,7 +40,11 @@ class JobWrapper:
         # check if job already exists
         if not self.scheduler.get_job(self.job.uuid):
             self.scheduler.add_job(
-                self.job.run_and_propagate_failure,
+                (
+                    self.job.run_and_propagate_failure
+                    if not self.job.on_compute
+                    else self.job.run_on_compute
+                ),
                 "cron",
                 minute=minute,
                 hour=hour,
@@ -61,16 +66,22 @@ class LocalCrontabBackend(Bookkeeping, CrontabBackend):
 
     cls = CronJob
 
-    def __init__(self):
+    def __init__(self, on_compute: bool = False, compute_kwargs: t.Dict | None = None):
         Bookkeeping.__init__(self)
         CrontabBackend.__init__(self)
+        self.on_compute = on_compute
+        self.compute_kwargs = compute_kwargs
         self.scheduler = BackgroundScheduler(
             jobstores={"default": MemoryJobStore()},
             executors={"default": ThreadPoolExecutor(20)},
         )
 
     def build_tool(self, component: 'CronJob'):
-        return JobWrapper(component, self.scheduler)
+        if component.compute_kwargs is None:
+            component.compute_kwargs = {}
+        if self.compute_kwargs is not None:
+            component.compute_kwargs.update(self.compute_kwargs)
+        return JobWrapper(component, self.scheduler, self.on_compute)
 
     def initialize(self):
         """Initialize the crontab."""

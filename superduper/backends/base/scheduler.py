@@ -83,11 +83,7 @@ def consume_streaming_events(events, table, db, batch_execute=False):
     for event_type, events in out.items():
         ids: t.List[str] = sum([event.ids for event in events], [])
         _consume_event_type(
-            event_type,
-            ids=ids,
-            table=table,
-            db=db,
-            batch_execute=batch_execute
+            event_type, ids=ids, table=table, db=db, batch_execute=batch_execute
         )
 
 
@@ -102,7 +98,9 @@ class Future:
     job_id: str
 
 
-def _consume_event_type(event_type, ids, table, db: 'Datalayer', batch_execute: bool = False):
+def _consume_event_type(
+    event_type, ids, table, db: 'Datalayer', batch_execute: bool = False
+):
     # contains all components triggered by the table
     # and all components triggered by the output of these components etc.
     # "uuid" -> dict("trigger_method": future)
@@ -144,13 +142,12 @@ def _consume_event_type(event_type, ids, table, db: 'Datalayer', batch_execute: 
         jobs += sub_jobs
         logging.info(f'Streaming with {component.component}:{component.identifier}')
 
+    assert db.cluster is not None
     if batch_execute:
         db.cluster.compute.submit_jobs(jobs)
     else:
         for job in jobs:
             job.execute(db)
-
-        assert db.cluster is not None
         db.cluster.compute.release_futures(context)
 
 
@@ -202,7 +199,9 @@ def consume_events(
     """
     if table != '_apply':
         logging.info(f'Consuming {len(events)} events on {table}.')
-        consume_streaming_events(events=events, table=table, db=db, batch_execute=batch_execute)
+        consume_streaming_events(
+            events=events, table=table, db=db, batch_execute=batch_execute
+        )
     else:
         table_events, create_events, put_events, teardown_events, job_events = (
             cluster_events(events)
@@ -257,6 +256,7 @@ def consume_events(
             )
 
         if job_events:
+            assert db.cluster is not None, "Datalayer instance must be provided."
             start_time = time.time()
             logging.info(f'Consuming {len(job_events)} jobs (`Job`)')
             if batch_execute:

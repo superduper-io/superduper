@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix the secrets-error
 - Fix job failure propagation logic and prevent duplicate inverse dependencies
 - Fix the gRPC usage issue in Qdrant
+- Fix the crontab job execution issue
 
 ## [0.7.0](https://github.com/superduper-io/superduper/compare/0.7.0...0.6.0])    (2025-May-26)
 

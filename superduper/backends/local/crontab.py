@@ -42,7 +42,7 @@ class JobWrapper:
             self.scheduler.add_job(
                 (
                     self.job.run_and_propagate_failure
-                    if not self.job.on_compute
+                    if not self.on_compute
                     else self.job.run_on_compute
                 ),
                 "cron",

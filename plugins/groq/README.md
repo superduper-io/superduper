@@ -26,7 +26,7 @@ pip install superduper-groq
 
 <!-- Add your additional content below -->
 
-Create a Chat Model with All Attributes
+## Create a Chat Model with All Attributes
 
 ```python
 model = GroqChatCompletions(
@@ -41,20 +41,20 @@ model = GroqChatCompletions(
 )
 ```
 
-Single Prediction
+## Single Prediction
 
 ```python
 response = model.predict("Tell me about AI")
 print(response)
 ```
 
-Prediction with Context
+## Prediction with Context
 ```python
 response = model.predict("Tell me about ", context=["Artificial Intelligence"])
 print(response)
 ```
 
-Batch Predictions
+## Batch Predictions
 ```python
 prompts = ["Hello world", "Explain machine learning"]
 responses = model.predict_batches(prompts)

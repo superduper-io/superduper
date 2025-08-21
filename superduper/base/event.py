@@ -367,7 +367,13 @@ class PutComponent(Event):
             f'Putting {self.component}:'
             f'{self.identifier}:{self.uuid} on {self.service}'
         )
-        getattr(db.cluster, self.service).put_component(
+        service = getattr(db.cluster, self.service)
+        if service is None:
+            logging.warn(
+                f'Skipping {self.service} since no connector is available in {db.cluster}'
+            )
+            return
+        service.put_component(
             component=self.component,
             uuid=self.uuid,
         )

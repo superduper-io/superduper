@@ -361,6 +361,7 @@ def _apply(
             jobs=list(job_events.values()),
             context=context,
         )
+        # TODO - add multiple services (potentially empty)
         for service in object.services:
             put_events[f'{object.huuid}/{service}'] = PutComponent(
                 component=object.component,

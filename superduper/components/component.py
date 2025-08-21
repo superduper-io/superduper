@@ -464,6 +464,16 @@ class Component(Base, metaclass=ComponentMeta):
             uuid=self.uuid,
         )
 
+    @classmethod
+    def branch(cls):
+        mro = cls.__mro__
+        try:
+            i = mro.index(Component)
+        except ValueError:
+            raise TypeError(f"{cls.__name__} is not a subclass of Component")
+        # If cls is Component itself, there is no class 'down' from Component
+        return None if i == 0 else mro[i - 1]
+
     @trigger('apply')
     def set_status(self):
         """Set the status of the component.

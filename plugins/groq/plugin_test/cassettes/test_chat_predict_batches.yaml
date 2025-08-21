@@ -1,0 +1,738 @@
+interactions:
+- request:
+    body: '{"messages":[{"role":"user","content":"What''s the capital of France?"}],"model":"llama3-8b-8192","temperature":0.3,"tool_choice":"auto","tools":null}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '149'
+      content-type:
+      - application/json
+      host:
+      - api.groq.com
+      user-agent:
+      - Groq/Python 0.31.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - Windows
+      x-stainless-package-version:
+      - 0.31.0
+      x-stainless-read-timeout:
+      - '60'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.12.3
+    method: POST
+    uri: https://api.groq.com/openai/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA1SRzW6kMBCE7/sUbJ9NBAYPxg+Qcw65RREydgPO+IexPZNkR/PuK6IZVnstfaXq
+        qr6C0SBALTIrt9pSsQNSHOtSaU7Ltse6HFnVlL1SUh8kp2zqgUAYP1Dlu/FJBbdazCZ4IKAiyowa
+        RN0xxivWsIaACxotCLBWOtmUfCx53dONXoJRmEC8XcF4jV8gKgIOU5IzgrhCDBZBgEzJpCx93jzB
+        Z/Rb+uuChZKrydIWYSqeo/QKC5OKFxlN+g03AjbMawxjAuHP1hKYjDdpGSLKFDwISDmscHsncH4k
+        ns54xiEbhyCqJ9q0vD00HSewxuDWPORwRJ+2fv+kO1xVtK1539HtyMcmu4H/r+4exmjf1pRADlna
+        HadsV3a061ve8PZ2P3cYI8qjDp/+US99p4xumIyfMa7R/Mw0rUPHJuzrUfEWCHwNcwynrevP8yOe
+        hqo+Nh2d6maZso5uPqnLn4v8UNO4jZgwXozaRsEIAoIfNDrpNdx+/QUAAP//AwDRlq7RQQIAAA==
+    headers:
+      CF-RAY:
+      - 972c9d407eb17eeb-MAA
+      Cache-Control:
+      - private, max-age=0, no-store, no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 21 Aug 2025 19:42:33 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=bp9d0lAYiUc8ePrlyGAhn3FmOrm2GiS_.qqEonN9FMQ-1755805353-1.0.1.1-iqtDQYOjm.Hloz4sDE1euFtiJBv3Qw4QZSr1Tt9DP0I.O4RFG1skiO_amL4Sn_VOUTxn70n5FvIeYpr9p6n2IzuFmY78v0AT2weUl9tuH.g;
+        path=/; expires=Thu, 21-Aug-25 20:12:33 GMT; domain=.groq.com; HttpOnly; Secure;
+        SameSite=None
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      vary:
+      - Origin
+      via:
+      - 1.1 google
+      x-groq-region:
+      - bom
+      x-ratelimit-limit-requests:
+      - '14400'
+      x-ratelimit-limit-tokens:
+      - '6000'
+      x-ratelimit-remaining-requests:
+      - '14398'
+      x-ratelimit-remaining-tokens:
+      - '5987'
+      x-ratelimit-reset-requests:
+      - 10.182s
+      x-ratelimit-reset-tokens:
+      - 130ms
+      x-request-id:
+      - req_01k372f13hftdrmgqcvzvajcfb
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages":[{"role":"user","content":"Summarize the history of Python
+      in 1 sentence."}],"model":"llama3-8b-8192","temperature":0.3,"tool_choice":"auto","tools":null}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '166'
+      content-type:
+      - application/json
+      cookie:
+      - __cf_bm=bp9d0lAYiUc8ePrlyGAhn3FmOrm2GiS_.qqEonN9FMQ-1755805353-1.0.1.1-iqtDQYOjm.Hloz4sDE1euFtiJBv3Qw4QZSr1Tt9DP0I.O4RFG1skiO_amL4Sn_VOUTxn70n5FvIeYpr9p6n2IzuFmY78v0AT2weUl9tuH.g
+      host:
+      - api.groq.com
+      user-agent:
+      - Groq/Python 0.31.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - Windows
+      x-stainless-package-version:
+      - 0.31.0
+      x-stainless-read-timeout:
+      - '60'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.12.3
+    method: POST
+    uri: https://api.groq.com/openai/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA1RTS4+bMBC+91eM5mxWPEICnCv1WvVaVWjAA7jxg7VNsukq/70yTbbt0ePvNePx
+        OyqJHY4LxdGsOhtrbnniKqubRmYHKtpsGOoha445NYeiyKtDhQLd8JPH+CC+jM6smqNyFgWOnimy
+        xK441XWT11VdCTROssYOtSZDVdYMWVO0ZUIvTo0csPv+jspKfsMuF2g4BJoZu3f0TjN2SCGoEMnG
+        xHE2sk3uX29xcRauFOBhC8pCXBg0RYaibfIAww2+bEo6uJCFby6EzQgg+LzFcYEUfYvsYfVu9mQM
+        ewFkJSwUICg7MvDF6cuuHB0QXJVkfcu2wFLAouYl03xhLdI9+9VzSvFUU3YGTXbeaGY4W3e1MDkP
+        KiZxs2o1qngT4JkkDUrvh+Suyc+cwpnNqngDN4FMLm5lHwRcVVx2kUn5EMGzZgqcei/attgVnJ1d
+        cn/QDNu410m6Nb1UAl/IK7clFdYypA5GvcnEuvLwL1NAGBXbqCY1Pkam7CxAUiQgS/oWVPiTnPyO
+        UqT3gWitZrYjv+BdoHbz6t0QsLOb1gInZVVYes8UnMUOQ3Qr3n8I3J6v/7rxxn1UhrHLX8qqbg/N
+        8dgKXL0za+yjO7MN2JXl39IDnOdlczieTkVamOd+fhCa8v/yk1Qfy6o5lieB0UXSH/giP3yUPrBt
+        3tRV29wfgfvBM52lu9png+EWIpt+UnZOq6H2pZ3W/lRP3BbD2BxQ4Fs/e/eaut2/oufXPi/O1amc
+        ChnYnP3F3Crjh+l6Xn6lMQb2FzWmsbDHDp3tJRuyEu+ffgMAAP//AwC08gFezwMAAA==
+    headers:
+      CF-RAY:
+      - 972c9d428f887eeb-MAA
+      Cache-Control:
+      - private, max-age=0, no-store, no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 21 Aug 2025 19:42:33 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      vary:
+      - Origin
+      via:
+      - 1.1 google
+      x-groq-region:
+      - bom
+      x-ratelimit-limit-requests:
+      - '14400'
+      x-ratelimit-limit-tokens:
+      - '6000'
+      x-ratelimit-remaining-requests:
+      - '14397'
+      x-ratelimit-remaining-tokens:
+      - '5966'
+      x-ratelimit-reset-requests:
+      - 17.673999999s
+      x-ratelimit-reset-tokens:
+      - 336.999999ms
+      x-request-id:
+      - req_01k372f1dsemkrvmy3mrbfwkhz
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages":[{"role":"system","content":"You are a helpful assistant."},{"role":"user","content":"Hello"}],"model":"llama3-8b-8192","temperature":null,"tool_choice":"auto","tools":null}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '185'
+      content-type:
+      - application/json
+      host:
+      - api.groq.com
+      user-agent:
+      - Groq/Python 0.31.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - Windows
+      x-stainless-package-version:
+      - 0.31.0
+      x-stainless-read-timeout:
+      - '60'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.12.3
+    method: POST
+    uri: https://api.groq.com/openai/v1/chat/completions
+  response:
+    body:
+      string: '{"error":{"message":"Invalid API Key","type":"invalid_request_error","code":"invalid_api_key"}}
+
+        '
+    headers:
+      CF-RAY:
+      - 972ca3f86ff0c87a-MAA
+      Cache-Control:
+      - private, max-age=0, no-store, no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '96'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 21 Aug 2025 19:47:08 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=UhqO2zat1gtMrGieUXdXOpkyLRJXE_oRcFucVsQh1fU-1755805628-1.0.1.1-b0EExmKlKfKc_UL4DLkPy0pw0pK0zrbjS2qNLcu00zrM2j_ZZaQ9KUpHMJg46EZORtNZnfvlT7GfdKLttiNc6pFhd8Lp6Ox35cJk.Z_gX6U;
+        path=/; expires=Thu, 21-Aug-25 20:17:08 GMT; domain=.groq.com; HttpOnly; Secure;
+        SameSite=None
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      vary:
+      - Origin
+      via:
+      - 1.1 google
+      x-groq-region:
+      - bom
+      x-request-id:
+      - req_01k372qdvbevx9dvaw7d9svnh1
+    status:
+      code: 401
+      message: Unauthorized
+- request:
+    body: '{"messages":[{"role":"system","content":"You are a helpful assistant."},{"role":"user","content":"Hello"}],"model":"llama3-8b-8192","temperature":null,"tool_choice":"auto","tools":null}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '185'
+      content-type:
+      - application/json
+      cookie:
+      - __cf_bm=UhqO2zat1gtMrGieUXdXOpkyLRJXE_oRcFucVsQh1fU-1755805628-1.0.1.1-b0EExmKlKfKc_UL4DLkPy0pw0pK0zrbjS2qNLcu00zrM2j_ZZaQ9KUpHMJg46EZORtNZnfvlT7GfdKLttiNc6pFhd8Lp6Ox35cJk.Z_gX6U
+      host:
+      - api.groq.com
+      user-agent:
+      - Groq/Python 0.31.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - Windows
+      x-stainless-package-version:
+      - 0.31.0
+      x-stainless-read-timeout:
+      - '60'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.12.3
+    method: POST
+    uri: https://api.groq.com/openai/v1/chat/completions
+  response:
+    body:
+      string: '{"error":{"message":"Invalid API Key","type":"invalid_request_error","code":"invalid_api_key"}}
+
+        '
+    headers:
+      CF-RAY:
+      - 972ca411de64c87a-MAA
+      Cache-Control:
+      - private, max-age=0, no-store, no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '96'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 21 Aug 2025 19:47:12 GMT
+      Server:
+      - cloudflare
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      vary:
+      - Origin
+      via:
+      - 1.1 google
+      x-groq-region:
+      - bom
+      x-request-id:
+      - req_01k372qht9fzvvdk3rpe3p6v8e
+    status:
+      code: 401
+      message: Unauthorized
+- request:
+    body: '{"messages":[{"role":"system","content":"You are a helpful assistant."},{"role":"user","content":"Hello"}],"model":"llama3-8b-8192","temperature":null,"tool_choice":"auto","tools":null}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '185'
+      content-type:
+      - application/json
+      host:
+      - api.groq.com
+      user-agent:
+      - Groq/Python 0.31.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - Windows
+      x-stainless-package-version:
+      - 0.31.0
+      x-stainless-read-timeout:
+      - '60'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.12.3
+    method: POST
+    uri: https://api.groq.com/openai/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA1SSza6bMBCF930KdzbdQMQ/xptum2eoKmTMAL6xPcQ2N7mK8u4VUdKo26PveOYc
+        zw30CALUIqOyq0lbxVUr5ZSiKsu0QpxSXnZ1mo8FKqnGThUVJEDDB6r4NB4U2dVg1OQgAeVRRhxB
+        5G1d86xueJ6ApRENCDBGWlmmfEh53hU7vZBWGED8voF2I15BZAlYDEHOCOIGngyCABmCDlG6uHvI
+        RXT79F9oDH1nx/gjMKcVskjMIkb2RduBHQOLC3pkgSzGRbuZHZmSji1o1h1hFx2XhJFnF9rM+JCM
+        Pj2e2YP9hHsChubV0xBAuM2YBCbtdFh6jzKQAwEh0gr3Pwlsr5XPG27YR20RRHYoyrJqiyxvElg9
+        2TX2kU7oAoiieEtPOMsK3lRVXu8pX6W+Dc3/8suUt01X5CVPIFKU5h9fvZUXWmR13dR1eX/u2w8e
+        5Wmki3vlC18hou0n7Wb0q9ePoqe1b+sJu3xQfP//az97Ou9hH+fj8dxn+alsi5DzYRpVV/HPKXbr
+        tQzVvLcY0H9qtbeCHgSQ60e00o1w//YXAAD//wMAdbmqA4MCAAA=
+    headers:
+      CF-RAY:
+      - 972ca5414f951797-MAA
+      Cache-Control:
+      - private, max-age=0, no-store, no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 21 Aug 2025 19:48:01 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=dt3v_TL7suT9_wad2MRuzsOJIHs1Dv9InJ.ld9U3zyk-1755805681-1.0.1.1-Wrr.b2Of59oEZ.U.aWZNiW1TuLjb5xPCmeKQyAUZjTJHj80jSPxRnthIFwJk3yf6fXfwJqcvmeweEe4A3OI5Tmc_cfYRQ9oB5WONUSDftLY;
+        path=/; expires=Thu, 21-Aug-25 20:18:01 GMT; domain=.groq.com; HttpOnly; Secure;
+        SameSite=None
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      vary:
+      - Origin
+      via:
+      - 1.1 google
+      x-groq-region:
+      - bom
+      x-ratelimit-limit-requests:
+      - '14400'
+      x-ratelimit-limit-tokens:
+      - '6000'
+      x-ratelimit-remaining-requests:
+      - '14398'
+      x-ratelimit-remaining-tokens:
+      - '5981'
+      x-ratelimit-reset-requests:
+      - 10.172999999s
+      x-ratelimit-reset-tokens:
+      - 190ms
+      x-request-id:
+      - req_01k372s18bfdc948vft9px3s4g
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages":[{"role":"system","content":"You are a helpful assistant."},{"role":"user","content":"Summarize
+      AI history in 2 sentences"}],"model":"llama3-8b-8192","temperature":null,"tool_choice":"auto","tools":null}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '215'
+      content-type:
+      - application/json
+      cookie:
+      - __cf_bm=dt3v_TL7suT9_wad2MRuzsOJIHs1Dv9InJ.ld9U3zyk-1755805681-1.0.1.1-Wrr.b2Of59oEZ.U.aWZNiW1TuLjb5xPCmeKQyAUZjTJHj80jSPxRnthIFwJk3yf6fXfwJqcvmeweEe4A3OI5Tmc_cfYRQ9oB5WONUSDftLY
+      host:
+      - api.groq.com
+      user-agent:
+      - Groq/Python 0.31.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - Windows
+      x-stainless-package-version:
+      - 0.31.0
+      x-stainless-read-timeout:
+      - '60'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.12.3
+    method: POST
+    uri: https://api.groq.com/openai/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA3xUTY/jNgy991cQPG0BZ2DH8fjjNthDOwV66t66RSBLtM2NLHkoOZtgMP+9kCeZ
+        3V569BMf3+MT5Vdkgx3qSUU9L3ZXV9Whqst2V9Sadgc9mF1bmX7X76vDvqSq0QNhhr7/RjreiA/a
+        z4ulyN5hhlpIRTLYFXVVNXn12BQZzt6QxQ6tVbMqd02/a4p2n6onz5oCdn+/IjtDF+zyDGcKQY2E
+        3SuKt4QdqhA4ROVi4ngXySX130kIOICC/S5QQjVBWOdZyRX8AE/PMHGIXq7dV/fVfZkItHealrid
+        SuSBNSsLzy6StTxuDT49Pf8KRkUK0Ct9guhBOc3kIvwmRJoy6NcIcSJIc4m7i9wkexqVA3ZbRdFW
+        eYDvHKft09CZrF/m1MwPGzSwhJh4i/hR1BxAOQPKjl44TnOA/gop4TWSQNh8cIgBLJ8Inqxy8GUV
+        duNG+8NPDv7Un5XE6foAf3EaKE7ksi0MFVIAkd1KJs1FZ2/PqUD8Ok43w03+bqFo2/+xTpeFJEK4
+        hkg3z7PSEzsCS0ocuzHb0CS6FXNK14ACobDKe9bsQEinlldS8pOaMuebkCFaPlpuHdP5It7yQKLS
+        2t2CV8tiWW9IAKXFhwBnJezXAOzMGqIwhQd8y9D6cRHfB+zcam2GAzsO01FIBe+wwxD9gm//ZLje
+        F/FlpZWOkWfCLn/Yl1VZt01+yHARPy/xGP2JXMCuzH9At+I8L+uiafePaXfvT+WDUBTlf/E7q66L
+        um6TRPRR2R+EQ/kB3WubvGkfm/LtZvjYC6mT8d/dfcD3ezoO7EaSRXh7P8NyrKuB2qLXzQEzvBxH
+        8S9p2u2vIPRyzItTWe9D8a0ZjG7nQV3OL268nKKkGAPJmXWKhQQ79O5oaFbO4Nsv/wIAAP//AwCX
+        xsFfWgQAAA==
+    headers:
+      CF-RAY:
+      - 972ca543686e1797-MAA
+      Cache-Control:
+      - private, max-age=0, no-store, no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 21 Aug 2025 19:48:01 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      vary:
+      - Origin
+      via:
+      - 1.1 google
+      x-groq-region:
+      - bom
+      x-ratelimit-limit-requests:
+      - '14400'
+      x-ratelimit-limit-tokens:
+      - '6000'
+      x-ratelimit-remaining-requests:
+      - '14397'
+      x-ratelimit-remaining-tokens:
+      - '5932'
+      x-ratelimit-reset-requests:
+      - 17.683s
+      x-ratelimit-reset-tokens:
+      - 678.999999ms
+      x-request-id:
+      - req_01k372s1j8fdc9mfaxvqngxktr
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages":[{"role":"system","content":"You are a helpful assistant."},{"role":"user","content":"Hello"}],"model":"llama3-8b-8192","temperature":null,"tool_choice":"auto","tools":null}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '185'
+      content-type:
+      - application/json
+      host:
+      - api.groq.com
+      user-agent:
+      - Groq/Python 0.31.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - Windows
+      x-stainless-package-version:
+      - 0.31.0
+      x-stainless-read-timeout:
+      - '60'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.12.3
+    method: POST
+    uri: https://api.groq.com/openai/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA1SSwY7iMBBEf8XbFy4JSpyEOLnsdfmG1Spy7IZ4cNzGdgYQ4t9XYQdGey29qu5y
+        +w5GQw9qkknN3uZa8KYuWp23He/yWnQ6F2NV56gPja5arjohIAMaP1ClL+NW0ewtJkMOMlABZUIN
+        fdk2jSgawcsMZtJooQdr5SyrXIy5KDu+0hMZhRH633cwTuMV+iKDGWOUR4T+DoEsQg8yRhOTdGn1
+        kEvo1um/0Fr6wfZpE5kzClkiNiMmdqNly/aRpQkDskgzpsm4I9szJR2b0PoVYReTJkaBXWix+qlY
+        c3qmrL1+sv1mZs+EROzfBt826W7svGBca8c1JJE3Kq7ARr9ztIlqiXELjwwsHX2gMULvFmszOBhn
+        4jQElJEc9BATeXj8yWB5lT8vuOCQzIzQF1tetVxUu7LKwAeafRoSndBF6Dn/lr7gouBd1fKqXd/r
+        dZ63oeb/yy8TF7uirNcJiZK0b35Xv5UXWpVNJXbN42vdYQwoT5ou7lUv3mLCeTgYd8Tgg3le7OCH
+        tjlgV45K1JDBdTgGOq9dn/8w4HkoylPV8qt0F6z9Z6N3h3L04eI+5V+BArE4tagsMxkUKKlFSlZK
+        +XnxKam5iXkpSrVcAAAAAP//AwCrTZh6zAIAAA==
+    headers:
+      CF-RAY:
+      - 972ca8b0eb05380b-MAA
+      Cache-Control:
+      - private, max-age=0, no-store, no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 21 Aug 2025 19:50:21 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=bG4dH3WwFIyJLRlIKR40Rvq1IDUDC46YvFEZk9tgEE8-1755805821-1.0.1.1-YrFvcrKET2GhwzbERNaUsb60Os97Y2WYflbIhT1YbXHiX_BfR53k3ST_kgSW0ADjpArmQhzu94Xpeu9CIchMHsDHvx5bTDi7GnS.EyX1Wq4;
+        path=/; expires=Thu, 21-Aug-25 20:20:21 GMT; domain=.groq.com; HttpOnly; Secure;
+        SameSite=None
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      vary:
+      - Origin
+      via:
+      - 1.1 google
+      x-groq-region:
+      - bom
+      x-ratelimit-limit-requests:
+      - '14400'
+      x-ratelimit-limit-tokens:
+      - '6000'
+      x-ratelimit-remaining-requests:
+      - '14397'
+      x-ratelimit-remaining-tokens:
+      - '5979'
+      x-ratelimit-reset-requests:
+      - 17.056s
+      x-ratelimit-reset-tokens:
+      - 206.999999ms
+      x-request-id:
+      - req_01k372xanwe4pv5d6f1bprwnva
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages":[{"role":"system","content":"You are a helpful assistant."},{"role":"user","content":"Summarize
+      AI history in 2 sentences"}],"model":"llama3-8b-8192","temperature":null,"tool_choice":"auto","tools":null}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '215'
+      content-type:
+      - application/json
+      cookie:
+      - __cf_bm=bG4dH3WwFIyJLRlIKR40Rvq1IDUDC46YvFEZk9tgEE8-1755805821-1.0.1.1-YrFvcrKET2GhwzbERNaUsb60Os97Y2WYflbIhT1YbXHiX_BfR53k3ST_kgSW0ADjpArmQhzu94Xpeu9CIchMHsDHvx5bTDi7GnS.EyX1Wq4
+      host:
+      - api.groq.com
+      user-agent:
+      - Groq/Python 0.31.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - Windows
+      x-stainless-package-version:
+      - 0.31.0
+      x-stainless-read-timeout:
+      - '60'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.12.3
+    method: POST
+    uri: https://api.groq.com/openai/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA3RUTW/kNgy991cQPLWAHXg89nz4FvTSLJDT9tYUA9qibe3IlCPRk5kG+e+FJpnN
+        7mGPfnpP5Huk/IrWYIPdSNpNs8urfVFSUe5zU/ZVXlFR5LRvOe83u36zM2W9qQvM0LffuNMP4V3n
+        p9mxWi+YYReYlA02q21d74p6V5YZTt6wwwado4nW+a7Nd6t9mdijtx1HbP55RSuGz9gUGU4cIw2M
+        zSsG7xgbpBhtVBJNGi/Kkqr/xYHBRiBog+Ue4jJNFC7ge7h/gNFG9eECVqCEyEnUcWye5Enug9re
+        dpYcPIiyc3ZIh/D7/cMf0PJAAupB6cgQR5o53aEjw2RNXhY6QseiS7jAi9XxemL4xM7PE4um8s4P
+        tiMHgSl6sTIAiYE5+NbxlEfvTlfMDT5YHacI7QXuHQn8vQQrQwaPFE5W4NFKPF6yq/qLHwUeuz8p
+        6JigycsAXkcOMftsRDlM8IS/cPiE0HIq3XkrbJKv1b7e3MFXm/zryJJds6MIfPLuxAZ0DH4ZRjhR
+        sH6JEJUGjhlY6dxi0mVhcZy3FNlAvETlKWbA55mDfn5P1I1WGBxTkKvF5Mkwzz9AVxfRDpJ6J1Eg
+        cyLpOMUaU7OBU/JguCPDEUywJ5YU3gfxSkr7uCgHGCmYFwqcgSElSOtAA79XfidR2lpyMPsXDnf4
+        lqHzQxpTxEYW5zLsrdg4Ht4HiQ1G9TO+/ZvhclvR54UXPqidGJvirlxvdlVZFnWGc/DTrAf1R5aI
+        zbr4hD7IRbHe1sW6qtNW3x7Rd8FqtfkZv6m2+3K/LVdVhuqV3Keg2nyHbtzduqi2db1/++j40Aam
+        o/EvcnP4PqJDb2XgMAd7fVr9fNjWPe9XbberMMPzYQj+Odm9/jACPx+K1XG9Lc/034WrWYlirC/f
+        xrMW55Rj5HCyXcqFAzbo5WB4IjH49tv/AAAA//8DAGlMCBh1BAAA
+    headers:
+      CF-RAY:
+      - 972ca8b2fdef380b-MAA
+      Cache-Control:
+      - private, max-age=0, no-store, no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 21 Aug 2025 19:50:22 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      vary:
+      - Origin
+      via:
+      - 1.1 google
+      x-groq-region:
+      - bom
+      x-ratelimit-limit-requests:
+      - '14400'
+      x-ratelimit-limit-tokens:
+      - '6000'
+      x-ratelimit-remaining-requests:
+      - '14396'
+      x-ratelimit-remaining-tokens:
+      - '5915'
+      x-ratelimit-reset-requests:
+      - 23.677999999s
+      x-ratelimit-reset-tokens:
+      - 846.999999ms
+      x-request-id:
+      - req_01k372xazye4ptaass5yjhxt0x
+    status:
+      code: 200
+      message: OK
+version: 1

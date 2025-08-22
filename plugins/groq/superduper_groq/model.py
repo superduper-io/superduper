@@ -19,8 +19,6 @@ class GroqAPIModel(APIBaseModel):
 
     :param groq_api_key: The API key for authenticating with the Groq API
     """
-
-    GROQ_API_KEY: Optional[str] = os.getenv("GROQ_API_KEY")
     temperature: Optional[float] = None
     system_message: Optional[str] = None
     tool_choice: Optional[Union[str, Dict]] = "auto"
@@ -36,7 +34,7 @@ class GroqAPIModel(APIBaseModel):
         """Initialize the model.
         :param db: The database connection to use.
         """
-        self.client = groq.Groq(api_key=self.GROQ_API_KEY)
+        self.client = groq.Groq(api_key=os.getenv("GROQ_API_KEY"))
         self.async_client = groq.AsyncGroq()
         super().setup()
 

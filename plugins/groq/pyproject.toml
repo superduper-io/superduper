@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=42"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "superduper-groq"
+version = "0.1.0"
+description = "SuperDuperDB integration with Groq API"
+authors = [
+    {name = "Geoffrey Robinson", email = "jeffrobin132004@gmail.com"},
+]
+dependencies = [
+    "superduper-framework>=0.1.0",
+    "groq>=0.4.0",
+]
+requires-python = ">=3.8"
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "pytest-mock>=3.10.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["superduper_groq*"]
+exclude = ["plugin_test*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v --cov=superduper_groq --cov-report=term-missing"
+
+[project.entry-points."superduper.plugin"]
+groq = "superduper_groq"

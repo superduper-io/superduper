@@ -1,13 +1,14 @@
+import dataclasses as dc
+import os
+from typing import Any, Dict, List, Optional, Union
+
 import groq
 from groq import APIConnectionError, APIError, APIStatusError, APITimeoutError
-from superduper.components.model import APIBaseModel
-from superduper.base.query_dataset import QueryDataset
-import os
-import dataclasses as dc
-from superduper.misc.retry import Retry
-from typing import Any, Optional, Union, List, Dict
-from superduper.misc.utils import format_prompt
 
+from superduper.base.query_dataset import QueryDataset
+from superduper.components.model import APIBaseModel
+from superduper.misc.retry import Retry
+from superduper.misc.utils import format_prompt
 
 retry = Retry(
     exception_types=(APIConnectionError, APIError, APIStatusError, APITimeoutError)
@@ -19,12 +20,13 @@ class GroqAPIModel(APIBaseModel):
 
     :param groq_api_key: The API key for authenticating with the Groq API
     """
+
     temperature: Optional[float] = None
     system_message: Optional[str] = None
     tool_choice: Optional[Union[str, Dict]] = "auto"
     tools: Optional[list] = dc.field(default_factory=list)
     include_reasoning: Optional[bool] = None
-    
+
     def postinit(self):
         """Post-initialization method."""
         self.model = self.model or self.identifier
@@ -77,7 +79,7 @@ class GroqChatCompletions(GroqAPIModel):
             model=self.identifier,
             temperature=self.temperature,
             tool_choice=self.tool_choice or "none",
-            tools=tools
+            tools=tools,
         )
         return response.choices[0].message.content
 

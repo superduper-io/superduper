@@ -24,6 +24,7 @@ def teardown():
     client.delete_collection("123456")
 
 
+@pytest.mark.skip(reason="Requires a running ChromaDB instance on localhost:9000")
 def test_index(index_data, teardown):
 
     from superduper import CFG

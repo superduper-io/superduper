@@ -3,7 +3,6 @@ import typing as t
 
 import chromadb
 import numpy as np
-from qdrant_client import models
 from superduper import CFG, logging
 from superduper.backends.base.vector_search import (
     BaseVectorSearcher,
@@ -173,7 +172,7 @@ class ChromaDBVectorSearcher(BaseVectorSearcher):
             dists = [dists[i] for i in ix]
         return ids, dists
 
-    def _distance_mapping(self, measure: t.Optional[str] = None) -> models.Distance:
+    def _distance_mapping(self, measure: t.Optional[str] = None):
         if measure == "cosine":
             return 'cosine'
         if measure == "l2":

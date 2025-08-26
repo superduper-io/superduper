@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "superduper_chromadb"
+name = "superduper-chromadb"
 readme = "README.md"
 description = """
 SuperDuper Lance is a Python library that provides a high-level API for working with Lance vector search database.

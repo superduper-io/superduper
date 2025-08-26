@@ -5,9 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "superduper-chromadb"
 readme = "README.md"
-description = """
-SuperDuper Lance is a Python library that provides a high-level API for working with Lance vector search database.
-"""
+description = """SuperDuper Lance is a Python library that provides a high-level API for working with Lance vector search database."""
 license = {file = "LICENSE"}
 maintainers = [{name = "superduper.io, Inc.", email = "opensource@superduper.io"}]
 keywords = [

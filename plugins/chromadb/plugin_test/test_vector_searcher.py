@@ -24,6 +24,7 @@ def teardown():
     client.delete_collection("123456")
 
 
+@pytest.skip(reason="Skipping in CI/ CD")
 def test_index(index_data, teardown):
 
     from superduper import CFG

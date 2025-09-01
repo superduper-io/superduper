@@ -187,6 +187,11 @@ class BaseVectorSearcher(VectorSearcherInterface):
     def db(self, value: 'Datalayer'):
         self._db = value
 
+    @abstractmethod
+    def list(self) -> t.List[str]:
+        """List all ids in the index."""
+        pass
+
     @classmethod
     def from_component(cls, index: 'VectorIndex'):
         """Create a vector searcher from a vector index.

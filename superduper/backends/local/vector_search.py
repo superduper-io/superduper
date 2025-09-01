@@ -50,15 +50,26 @@ class LocalVectorSearchBackend(VectorSearchBackend):
             if t.is_component and t.cls is not None:
                 if issubclass(t.cls, VectorIndex):
                     components.append(t.identifier)
+                    
         for component in components:
             try:
                 for identifier in self.db.show(component):
                     try:
                         vector_index = self.db.load(component, identifier=identifier)
                         self.put_component(component, vector_index.uuid)
-                        vectors = vector_index.get_vectors()
-                        vectors = [VectorItem(**vector) for vector in vectors]
-                        self.get_tool(vector_index.uuid).add(vectors)
+                        all_ids = vector_index.list()
+                        tool = self.get_tool(vector_index.uuid)
+                        deployed_ids = tool.list()
+                        to_deploy_ids = list(set(all_ids) - set(deployed_ids))
+                        if to_deploy_ids:
+                            vectors = vector_index.get_vectors(ids=to_deploy_ids)
+                            vectors = [VectorItem(**vector) for vector in vectors]
+                            self.get_tool(vector_index.uuid).add(vectors)
+                        else:
+                            logging.info(
+                                'Skipping since have already deployed vectors for '
+                                f'component: {component}, vector_index: {vector_index.uuid}'
+                            )
 
                     except FileNotFoundError:
                         logging.error(
@@ -190,6 +201,9 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
         self.h = h
         self.index = index
         self.lookup = dict(zip(index, range(len(index))))
+
+    def list(self):
+        return self.index if self.index is not None else []
 
     def describe(self):
         """Describe the vector index.

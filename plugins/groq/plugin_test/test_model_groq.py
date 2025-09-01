@@ -14,15 +14,13 @@ if os.getenv('GROQ_API_KEY') is None:
     mp.setenv('GROQ_API_KEY', 'sk-TopSecret')
 
 
-# -----------------------
-# Single prediction test
-# -----------------------
 @vcr.use_cassette(
     f"{CASSETTE_DIR}/test_chat_predict.yaml",
     filter_headers=["authorization"],
     record_mode="all",
 )
 def test_chat_predict():
+    """Test that GroqChatCompletions predicts a single string response."""
     model = GroqChatCompletions(
         identifier="llama3-8b-8192", system_message="You are a helpful assistant."
     )
@@ -30,15 +28,13 @@ def test_chat_predict():
     assert isinstance(resp, str)
 
 
-# -----------------------
-# Prediction with context
-# -----------------------
 @vcr.use_cassette(
     f"{CASSETTE_DIR}/test_chat_predict_with_context.yaml",
     filter_headers=["authorization"],
     record_mode="all",
 )
 def test_chat_predict_with_context():
+    """Test that GroqChatCompletions predicts a single string response with context."""
     model = GroqChatCompletions(
         identifier="llama3-8b-8192", system_message="You are a helpful assistant."
     )
@@ -46,15 +42,13 @@ def test_chat_predict_with_context():
     assert isinstance(resp, str)
 
 
-# -----------------------
-# Batch prediction test
-# -----------------------
 @vcr.use_cassette(
     f"{CASSETTE_DIR}/test_chat_predict_batches.yaml",
     filter_headers=["authorization"],
     record_mode="all",
 )
 def test_chat_predict_batches():
+    """Test that GroqChatCompletions predicts a batch of responses."""
     model = GroqChatCompletions(
         identifier="llama3-8b-8192", system_message="You are a helpful assistant."
     )

@@ -16,9 +16,9 @@ retry = Retry(
 
 
 class GroqAPIModel(APIBaseModel):
-    """Base Class for Groq API Models
+    """Base Class for Groq API Models.
 
-    :param groq_api_key: The API key for authenticating with the Groq API
+    :param groq_api_key: The API key for authenticating with the Groq API.
     """
 
     temperature: Optional[float] = None
@@ -34,6 +34,7 @@ class GroqAPIModel(APIBaseModel):
 
     def setup(self, db=None):
         """Initialize the model.
+
         :param db: The database connection to use.
         """
         self.client = groq.Groq(api_key=os.getenv("GROQ_API_KEY"))
@@ -42,7 +43,7 @@ class GroqAPIModel(APIBaseModel):
 
 
 class GroqChatCompletions(GroqAPIModel):
-    """Chat Completions Model for Groq API"""
+    """Chat Completions Model for Groq API."""
 
     prompt: str = ''
     signature: str = '*args,**kwargs'

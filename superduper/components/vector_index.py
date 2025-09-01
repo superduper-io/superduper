@@ -85,6 +85,9 @@ class VectorIndex(CDC):
             )
         return self
 
+    def list(self):
+        return self.db[self.indexing_listener.outputs].ids()
+
     @ensure_setup
     def get_vectors(self, ids: t.Sequence[str] | None = None):
         """Get vectors from the vector index.

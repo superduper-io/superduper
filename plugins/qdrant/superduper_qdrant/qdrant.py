@@ -91,7 +91,7 @@ class QdrantVectorSearcher(BaseVectorSearcher):
                 config_dict["timeout"] = 60  # 60 seconds timeout
         self.client = QdrantClient(**config_dict)
 
-        logging.info('Found these collections in the qdrant collection:')
+        logging.info('Found these collections in the qdrant connection:')
         collections = self.client.get_collections().collections
         for collection in collections:
             logging.info(f" - {collection.name}")
@@ -121,6 +121,45 @@ class QdrantVectorSearcher(BaseVectorSearcher):
 
     def __len__(self):
         return self.client.get_collection(self.identifier).vectors_count
+
+    def list(self):
+        """List all ids in the index."""
+        if not self.client.collection_exists(self.identifier):
+            return []
+
+        ids: t.List[str] = []
+        next_page: t.Optional[models.ScrollCursor] = None
+        limit = max(256, self.batch_size)  # reasonable paging size
+
+        # Reuse the same retry pattern as upserts
+        retry = Retry(exception_types=QDRANT_RETRY_EXCEPTIONS)
+
+        @retry
+        def _do_scroll(offset):
+            return self.client.scroll(
+                collection_name=self.identifier,
+                limit=limit,
+                with_payload=[ID_PAYLOAD_KEY],
+                with_vectors=False,
+                offset=offset,
+            )
+
+        while True:
+            records, next_page = _do_scroll(next_page)
+
+            if not records:
+                break
+
+            for rec in records:
+                # We store original IDs in the payload under ID_PAYLOAD_KEY
+                if rec.payload and ID_PAYLOAD_KEY in rec.payload:
+                    ids.append(rec.payload[ID_PAYLOAD_KEY])
+
+            if next_page is None:
+                break
+
+        return ids
+
 
     def _create_collection(self):
         measure = (

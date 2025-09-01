@@ -92,7 +92,7 @@ class QdrantVectorSearcher(BaseVectorSearcher):
         self.client = QdrantClient(**config_dict)
 
         logging.info('Found these collections in the qdrant collection:')
-        collections = self.client.get_collections()
+        collections = self.client.get_collections().collections
         for collection in collections:
             logging.info(f" - {collection.name}")
 

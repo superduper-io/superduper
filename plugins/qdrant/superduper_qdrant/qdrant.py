@@ -90,6 +90,12 @@ class QdrantVectorSearcher(BaseVectorSearcher):
             if "timeout" not in config_dict:
                 config_dict["timeout"] = 60  # 60 seconds timeout
         self.client = QdrantClient(**config_dict)
+
+        logging.info('Found these collections in the qdrant collection:')
+        collections = self.client.get_collections()
+        for collection in collections:
+            logging.info(f" - {collection.name}")
+
         self.identifier = identifier
         self.measure = measure
         self.batch_size = batch_size

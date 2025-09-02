@@ -15,6 +15,8 @@ class CDC(Component):
     """
 
     triggers: t.ClassVar[t.Set] = set()
+    tags: t.ClassVar[t.Sequence[str]] = ('cdc_table',)
+    filter_deployment: t.ClassVar[str] = 'cdc_table'
     cdc_table: str
     services: t.ClassVar[t.Sequence[str]] = ('scheduler', 'cdc')
 

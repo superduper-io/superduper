@@ -12,14 +12,14 @@ if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
 
 
-class MyTrainer(Trainer):
+class MyUseCaseTrainer(Trainer):
     def fit(self, model, db, train_dataset, valid_dataset):
         X, y = list(zip(*list(train_dataset)))
         model.estimator.fit(X, y)
         db.apply(model, force=True, jobs=False)
 
 
-class MyModel(Model):
+class MyUseCaseModel(Model):
     _fields = {'estimator': pickle_serializer}
     estimator: t.Any
     signature: str = 'singleton'
@@ -38,10 +38,10 @@ def test_training(db: "Datalayer"):
 
     from sklearn.svm import SVC
 
-    model = MyModel(
+    model = MyUseCaseModel(
         identifier="my-model",
         estimator=SVC(),
-        trainer=MyTrainer(
+        trainer=MyUseCaseTrainer(
             "my-trainer",
             key=('x', 'y'),
             select=db['documents'].select(),

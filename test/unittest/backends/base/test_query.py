@@ -58,6 +58,7 @@ def test_encode_decode_data(db: Datalayer):
 
 
 class Document(Base):
+    primary_id = '_id'
     x: int
 
 
@@ -229,6 +230,8 @@ def test_outputs(db):
 
 
 class Special(Base):
+    primary_id = '_id'
+
     x: str
     y: int
     special_y: int
@@ -303,7 +306,7 @@ def test_like(db):
     from test.utils.usecase.vector_search import build_vector_index
 
     build_vector_index(db)
-    table = db["documents"]
+    table = db["searchable_documents"]
     # primary_id = table.primary_id.execute()
     vector_index = "vector_index"
 

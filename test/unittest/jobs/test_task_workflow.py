@@ -14,7 +14,8 @@ def assert_output_is_correct(data, output):
         assert output == data
 
 
-class test(Base):
+class test_schema(Base):
+    primary_id = '_id'
     x: int
 
 
@@ -28,11 +29,11 @@ class test(Base):
 @pytest.mark.parametrize("flatten", [True, False])
 def test_downstream_task_workflows_are_triggered(db, data, flatten):
 
-    db.create(test)
+    db.create(test_schema)
 
     data, datatype, datatype_flat = data
 
-    db["test"].insert([{"x": 10}])
+    db["test_schema"].insert([{"x": 10}])
 
     upstream_model = ObjectModel(
         "m1",
@@ -43,7 +44,7 @@ def test_downstream_task_workflows_are_triggered(db, data, flatten):
     upstream_listener = Listener(
         model=upstream_model,
         key="x",
-        select=db["test"].select(),
+        select=db["test_schema"].select(),
         identifier="upstream",
         flatten=flatten,
     )
@@ -78,7 +79,7 @@ def test_downstream_task_workflows_are_triggered(db, data, flatten):
     assert_output_is_correct(data * 10, outputs1[0])
     assert_output_is_correct(data * 10 / 2, outputs2[0])
 
-    db["test"].insert([{"x": 20}])
+    db["test_schema"].insert([{"x": 20}])
 
     # Check that the listeners are triggered when data is inserted later
     outputs1 = [

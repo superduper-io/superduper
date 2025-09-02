@@ -33,7 +33,7 @@ ibis_config = os.environ.get('SUPERDUPER_CONFIG', "").endswith('ibis.yaml')
 mongodb_config = os.environ.get('SUPERDUPER_CONFIG', "").endswith('mongodb.yaml')
 
 
-class TestComponent(Component):
+class MyTestComponent(Component):
     breaks: ClassVar[Sequence] = ('inc',)
     _fields = {'artifact': dill_serializer}
     inc: int = 0
@@ -56,12 +56,12 @@ class TestComponent(Component):
 
     @property
     def child_components(self):
-        return [('child', 'TestComponent')] if self.child else []
+        return [('child', 'MyTestComponent')] if self.child else []
 
 
 def add_fake_model(db: Datalayer):
 
-    table = Table(identifier='documents', fields={'x': 'int', 'id': 'str'})
+    table = Table(identifier='documentz', fields={'x': 'int', 'id': 'str'})
 
     db.apply(table)
 
@@ -70,7 +70,7 @@ def add_fake_model(db: Datalayer):
         identifier='fake_model',
     )
 
-    select = db['documents'].select()
+    select = db['documentz'].select()
     listener = Listener(
         identifier='listener-x',
         model=model,
@@ -84,14 +84,14 @@ def add_fake_model(db: Datalayer):
 
 def test_add_version(db: Datalayer):
     # Check the component functions are called
-    component = TestComponent(identifier='test')
+    component = MyTestComponent(identifier='test')
     db.apply(component)
     # assert component.is_after_create is True
     assert component.version == 0
-    assert db.show('TestComponent', 'test') == [0]
+    assert db.show('MyTestComponent', 'test') == [0]
 
     # Test the component saves the data correctly
-    component_loaded = db.load('TestComponent', 'test')
+    component_loaded = db.load('MyTestComponent', 'test')
 
     original_serialized = component.dict().encode()
     saved_serialized = component_loaded.dict().encode()
@@ -101,65 +101,65 @@ def test_add_version(db: Datalayer):
     # Check duplicate components are not added
     db.apply(component)
 
-    component_loaded = db.load('TestComponent', 'test')
+    component_loaded = db.load('MyTestComponent', 'test')
 
     assert component_loaded.version == 0
-    assert db.show('TestComponent', 'test') == [0]
+    assert db.show('MyTestComponent', 'test') == [0]
 
     # Check the version is incremented
-    component = TestComponent(identifier='test', inc=1)
+    component = MyTestComponent(identifier='test', inc=1)
     db.apply(component)
     assert component.version == 1
-    assert db.show('TestComponent', 'test') == [0, 1]
+    assert db.show('MyTestComponent', 'test') == [0, 1]
 
-    component = TestComponent(identifier='test', inc=2)
+    component = MyTestComponent(identifier='test', inc=2)
     db.apply(component)
     assert component.version == 2
-    assert db.show('TestComponent', 'test') == [0, 1, 2]
+    assert db.show('MyTestComponent', 'test') == [0, 1, 2]
 
 
 def test_add_artifact_auto_replace(db):
     # Check artifact is automatically replaced to metadata
     artifact = {'data': 1}
-    component = TestComponent(identifier='test', artifact=artifact)
+    component = MyTestComponent(identifier='test', artifact=artifact)
     db.apply(component)
-    r = db.show('TestComponent', 'test', -1)
+    r = db.show('MyTestComponent', 'test', -1)
     assert r['artifact'].startswith('&')
 
 
 def test_add_child(db: Datalayer):
-    child_component = TestComponent(identifier='child')
-    component = TestComponent(identifier='test', child=child_component)
+    child_component = MyTestComponent(identifier='child')
+    component = MyTestComponent(identifier='test', child=child_component)
 
     db.apply(component)
-    assert db.show('TestComponent', 'test') == [0]
-    assert db.show('TestComponent', 'child') == [0]
+    assert db.show('MyTestComponent', 'test') == [0]
+    assert db.show('MyTestComponent', 'child') == [0]
 
     parents = db.metadata.get_component_version_parents(child_component.uuid)
     assert parents == [(component.component, component.uuid)]
 
-    child_component_2 = TestComponent(identifier='child-2')
-    component_3 = TestComponent(identifier='test-3', child=child_component_2)
+    child_component_2 = MyTestComponent(identifier='child-2')
+    component_3 = MyTestComponent(identifier='test-3', child=child_component_2)
     db.apply(component_3)
-    assert db.show('TestComponent', 'test-3') == [0]
-    assert db.show('TestComponent', 'child-2') == [0]
+    assert db.show('MyTestComponent', 'test-3') == [0]
+    assert db.show('MyTestComponent', 'child-2') == [0]
 
     parents = db.metadata.get_component_version_parents(child_component_2.uuid)
     assert parents == [(component_3.component, component_3.uuid)]
 
 
 def test_add(db):
-    component = TestComponent(identifier='test')
+    component = MyTestComponent(identifier='test')
     db.apply(component)
-    assert db.show('TestComponent', 'test') == [0]
+    assert db.show('MyTestComponent', 'test') == [0]
 
     for component in [
-        TestComponent(identifier='test_list_1'),
-        TestComponent(identifier='test_list_2'),
+        MyTestComponent(identifier='test_list_1'),
+        MyTestComponent(identifier='test_list_2'),
     ]:
         db.apply(component)
-    assert db.show('TestComponent', 'test_list_1') == [0]
-    assert db.show('TestComponent', 'test_list_2') == [0]
+    assert db.show('MyTestComponent', 'test_list_1') == [0]
+    assert db.show('MyTestComponent', 'test_list_2') == [0]
 
     with pytest.raises(ValueError):
         db.apply('test')
@@ -190,50 +190,50 @@ def test_add_table(db):
 
 def test_remove_multi_version(db):
     for component in [
-        TestComponent(identifier='test', inc=0),
-        TestComponent(identifier='test', inc=1),
-        TestComponent(identifier='test', inc=2),
+        MyTestComponent(identifier='test', inc=0),
+        MyTestComponent(identifier='test', inc=1),
+        MyTestComponent(identifier='test', inc=2),
     ]:
         db.apply(component)
 
-    db.teardown('TestComponent', 'test', force=True)
+    db.teardown('MyTestComponent', 'test', force=True)
     # Wait for the db to update
     time.sleep(0.1)
-    assert db.show('TestComponent', 'test') == []
+    assert db.show('MyTestComponent', 'test') == []
 
 
 def test_show(db):
     for component in [
-        TestComponent(identifier='a1'),
-        TestComponent(identifier='a2'),
-        TestComponent(identifier='a3'),
-        TestComponent(identifier='b', inc=0),
-        TestComponent(identifier='b', inc=1),
-        TestComponent(identifier='b', inc=2),
+        MyTestComponent(identifier='a1'),
+        MyTestComponent(identifier='a2'),
+        MyTestComponent(identifier='a3'),
+        MyTestComponent(identifier='b', inc=0),
+        MyTestComponent(identifier='b', inc=1),
+        MyTestComponent(identifier='b', inc=2),
         # DataType(identifier='c1'),
         # DataType(identifier='c2'),
     ]:
         db.apply(component)
 
     with pytest.raises(ValueError) as e:
-        db.show('TestComponent', version=1)
+        db.show('MyTestComponent', version=1)
     assert 'None' in str(e) and '1' in str(e)
 
-    assert sorted(db.show('TestComponent')) == ['a1', 'a2', 'a3', 'b']
+    assert sorted(db.show('MyTestComponent')) == ['a1', 'a2', 'a3', 'b']
     # assert sorted(db.show('datatype')) == ['c1', 'c2']
 
-    assert sorted(db.show('TestComponent', 'a1')) == [0]
-    assert sorted(db.show('TestComponent', 'b')) == [0, 1, 2]
+    assert sorted(db.show('MyTestComponent', 'a1')) == [0]
+    assert sorted(db.show('MyTestComponent', 'b')) == [0, 1, 2]
 
     # Test get specific version
-    info = db.show('TestComponent', 'b', 1)
+    info = db.show('MyTestComponent', 'b', 1)
     assert isinstance(info, dict)
     assert info['version'] == 1
     assert info['identifier'] == 'b'
-    assert info['_path'].split('.')[-1] == 'TestComponent'
+    assert info['component'] == 'MyTestComponent'
 
     # Test get last version
-    assert db.show('TestComponent', 'b', -1)['version'] == 2
+    assert db.show('MyTestComponent', 'b', -1)['version'] == 2
 
 
 class DataType(BaseDataType):
@@ -273,7 +273,7 @@ def test_load(db):
 
 def test_insert(db):
     add_fake_model(db)
-    inserted_ids = db['documents'].insert([{'x': i} for i in range(5)])
+    inserted_ids = db['documentz'].insert([{'x': i} for i in range(5)])
     assert len(inserted_ids) == 5
 
     uuid = db.show('Listener', 'listener-x', 0)['uuid']
@@ -286,10 +286,10 @@ def test_insert(db):
 
 def test_insert_artifacts(db):
 
-    db.apply(Table('documents', fields={'x': 'array[float:100]'}))
+    db.apply(Table('documentz', fields={'x': 'array[float:100]'}))
 
-    db['documents'].insert([{'x': numpy.random.randn(100)} for _ in range(1)])
-    r = db['documents'].get()
+    db['documentz'].insert([{'x': numpy.random.randn(100)} for _ in range(1)])
+    r = db['documentz'].get()
     assert isinstance(r['x'], numpy.ndarray)
 
 
@@ -321,7 +321,7 @@ def test_reload_dataset(db):
 
     add_random_data(db, n=6)
 
-    select = db['documents'].select().filter(db['documents']['_fold'] == 'valid')
+    select = db['documentz'].select().filter(db['documentz']['_fold'] == 'valid')
 
     d = Dataset(
         identifier='my_valid',
@@ -338,7 +338,7 @@ def test_dataset(db):
     from test.utils.setup.fake_data import add_random_data
 
     add_random_data(db, n=6)
-    select = db['documents'].select().filter(db['documents']['_fold'] == 'valid')
+    select = db['documentz'].select().filter(db['documentz']['_fold'] == 'valid')
 
     d = Dataset(
         identifier='test_dataset',
@@ -347,7 +347,7 @@ def test_dataset(db):
     db.apply(d)
     assert db.show('Dataset') == ['test_dataset']
     dataset = db.load('Dataset', 'test_dataset')
-    assert len(dataset.data) == len(dataset.select.execute())
+    assert len(dataset.dataset) == len(dataset.select.execute())
 
 
 def test_delete_component_with_same_artifact(db):

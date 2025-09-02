@@ -12,7 +12,7 @@ from superduper.base.datatype import (
 from superduper.misc import typing as st
 
 
-class TestComponent(Component):
+class TestComponentFields(Component):
     _fields = {'a': dill_serializer, 'b': file}
 
     a: t.Callable
@@ -46,14 +46,14 @@ def test_schema_with_bytes_encoding(db):
 def test_schema_with_blobs(db):
     db.apply(
         Table(
-            'documents',
+            'documentz',
             fields={'txt': 'pickle'},
         )
     )
 
-    db['documents'].insert([{'txt': 'testing 123'}])
+    db['documentz'].insert([{'txt': 'testing 123'}])
 
-    r = db['documents'].get()
+    r = db['documentz'].get()
 
     assert isinstance(r['txt'], Blob)
 
@@ -84,14 +84,14 @@ def test_schema_with_file(db, tmp_file):
     # containing a file field is inserted
     db.apply(
         Table(
-            'documents',
+            'documentz',
             fields={'my_file': 'file'},
         )
     )
-    db['documents'].insert([{'my_file': tmp_file}])
+    db['documentz'].insert([{'my_file': tmp_file}])
 
     # only the references are loaded when data is selected
-    r = db['documents'].get()
+    r = db['documentz'].get()
 
     # loaded document contains a pointer to the file
     assert isinstance(r['my_file'], FileItem)
@@ -116,7 +116,7 @@ def test_schema_with_file(db, tmp_file):
 
 
 def test_component_serializes_with_schema(db, tmp_file):
-    c = TestComponent('test', a='testing testing 123', b=tmp_file)
+    c = TestComponentFields('test', a='testing testing 123', b=tmp_file)
 
     r = c.dict()
 

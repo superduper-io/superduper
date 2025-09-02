@@ -62,7 +62,6 @@ class Listener(CDC):
             self.outputs,
             fields={self.outputs: self.model.datatype, '_source': 'str'},
         )
-        t.status = 'running'
         return t
 
     @property
@@ -128,6 +127,7 @@ class Listener(CDC):
             logging.info(f'[{self.huuid}] Processing ids: {ids[:10]}...')
 
         documents = self.select.subset(ids)
+
         if not documents:
             logging.info(
                 f'[{self.huuid}] No documents to process for {self.huuid}, skipping'

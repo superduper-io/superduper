@@ -6,6 +6,7 @@ import click
 from bson.objectid import ObjectId
 from superduper import CFG, logging
 from superduper.backends.base.data_backend import BaseDataBackend
+from superduper.base.base import REGISTRY
 from superduper.base.query import Query
 from superduper.base.schema import Schema
 
@@ -171,24 +172,29 @@ class MongoDBDataBackend(BaseDataBackend):
     def select(self, query: Query):
         """Select data from the table."""
         if query.decomposition.outputs:
-            return self._outputs(query)
+            output = self._outputs(query)
+        else:
+            collection = self._database[query.table]
 
-        collection = self._database[query.table]
+            logging.debug(str(query))
 
-        logging.debug(str(query))
-
-        limit = self._get_limit(query)
-        if limit:
-            native_query = collection.find(
-                self._mongo_filter(query), self._get_project(query)
-            ).limit(limit)
-            if skip := self._get_skip(query):
-                native_query = native_query.skip(skip)
-            return list(native_query)
-
-        return list(
-            collection.find(self._mongo_filter(query), self._get_project(query))
-        )
+            limit = self._get_limit(query)
+            if limit:
+                native_query = collection.find(
+                    self._mongo_filter(query), self._get_project(query)
+                ).limit(limit)
+                if skip := self._get_skip(query):
+                    native_query = native_query.skip(skip)
+                output = list(native_query)
+            else:
+                output = list(
+                    collection.find(self._mongo_filter(query), self._get_project(query))
+                )
+        if query.table in REGISTRY and REGISTRY[query.table].primary_id != '_id':
+            for o in output:
+                if '_id' in o:
+                    del o['_id']
+        return output
 
     def to_id(self, id):
         """Convert the ID to the correct format."""

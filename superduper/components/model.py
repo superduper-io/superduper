@@ -16,7 +16,6 @@ import requests
 from superduper import logging
 from superduper.base.annotations import trigger
 from superduper.base.query import Query
-from superduper.base.schema import Schema
 from superduper.components.component import Component, ComponentMeta, ensure_setup
 from superduper.components.metric import Metric
 from superduper.misc import typing as st
@@ -338,8 +337,8 @@ class Model(Component, metaclass=ModelMeta):
         if isinstance(key, str):
             # metrics are currently functions of 2 inputs.
             key = [key, key]
-        inputs = self._map_inputs(self.signature, dataset.data, key[0])
-        targets = self._map_inputs('singleton', dataset.data, key[1])
+        inputs = self._map_inputs(self.signature, dataset.dataset, key[0])
+        targets = self._map_inputs('singleton', dataset.dataset, key[1])
         predictions = self.predict_batches(inputs)
         results = {}
         for m in metrics:
@@ -450,6 +449,7 @@ class Model(Component, metaclass=ModelMeta):
             X=self.trainer.key,
             db=self.db,
         )
+
         if len(train_dataset) == 0:
             logging.warn('No data found for training, skipping training')
             return

@@ -17,7 +17,7 @@ def test_vector_index(db: "Datalayer"):
     build_vector_index(db, n=100)
 
     vector_index = "vector_index"
-    table = db["documents"]
+    table = db["searchable_documents"]
     primary_id = table.primary_id.execute()
     sample_data = table.select().filter(table['x'] == 50).execute()[0]
 

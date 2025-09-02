@@ -62,16 +62,16 @@ def check_data_with_schema_and_db(data, datatype: BaseDataType, db: Datalayer):
     print("datatype", datatype)
     print_sep()
 
-    table = Table("documents", fields={"x": str(datatype).lower(), "y": 'int'})
+    table = Table("documentz", fields={"x": str(datatype).lower(), "y": 'int'})
     db.apply(table)
 
     document = {"x": data, "y": 1}
     print(document)
     print_sep()
 
-    db["documents"].insert([document])
+    db["documentz"].insert([document])
 
-    decoded = db["documents"].select().execute()[0]
+    decoded = db["documentz"].select().execute()[0]
 
     decoded = decoded.unpack()
 
@@ -88,7 +88,7 @@ class ChildComponent(Component):
     y: int | None = None
 
 
-class TestComponent(Component):
+class TestComponentDatatype(Component):
     type_id: t.ClassVar[str] = "TestComponent"
     y: int = 1
     x: np.ndarray | None = None
@@ -100,7 +100,7 @@ def check_component(data, datatype: BaseDataType):
     print("datatype", datatype)
     print_sep()
 
-    c = TestComponent(
+    c = TestComponentDatatype(
         "test",
         x=data,
         child=ChildComponent("child", y=2),
@@ -125,7 +125,7 @@ def check_component_with_db(data, datatype, db):
     print("datatype", datatype)
     print_sep()
 
-    c = TestComponent(
+    c = TestComponentDatatype(
         "test",
         x=data,
         child=ChildComponent("child", y=2),

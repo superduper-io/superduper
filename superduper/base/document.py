@@ -364,7 +364,7 @@ class Document(DeepKeyedDict):
         if db is None:
             db = cls.build_in_memory_db(blobs=blobs, files=files)
 
-        builds = r.get(KEY_BUILDS, {})
+        builds = r.pop(KEY_BUILDS, {})
 
         for k in builds:
             if isinstance(builds[k], dict):  # and ('_path' in builds[k]):

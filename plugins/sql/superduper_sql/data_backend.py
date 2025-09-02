@@ -359,7 +359,10 @@ class SQLDatabackend(IbisDataBackend):
 
     def __init__(self, uri, plugin, flavour=None):
         super().__init__(uri, plugin, flavour)
-        self._create_sqlalchemy_engine()
+        if 'sqlite://./' in uri:
+            self._create_sqlalchemy_engine(uri.replace('./', '//'))
+        else:
+            self._create_sqlalchemy_engine(uri)
         self.sm = sessionmaker(bind=self.alchemy_engine)
 
     @property
@@ -373,6 +376,8 @@ class SQLDatabackend(IbisDataBackend):
         """Update data in the database."""
         with self.sm() as session:
             metadata = MetaData()
+
+            assert table in self.list_tables()
 
             metadata.reflect(bind=session.bind)
             table = Table(table, metadata, autoload_with=session.bind)
@@ -422,16 +427,16 @@ class SQLDatabackend(IbisDataBackend):
         except NoSuchTableError:
             raise exceptions.NotFound("Table", table)
 
-    def _create_sqlalchemy_engine(self):
+    def _create_sqlalchemy_engine(self, uri):
         with self.connection_manager.get_connection() as conn:
-            self.alchemy_engine = create_engine(self.uri, creator=lambda: conn.con)
+            self.alchemy_engine = create_engine(uri, creator=lambda: conn.con)
             if not self._test_engine():
                 logging.warn(
                     "Unable to reuse the ibis connection "
                     "to create the SQLAlchemy engine. "
                     "Creating a new connection with the URI."
                 )
-                self.alchemy_engine = create_engine(self.uri)
+                self.alchemy_engine = create_engine(uri)
 
     def _test_engine(self):
         """Test the engine."""

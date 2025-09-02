@@ -18,6 +18,7 @@ def db() -> Iterator[Datalayer]:
     db = superduper(force_apply=True)
 
     yield db
+
     db.drop(force=True, data=True)
 
 

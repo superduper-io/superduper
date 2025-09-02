@@ -17,7 +17,7 @@ def test_output_prefix(db):
         assert listener_c.outputs.startswith("sddb_outputs_c")
 
         expect_tables = [
-            "documents",
+            "simple_documents",
             "sddb_outputs_a",
             "sddb_outputs_b",
             "sddb_outputs_c",

@@ -5,6 +5,7 @@ from rich.tree import Tree
 
 from superduper import CFG
 from superduper.base.annotations import trigger
+from superduper.base.base import REGISTRY
 from superduper.base.schema import Schema
 from superduper.components.component import Component
 from superduper.misc import typing as st  # noqa: F401
@@ -23,27 +24,23 @@ class Table(Component):
     :param fields: The schema of the table
     :param primary_id: The primary id of the table
     :param data: Data to insert post creation
-    :param path: The path to the class
-    :param is_component: Whether the table is a component
     """
+
+    component_cache: t.ClassVar[bool] = True
 
     fields: t.Dict | None = None
     primary_id: str = DEFAULT_PRIMARY_ID
     data: Component | None = None
-    path: str | None = None
-    is_component: bool = False
-    component_cache: t.ClassVar[bool] = True
 
     def postinit(self):
         """Post initialization method."""
-        if self.path is None:
-            assert isinstance(self.fields, dict), "Fields must be set if cls is not set"
-            self.schema = Schema.build(**self.fields)
-            self.cls = None
-        else:
-            self.cls = import_object(self.path)
+        if self.identifier in REGISTRY:
+            self.cls = REGISTRY[self.identifier]
             self.schema = self.cls.class_schema
             self.fields = self.cls._new_fields
+        else:
+            self.schema = Schema.build(**self.fields)
+            self.cls = None
         super().postinit()
 
     def _build_outputs_graph(self, tree: Tree, event_type: str = 'insert'):
@@ -83,7 +80,6 @@ class Table(Component):
                 identifier=self.identifier,
                 primary_id=self.primary_id,
                 fields=self.fields,
-                is_component=self.is_component,
             )
         }
 

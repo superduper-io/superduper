@@ -106,16 +106,16 @@ def test_type_mapping():
     assert a.datatype == 'componentdict'
 
 
-class MyModel(Model):
+class MyModelImpl(Model):
     a: str
     b: str | t.List[str] | t.Dict[str, str]
     c: t.Callable
-    d: 'MyModel'
+    d: 'MyModelImpl'
 
 
 def test_model_schema():
 
-    s = MyModel.class_schema
+    s = MyModelImpl.class_schema
 
     print()
     print(s)

@@ -119,9 +119,9 @@ def test_teardown_with_collision(db):
     l1 = Listener(
         'my-listener',
         model=m1,
-        select=db['docs'],
+        select=db['docs_1'],
         key='x',
-        upstream=[Table('docs', fields={'x': 'str'})],
+        upstream=[Table('docs_1', fields={'x': 'str'})],
     )
 
     db.apply(l1, force=True)

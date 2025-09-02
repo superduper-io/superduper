@@ -8,13 +8,13 @@ if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
 
 
-class documents(Base):
+class simple_documents(Base):
     x: int
 
 
 def build_chain_listener(db: "Datalayer"):
 
-    db.create(documents)
+    db.create(simple_documents)
 
     data = [
         {"x": 1},
@@ -22,7 +22,7 @@ def build_chain_listener(db: "Datalayer"):
         {"x": 3},
     ]
 
-    db["documents"].insert(data)
+    db["simple_documents"].insert(data)
 
     model_a = ObjectModel(identifier="a", object=lambda x: f"{x}->a")
 
@@ -32,7 +32,7 @@ def build_chain_listener(db: "Datalayer"):
 
     listener_a = Listener(
         model=model_a,
-        select=db["documents"].select(),
+        select=db["simple_documents"].select(),
         key="x",
         identifier="a",
     )
@@ -62,7 +62,7 @@ def build_chain_listener(db: "Datalayer"):
         {"x": 6},
     ]
 
-    db["documents"].insert(data)
+    db["simple_documents"].insert(data)
 
     assert db.databackend.check_output_dest(listener_a.predict_id)
     assert db.databackend.check_output_dest(listener_b.predict_id)

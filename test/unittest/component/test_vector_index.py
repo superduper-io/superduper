@@ -10,7 +10,7 @@ def test_vector_index_recovery(db):
 
     build_vector_index(db)
 
-    table = db["documents"]
+    table = db["searchable_documents"]
     primary_id = table.primary_id.execute()
     vector_index = "vector_index"
     sample_data = table.select().execute()[50]

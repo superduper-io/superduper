@@ -3,7 +3,7 @@ import typing as t
 from superduper import Component
 
 
-class MyComponent(Component):
+class MyComponentUtil(Component):
     a: int
     b: str
     c: t.Dict
@@ -11,13 +11,13 @@ class MyComponent(Component):
 
 def test_hash_item():
 
-    c1 = MyComponent('test', a=1, b='test-1', c={'this': 'is a test'})
+    c1 = MyComponentUtil('test', a=1, b='test-1', c={'this': 'is a test'})
 
-    c2 = MyComponent('test', a=1, b='test-1', c={'this': 'is a test'})
+    c2 = MyComponentUtil('test', a=1, b='test-1', c={'this': 'is a test'})
 
     assert c1.uuid == c2.uuid
 
-    c3 = MyComponent('test', a=1, b='test-2', c={'this': 'is a test'})
+    c3 = MyComponentUtil('test', a=1, b='test-2', c={'this': 'is a test'})
 
     assert c1.hash != c3.hash
 

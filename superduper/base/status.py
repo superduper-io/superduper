@@ -2,6 +2,7 @@ from datetime import datetime
 
 # List of Job's stages
 STATUS_UNINITIALIZED = "submitted"
+STATUS_DEPRECATED = "deprecated"
 STATUS_PENDING = "pending"
 STATUS_RUNNING = "running"
 STATUS_DELETING = "deletion"

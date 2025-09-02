@@ -44,7 +44,7 @@ class Dataset(Component):
 
     @property
     @ensure_setup
-    def data(self):
+    def dataset(self):
         """Property representing the dataset's data."""
         return self._data
 
@@ -65,7 +65,7 @@ class Dataset(Component):
         return self
 
     def _load_data(self, db: 'Datalayer'):
-        assert db is not None, 'Database must be set'
+        assert db is not None, 'Datalayer must be set'
         assert self.select is not None, 'Select must be set'
         data = self.select.execute()
         if self.sample_size is not None and self.sample_size < len(data):

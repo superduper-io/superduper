@@ -1,3 +1,4 @@
+import typing as t
 from test.utils.setup.fake_data import add_listeners, add_models, add_random_data
 
 import numpy as np
@@ -44,7 +45,7 @@ def test_renamings(db):
     add_random_data(db, n=5)
     add_models(db)
     add_listeners(db)
-    t = db["documents"]
+    t = db["documentz"]
     listener_uuid = [db.load('Listener', k).outputs for k in db.show("Listener")][0]
     q = t.select("id", "x", "y").outputs(listener_uuid.split('__', 1)[-1])
     data = q.execute()
@@ -62,13 +63,13 @@ def test_serialize_query(db):
 
 def test_get_data(db):
     add_random_data(db, n=5)
-    db["documents"].limit(2)
-    db.metadata.get_component("Table", "documents")
+    db["documentz"].limit(2)
+    db.metadata.get_component("Table", "documentz")
 
 
 def test_insert_select(db):
     add_random_data(db, n=5)
-    q = db["documents"].select("id", "x", "y").limit(2)
+    q = db["documentz"].select("id", "x", "y").limit(2)
     r = q.execute()
 
     assert len(r) == 2
@@ -77,7 +78,7 @@ def test_insert_select(db):
 
 def test_filter(db):
     add_random_data(db, n=5)
-    t = db["documents"]
+    t = db["documentz"]
     q = t.select("id", "y")
     r = q.execute()
     ys = [x["y"] for x in r]
@@ -88,17 +89,18 @@ def test_filter(db):
     assert len(r) == uq[1][0]
 
 
-class documents(Base):
+class documents_plugin(Base):
+    primary_id: t.ClassVar[str] = 'id'
     this: 'str'
 
 
 def test_select_using_ids(db):
-    db.create(documents)
+    db.create(documents_plugin)
 
-    table = db["documents"]
+    table = db["documents_plugin"]
     table.insert([{"this": f"is a test {i}", "id": str(i)} for i in range(4)])
 
-    basic_select = db['documents'].select()
+    basic_select = db['documents_plugin'].select()
 
     assert len(basic_select.execute()) == 4
     assert len(basic_select.subset(['1', '2'])) == 2
@@ -112,16 +114,16 @@ def test_select_using_ids_of_outputs(db):
 
     my_func = ObjectModel('my_func', object=my_func)
 
-    db.create(documents)
+    db.create(documents_plugin)
 
-    table = db["documents"]
+    table = db["documents_plugin"]
     table.insert([{"this": f"is a test {i}", "id": str(i)} for i in range(4)])
 
     listener = Listener(
         'test',
         model=my_func,
         key='this',
-        select=db['documents'].select(),
+        select=db['documents_plugin'].select(),
     )
     db.apply(listener)
 

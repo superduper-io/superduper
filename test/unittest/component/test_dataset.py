@@ -34,6 +34,6 @@ def test_dataset_pin(db, pin):
     dataset: Dataset = db.load("Dataset", "test_dataset")
     dataset.setup()
     if pin:
-        len(dataset.data) == 10
+        len(dataset.dataset) == 10
     else:
-        len(dataset.data) == 20
+        len(dataset.dataset) == 20

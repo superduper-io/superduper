@@ -11,7 +11,7 @@ from superduper.backends.base.cluster import Cluster
 from superduper.backends.base.data_backend import BaseDataBackend
 from superduper.base import apply, exceptions
 from superduper.base.artifacts import ArtifactStore
-from superduper.base.base import Base
+from superduper.base.base import REGISTRY, Base
 from superduper.base.config import Config
 from superduper.base.datatype import BaseType, ComponentType
 from superduper.base.document import Document
@@ -93,11 +93,9 @@ class Datalayer:
 
         :param items: The instances (`superduper.base.Base`) to insert.
         """
-        table = self.pre_insert(items)
+        self.pre_insert(items)
         data = [x.dict() for x in items]
-        for r in data:
-            del r['_path']
-        return self[table.identifier].insert(data)
+        return self[items[0].__class__.__name__].insert(data)
 
     def replace(self, condition: t.Dict, item: Base):
         """
@@ -108,7 +106,6 @@ class Datalayer:
         """
         table = self.pre_insert([item])
         r = item.dict()
-        del r['_path']
         return self[table.identifier].replace(condition, r)
 
     @property
@@ -309,7 +306,9 @@ class Datalayer:
             return self.metadata.create(type(items[0]))
 
     def _post_query(self, table: str, ids: t.Sequence[str], type_: str):
-        if table in metaclasses or self.metadata.is_component(table):
+        if table in metaclasses or (
+            table in REGISTRY and issubclass(REGISTRY[table], Component)
+        ):
             return
         if (
             not table.startswith(CFG.output_prefix)

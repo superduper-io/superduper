@@ -17,7 +17,28 @@ if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
 
 
-REGISTRY = {}
+class _UniqueRegistry:
+    def __init__(self, d):
+        self.d = d
+    def __getitem__(self, item):
+        return self.d[item]
+
+    def __setitem__(self, key, value):
+        matching = [x for x in self.d.keys() if x.split('.')[-1] == key.split('.')[-1]]
+        if matching and matching[0] != key:
+            raise ValueError(
+                f"Class name \"{key.split('.')[-1]}\" already exists"
+                f" as a `superduper` schema: as {matching[0]}."
+            )
+        elif matching:
+            return
+        self.d[key] = value
+
+    def __repr__(self):
+        return f'_UniqueRegistry({self.d})'
+
+
+REGISTRY = _UniqueRegistry({})
 
 
 class BaseMeta(type):

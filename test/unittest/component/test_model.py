@@ -162,15 +162,12 @@ def test_model_append_metrics():
     @dc.dataclass
     class _Tmp(ObjectModel): ...
 
-    class MyTrainer(Trainer):
-        def fit(self, *args, **kwargs): ...
-
     model = _Tmp(
         'test',
         object=object(),
         validation=Validation('test', key=('x', 'y')),
         # select
-        trainer=MyTrainer('test', key='x', select='1'),
+        trainer=CustomTrainer('test', key='x', select='1'),
     )
 
     metric_values = {'acc': 0.5, 'loss': 0.5}
@@ -194,7 +191,7 @@ def test_model_validate():
     my_metric.identifier = 'acc'
     my_metric.return_value = 0.5
     dataset = MagicMock(spec=Dataset)
-    dataset.data = [{'X': 1, 'y': 1} for _ in range(4)]
+    dataset.dataset = [{'X': 1, 'y': 1} for _ in range(4)]
 
     def acc(x, y):
         return sum([xx == yy for xx, yy in zip(x, y)]) / len(x)
@@ -235,7 +232,7 @@ def test_model_validate_in_db(db):
     assert next(iter(reloaded.metric_values.keys())) == 'my_valid/0'
 
 
-class MyTrainer(Trainer):
+class CustomTrainer(Trainer):
     def fit(self, *args, **kwargs):
         return
 
@@ -248,7 +245,7 @@ def test_model_create_fit_job(db):
     # Check the fit job is created correctly
     model = Validator('test', object=lambda x: x)
     # TODO move these parameters into the `Trainer` (same thing for validation)
-    model.trainer = MyTrainer('test', select=db['documents'].select(), key='x')
+    model.trainer = CustomTrainer('test', select=db['documentz'].select(), key='x')
     db.apply(model)
     model.db = db
     job = model.fit_in_db(job=True)
@@ -262,19 +259,19 @@ def test_model_fit(db):
 
     add_random_data(db)
 
-    class MyTrainer(Trainer):
+    class MyNewTrainer(Trainer):
         def fit(self, *args, **kwargs):
             return
 
     from superduper.components.dataset import Dataset
 
-    valid_dataset = Dataset(identifier='test', select=db['documents'].select(), db=db)
+    valid_dataset = Dataset(identifier='test', select=db['documentz'].select(), db=db)
 
     model = Validator(
         'test',
         object=object(),
-        trainer=MyTrainer(
-            'my-trainer', key='x', select=db['documents'].select(), db=db
+        trainer=MyNewTrainer(
+            'my-trainer', key='x', select=db['documentz'].select(), db=db
         ),
         validation=Validation(
             'my-valid',

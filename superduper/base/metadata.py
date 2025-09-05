@@ -15,7 +15,8 @@ import networkx as nx
 
 from superduper import logging
 from superduper.base import exceptions
-from superduper.base.base import Base
+from superduper.base.base import REGISTRY, Base
+from superduper.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES
 from superduper.base.schema import Schema
 from superduper.base.status import (
     STATUS_FAILED,
@@ -31,7 +32,6 @@ from superduper.misc.importing import import_object
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
-    from superduper.base.event import CreateTable
 
 
 class Deployment(Base):
@@ -39,19 +39,29 @@ class Deployment(Base):
 
     :param identifier: identifier of the deployment
     :param uuid: UUID of the deployment
+    :param details: details about the deployment
+    :param branch: the branch below `Component`
+    :param parent: the class above `self.component`
     :param component: type of component
     :param version: version of the component
     :param status: status of the deployment
     :param context: context of the deployment
+    :param tags: tags associated with the deployment
+    :param filter: additional database filter to use
     """
 
     primary_id: t.ClassVar[str] = 'uuid'
     identifier: str
     uuid: str = dc.field(default_factory=lambda: str(uuid.uuid4()))
+    details: t.Dict = dc.field(default_factory=lambda: {'failed_children': {}})
+    branch: str
+    parent: str
     component: str
     version: int
-    status: str = STATUS_RUNNING
+    status: str = STATUS_UNINITIALIZED
     context: str
+    tags: t.Dict
+    filter: str | None = None
 
 
 class Job(Base):
@@ -64,7 +74,7 @@ class Job(Base):
     primary_id: t.ClassVar[str] = 'job_id'
 
     context: str
-    component: str
+    parent_component: str
     identifier: str
     uuid: str
     args: t.List = dc.field(default_factory=list)
@@ -129,7 +139,7 @@ class Job(Base):
     @property
     def huuid(self):
         """Return the hashed uuid."""
-        return f'{self.component}:{self.identifier}:{self.uuid}.{self.method}'
+        return f'{self.parent_component}:{self.identifier}:{self.uuid}.{self.method}'
 
     def get_args_kwargs(self, futures):
         """Get args and kwargs for job execution.
@@ -259,7 +269,7 @@ class Job(Base):
         logging.info(f'Setting job status {self.job_id} to failed... DONE')
 
         db.metadata.set_component_failed(
-            component=self.component,
+            component=self.parent_component,
             uuid=self.uuid,
             context=self.context,
             failed_child=(
@@ -301,7 +311,7 @@ class Job(Base):
 
         if was_broken and status == STATUS_SUCCESS:
             db.metadata.set_component_fixed(
-                self.component,
+                self.parent_component,
                 self.uuid,
                 fixed_child=f'Job/{self.huuid}',
             )
@@ -343,7 +353,7 @@ class Job(Base):
                 reason='job started',
             )
             logging.info(f'Loading component for job {self.job_id}')
-            component = db.load(component=self.component, uuid=self.uuid)
+            component = db.load(component=self.parent_component, uuid=self.uuid)
             component.setup()
             logging.info(f'Executing method for job {self.job_id}')
             method = getattr(component, self.method)
@@ -429,7 +439,7 @@ class ArtifactRelations(Base):
 
 
 metaclasses = {
-    'Table': Table,
+    'Component': Component,
     'ParentChildAssociations': ParentChildAssociations,
     'ArtifactRelations': ArtifactRelations,
     'Job': Job,
@@ -450,7 +460,7 @@ class MetaDataStore:
         self.db = db
         self.parent_db = parent_db
         self.primary_ids = {
-            "Table": "uuid",
+            "Component": "uuid",
             "ParentChildAssociations": "uuid",
             "ArtifactRelations": "relation_id",
             "Job": "job_id",
@@ -461,32 +471,8 @@ class MetaDataStore:
 
     def init(self):
         """Initialize the metadata store."""
-        self.db.databackend.create_table_and_schema(
-            'Table',
-            Table.class_schema,
-            primary_id='uuid',
-        )
-
-        try:
-            r = self.db['Table'].get(identifier='Table')
-        except exceptions.NotFound:
-            r = None
-
-        if r is None:
-            r = Table(
-                identifier='Table',
-                primary_id='uuid',
-                is_component=True,
-                path='superduper.components.table.Table',
-            ).encode()
-            r['version'] = 0
-
-            self.db.databackend.do_insert('Table', [r], raw=True)
-
-        r = self.get_component('Table', 'Table')
-
-        assert r is not None, 'Something went wrong in initializing the metadata store'
-
+        self.create(Component)
+        self.create(Deployment)
         self.create(ParentChildAssociations)
         self.create(ArtifactRelations)
         self.create(Job)
@@ -507,19 +493,6 @@ class MetaDataStore:
             if token is not None:
                 _component_cache.reset(token)
 
-    def _get_component_class_info(self, component):
-        cache = _component_cache.get()
-
-        if cache is not None and component in cache:
-            return cache[component].copy()
-
-        info = self.get_component('Table', component, version=0)
-
-        if cache is not None and info:
-            cache[component] = info.copy()
-
-        return info
-
     def check_table_in_metadata(self, table: str):
         """Check if a table exists in the metadata store.
 
@@ -535,48 +508,14 @@ class MetaDataStore:
 
         :param table: table name.
         """
-        pid = self.primary_ids.get(table)
+        try:
+            return REGISTRY[table].primary_id
+        except KeyError:
+            pass
 
-        if pid is None:
-            pid = self.get_component(component="Table", identifier=table, version=0)[
-                "primary_id"
-            ]
-            self.primary_ids[table] = pid
-
-        return pid
-
-    def create_tables_and_schemas(self, events: t.List['CreateTable']):
-        """Create a table and schema in the metadata store.
-
-        :param events: list of create table events.
-        """
-        metadata_tables = [e for e in events if e.is_component]
-        main_tables = [e for e in events if not e.is_component]
-        self.db.databackend.create_tables_and_schemas(metadata_tables)
-        self.parent_db.databackend.create_tables_and_schemas(main_tables)
-
-    def create_table_and_schema(
-        self,
-        identifier: str,
-        schema: 'Schema',
-        primary_id: str,
-        is_component: bool,
-    ):
-        """Create a table and schema in the metadata store.
-
-        :param identifier: table name
-        :param schema: schema of the table
-        :param primary_id: primary id of the table
-        :param is_component: whether the table is a component
-        """
-        if is_component:
-            self.db.databackend.create_table_and_schema(
-                identifier, schema, primary_id=primary_id
-            )
-        else:
-            self.parent_db.databackend.create_table_and_schema(
-                identifier, schema, primary_id=primary_id
-            )
+        return self.get_component(component="Table", identifier=table, version=0)[
+            "primary_id"
+        ]
 
     def drop(self, force: bool = False):
         """Drop the metadata store.
@@ -590,13 +529,6 @@ class MetaDataStore:
         self.db.databackend.drop(force=force)
         self.db.artifact_store.drop(force=force)
 
-    def is_component(self, table: str):
-        """Check if a table is a component.
-
-        :param table: table name.
-        """
-        return self._get_component_class_info(table).get('is_component', False)
-
     def get_schema(self, table: str):
         """Get the schema of a table.
 
@@ -605,7 +537,10 @@ class MetaDataStore:
         if table in metaclasses:
             return metaclasses[table].class_schema
 
-        r = self._get_component_class_info(table)
+        if table in REGISTRY:
+            return REGISTRY[table].class_schema
+
+        r = self.get_component('Table', table, version=0)
         fields = r['fields']
 
         schema = Schema.build(**fields)
@@ -613,16 +548,16 @@ class MetaDataStore:
 
     def create(self, cls: t.Type[Base]):
         """
-        Create a table in the metadata store.
+        Create a table/ schema in the metadata store.
 
         :param cls: class to create
         """
         try:
-            r = self._get_component_class_info(cls.__name__)
-            if r is not None:
-                return
+            r = self.db['Component'].get(component='Table', identifier=cls.__name__)
         except exceptions.NotFound:
-            pass
+            r = None
+        if r is not None:
+            return
 
         pid = self.db.databackend.id_field
         if issubclass(cls, Component):
@@ -641,20 +576,13 @@ class MetaDataStore:
 
         t = Table(
             identifier=cls.__name__,
-            path=f'{cls.__module__}.{cls.__name__}',
             primary_id=pid,
-            is_component=issubclass(cls, Component),
         )
 
         r = t.dict()
-        try:
-            r.pop('_path')
-        except KeyError:
-            pass
+
         r = {**r, 'version': 0, 'uuid': t.uuid}
-
-        self.db['Table'].insert([r])
-
+        self.create_component(r)
         return t
 
     def delete_parent_child_relationships(
@@ -673,31 +601,33 @@ class MetaDataStore:
             }
         )
 
-    def create_component(self, info: t.Dict, path: str, raw: bool = True):
+    def create_component(self, info: t.Dict, raw: bool = True):
         """
         Create a component in the metadata store.
 
         :param info: dictionary containing information about the component.
-        :param path: path to the component class.
         :param raw: whether to insert raw data.
         """
-        component = path.rsplit('.', 1)[1]
-
-        try:
-            msg = f'Component {component} with different path {path} already exists'
-            r = self._get_component_class_info(component)
-            if r is None:
-                raise exceptions.NotFound(component, path)
-            assert r['path'] == path, msg
-        except exceptions.NotFound:
-            assert path is not None
-            cls = import_object(path)
-            self.create(cls)
-
-        if '_path' in info:
-            del info['_path']
-
-        self.db[component].insert([info], raw=raw)
+        base_schema = Component.class_schema
+        trailing_data = {
+            k: v
+            for k, v in info.items()
+            if k not in base_schema.fields
+            and k
+            not in {
+                'component',
+                'uuid',
+                'branch',
+                'parent',
+                KEY_BLOBS,
+                KEY_FILES,
+                KEY_BUILDS,
+            }
+        }
+        info['data'] = trailing_data
+        for k in trailing_data:
+            del info[k]
+        self.db['Component'].insert([info], raw=raw)
 
     def create_parent_child(
         self,
@@ -753,7 +683,6 @@ class MetaDataStore:
             )
 
         if data:
-
             self.db['ArtifactRelations'].insert(data, raw=True)
 
     def delete_artifact_relation(
@@ -821,7 +750,7 @@ class MetaDataStore:
         :param reason: reason for failure
         :param context: context of the failure
         """
-        r = self.db[component].get(uuid=uuid)
+        r = self.db['Deployment'].get(uuid=uuid)
         details = r['details']
 
         if failed_child and failed_child[0] not in details['failed_children']:
@@ -837,8 +766,8 @@ class MetaDataStore:
         details['last_change_time'] = str(datetime.datetime.now())
         details['context'] = context
 
-        self.db[component].update({'uuid': uuid}, 'details', details)
-        self.db[component].update({'uuid': uuid}, 'status', STATUS_FAILED)
+        self.db['Deployment'].update({'uuid': uuid}, 'details', details)
+        self.db['Deployment'].update({'uuid': uuid}, 'status', STATUS_FAILED)
 
         parents = self.get_component_version_parents(uuid)
         for parent in parents:
@@ -868,7 +797,7 @@ class MetaDataStore:
         :param uuid: ``Component.uuid``
         :param fixed_child: Child to fix
         """
-        r = self.db[component].get(uuid=uuid)
+        r = self.db['Deployment'].get(uuid=uuid)
         details = r['details']
         if fixed_child in details['failed_children']:
             details['failed_children'].pop(fixed_child)
@@ -886,7 +815,7 @@ class MetaDataStore:
         else:
             details['reason'] = f'{len(details["failed_children"])} children failed'
             details['message'] = None
-        self.db[component].update({'uuid': uuid}, 'details', details)
+        self.db['Deployment'].update({'uuid': uuid}, 'details', details)
 
     def set_component_status(
         self,
@@ -916,7 +845,7 @@ class MetaDataStore:
             STATUS_SUCCESS,
         ], f'Invalid status: {status}'
 
-        self.db[component].update(
+        self.db['Deployment'].update(
             {'uuid': uuid},
             'details',
             {
@@ -926,7 +855,7 @@ class MetaDataStore:
                 'failed_children': {},
             },
         )
-        self.db[component].update({'uuid': uuid}, 'status', status)
+        self.db['Deployment'].update({'uuid': uuid}, 'status', status)
 
     def get_component_status(self, component: str, uuid: str):
         """
@@ -935,7 +864,7 @@ class MetaDataStore:
         :param component: type of component
         :param uuid: ``Component.uuid``
         """
-        return self.db[component].get(uuid=uuid)['status']
+        return self.db['Deployment'].get(uuid=uuid)['status']
 
     # ------------------ JOBS ------------------
 
@@ -967,14 +896,17 @@ class MetaDataStore:
         """
         return self.db.insert([deployment])
 
-    def delete_deployment(self, identifier: str):
+    def delete_deployment(self, component: str, identifier: str):
         """
         Delete a deployment from the metadata store.
 
+        :param component: component of the deployment.
         :param identifier: identifier of the deployment.
         """
         try:
-            return self.db['Deployment'].delete({'identifier': identifier})
+            return self.db['Deployment'].delete(
+                {'component': component, 'identifier': identifier}
+            )
         except exceptions.NotFound:
             pass
 
@@ -1019,43 +951,20 @@ class MetaDataStore:
         :param component: type of component
         """
         if component is None:
-            out = []
-
-            t = self.db['Table']
-            components = t.filter(t['is_component'] == True).distinct(  # noqa: E712
-                'identifier'
+            data = (
+                self.db['Deployment']
+                .select('identifier', 'status', 'component')
+                .execute()
             )
+            for r in data:
+                r['component'] = r.pop('component')
+            return data
 
-            for component in components:
-                if component in metaclasses.keys():
-                    continue
-
-                identifiers = self.db[component].distinct('identifier')
-                t = self.db[component]
-                q = t.select('identifier', 'status', 'version')
-                results = sorted(q.execute(), key=lambda x: x['version'])
-                output = {}
-                for r in results:
-                    output[r['identifier']] = r['status']
-
-                results = [
-                    {'component': component, 'identifier': k, 'status': v}
-                    for k, v in output.items()
-                ]
-
-                out.extend(results)
-
-            identifiers = self.db['Table'].distinct('identifier')
-
-            out.extend(
-                [
-                    {'component': 'Table', 'identifier': x, 'status': STATUS_RUNNING}
-                    for x in identifiers
-                ]
-            )
-            return out
-
-        return self.db[component].distinct('identifier')
+        return (
+            self.db['Deployment']
+            .filter(self.db['Deployment']['component'] == component)
+            .distinct('identifier')
+        )
 
     def show_status(self, component: str, identifier: str | None = None):
         """
@@ -1066,36 +975,24 @@ class MetaDataStore:
         """
         if component is None:
             raise exceptions.NotFound(component, identifier)
-        t = self.db[component]
+        t = self.db['Deployment']
         if identifier:
-            t = t.filter(t['identifier'] == identifier)
-        t = t.select('status', 'version', 'identifier')
+            t = t.filter(t['component'] == component, t['identifier'] == identifier)
+        else:
+            t = t.filter(t['component'] == component)
+        t = t.select('status', 'identifier')
         results = sorted(t.execute(), key=lambda x: x['version'])
-        output = {}
-        for r in results:
-            output[r['identifier']] = dict(r)
-        output = list(output.values())
-        for r in output:
-            del r['version']
-        return output
+        return results
 
     def show_cdc_tables(self):
         """List the tables used for CDC."""
-        metadata = self.db['Table'].execute()
-
-        cdc_classes = []
-        for r in metadata:
-            if r['path'] is None:
-                continue
-            cls = import_object(r['path'])
-            r = r.unpack()
-            if issubclass(cls, CDC):
-                cdc_classes.append(r)
-
-        cdc_tables = []
-        for r in cdc_classes:
-            cdc_tables.extend(self.db[r['identifier']].distinct('cdc_table'))
-        return cdc_tables
+        cdcs = (
+            self.db['Deployment']
+            .filter(self.db['Deployment']['branch'] == 'CDC')
+            .select('tags')
+            .execute()
+        )
+        return [r['tags']['cdc_table'] for r in cdcs]
 
     def show_cdcs(self, table):
         """
@@ -1103,24 +1000,16 @@ class MetaDataStore:
 
         :param table: ``Table`` to consider.
         """
-        cdc_classes = []
-
-        metadata = self.db['Table'].execute()
-
-        for r in metadata:
-            if r['path'] is None:
-                continue
-            cls = import_object(r['path'])
-            if issubclass(cls, CDC):
-                cdc_classes.append(r)
-
-        cdcs = []
-        for r in cdc_classes:
-            t = self.db[r['identifier']]
-            results = t.filter(t['cdc_table'] == table).execute()
-            for result in results:
-                cdcs.extend([{'component': r['identifier'], 'uuid': result['uuid']}])
-        return cdcs
+        t = self.db['Deployment']
+        all_ = t.filter(t['branch'] == 'CDC', t['filter'] == table).execute()
+        return [
+            {
+                'component': r['component'],
+                'identifier': r['identifier'],
+                'uuid': r['uuid'],
+            }
+            for r in all_
+        ]
 
     def show_component_versions(self, component: str, identifier: str):
         """
@@ -1129,8 +1018,10 @@ class MetaDataStore:
         :param component: type of component
         :param identifier: identifier of component
         """
-        t = self.db[component]
-        return t.filter(t['identifier'] == identifier).distinct('version')
+        t = self.db['Component']
+        return t.filter(
+            t['component'] == component, t['identifier'] == identifier
+        ).distinct('version')
 
     def delete_component(self, component: str, identifier: str):
         """
@@ -1139,7 +1030,7 @@ class MetaDataStore:
         :param component: type of component
         :param identifier: identifier of component
         """
-        self.db[component].delete({'identifier': identifier})
+        self.db['Component'].delete({'component': component, 'identifier': identifier})
 
     def get_uuid(self, component: str, identifier: str, version: int):
         """
@@ -1149,15 +1040,18 @@ class MetaDataStore:
         :param identifier: identifier of component
         :param version: version of component
         """
-        t = self.db[component]
+        t = self.db['Component']
         r = (
-            t.filter(t['identifier'] == identifier, t['version'] == version)
+            t.filter(
+                t['component'] == component,
+                t['identifier'] == identifier,
+                t['version'] == version,
+            )
             .select('uuid')
             .get()
         )
         if r is None:
             raise exceptions.NotFound(component, identifier)
-
         return r['uuid']
 
     def component_version_has_parents(
@@ -1183,10 +1077,10 @@ class MetaDataStore:
         :param identifier: identifier of component
         :param allow_hidden: whether to allow hidden components
         """
-        t = self.db[component]
-
-        versions = t.filter(t['identifier'] == identifier).distinct('version')
-
+        t = self.db['Component']
+        versions = t.filter(
+            t['component'] == component, t['identifier'] == identifier
+        ).distinct('version')
         if not versions:
             raise exceptions.NotFound(component, identifier)
         return max(versions)
@@ -1210,23 +1104,14 @@ class MetaDataStore:
         :param component: type of component
         :param uuid: UUID of component
         """
-        r = None
-        if r is None:
-            r = self.db[component].get(uuid=uuid, raw=True)
-
-        if r is None:
-            raise exceptions.NotFound(component, uuid)
-
-        # TODO replace database query with cache query
-        metadata = self._get_component_class_info(component)
+        metadata = self.db['Component'].get(component=component, uuid=uuid, raw=True)
+        metadata = {**metadata, **metadata['data']}
+        metadata.pop('data')
 
         if metadata is None:
             raise exceptions.NotFound("Table", component)
 
-        path = metadata['path']
-        r['_path'] = path
-
-        return r
+        return metadata
 
     def get_latest_uuid(self, component: str, identifier: str):
         """Check if a component version has been updated.
@@ -1255,14 +1140,20 @@ class MetaDataStore:
                 identifier=identifier,
             )
 
-        r = self.db[component].get(identifier=identifier, version=version, raw=True)
+        r = self.db['Component'].get(
+            component=component,
+            identifier=identifier,
+            version=version,
+            raw=True,
+        )
 
         if r is None:
             raise exceptions.NotFound(component, identifier)
 
-        metadata = self.db['Table'].get(identifier=component, raw=True)
-        r['_path'] = metadata['path']
-
+        r = {**r, **r['data']}
+        del r['data']
+        del r['branch']
+        del r['parent']
         return r
 
     def replace_object(self, component: str, uuid: str, info: t.Dict[str, t.Any]):
@@ -1273,8 +1164,26 @@ class MetaDataStore:
         :param uuid: unique identifier of the object.
         :param info: dictionary containing information about the object.
         """
-        info.pop("_path")
-        self.db[component].replace({'uuid': uuid}, info, raw=True)
+        trailing_data = {
+            k: v
+            for k, v in info.items()
+            if k not in Component.class_schema.fields
+            and k
+            not in {
+                'component',
+                'uuid',
+                'branch',
+                'parent',
+                KEY_BLOBS,
+                KEY_FILES,
+                KEY_BUILDS,
+            }
+        }
+        info['data'] = trailing_data
+        for k in trailing_data:
+            del info[k]
+        info['data'] = trailing_data
+        self.db['Component'].replace({'uuid': uuid}, info, raw=True)
 
     def get_component_parents(self, component: str, identifier: str):
         """

@@ -155,7 +155,7 @@ def test_encode_model(db):
     r = m.dict()
 
     assert isinstance(r, Document)
-    assert {'version', 'status', '_path'}.issubset(set(r.keys()))
+    assert {'version', 'component'}.issubset(set(r.keys()))
 
     print(r)
 
@@ -182,16 +182,16 @@ def test_column_encoding(db):
         'data': 'pickle',
     }
 
-    db.apply(Table('test', fields=fields))
+    db.apply(Table('col_encoding', fields=fields))
     data = np.random.rand(20)
-    db['test'].insert(
+    db['col_encoding'].insert(
         [
             {'id': '1', 'x': 1, 'y': 2, 'data': data},
             {'id': '2', 'x': 3, 'y': 4, 'data': data},
         ]
     )
 
-    db['test'].select().execute()
+    db['col_encoding'].select().execute()
 
 
 def test_refer_to_system(db):

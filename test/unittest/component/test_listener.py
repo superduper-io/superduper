@@ -27,6 +27,8 @@ class _Tmp(ObjectModel):
 
 
 class test(Base):
+    primary_id = '_id'
+
     x: int
     y: int
     _fold: str

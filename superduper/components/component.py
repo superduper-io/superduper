@@ -20,12 +20,12 @@ from superduper.base.annotations import trigger
 from superduper.base.base import Base, BaseMeta
 from superduper.base.constant import KEY_BLOBS, KEY_FILES, LENGTH_UUID
 from superduper.base.status import (
+    STATUS_DEPRECATED,
     STATUS_PENDING,
     STATUS_RUNNING,
     init_status,
 )
 from superduper.base.variables import _replace_variables
-from superduper.misc.annotations import lazy_classproperty
 from superduper.misc.importing import isreallyinstance
 from superduper.misc.utils import hash_item
 
@@ -58,7 +58,7 @@ def ensure_setup(func):
     @wraps(func)
     def wrapper(self, *args, **kwargs):
         if not getattr(self, "_is_setup", False):
-            model_message = f"{self.__class__.__name__} : {self.identifier}"
+            model_message = f"{self.component} : {self.identifier}"
             logging.debug(f"Initializing {model_message}")
             self.setup()
             self._is_setup = True
@@ -184,6 +184,7 @@ class Component(Base, metaclass=ComponentMeta):
 
 
     :param identifier: Identifier of the instance.
+    :param data: Data stored about the component.
     :param upstream: A list of upstream components.
     :param compute_kwargs: Keyword arguments to manage the compute environment.
 
@@ -194,13 +195,20 @@ class Component(Base, metaclass=ComponentMeta):
     breaks: t.ClassVar[t.Sequence] = ()
     triggers: t.ClassVar[t.List] = []
     services: t.ClassVar[t.List] = ()
+    tags: t.ClassVar[t.Sequence] = ()
+    filter_deployment: t.ClassVar[str | None] = None
     metadata_fields: t.ClassVar[t.Dict[str, t.Type]] = {
         'version': int,
-        'status': str,
-        'details': dict,
+        'uuid': str,
+        'branch': str,
+        'parent': str,
+        'component': str,
+        '_path': str,
+        'upstream_uuids': t.List[str],
     }
 
     identifier: str
+    data: t.Dict | None = None
     upstream: t.Optional[t.List['Component']] = None
     compute_kwargs: t.Dict = dc.field(default_factory=dict)
 
@@ -210,7 +218,8 @@ class Component(Base, metaclass=ComponentMeta):
         self.db: Datalayer = db
 
         self.version: t.Optional[int] = None
-        self.status, self.details = init_status()
+        self.context: str | None = None
+        self.branch, self.parent = self.get_branch_and_parent()
 
         self._original_parameters: t.Dict | None = None
         self._use_component_cache: bool = True
@@ -219,6 +228,12 @@ class Component(Base, metaclass=ComponentMeta):
         self.postinit()
 
         assert self.identifier, "Identifier cannot be empty or None"
+
+    @property
+    def upstream_uuids(self):
+        """Get upstream component UUIDs."""
+        children = self.get_children(deep=True, metadata=False)
+        return sorted(list(set([c.uuid for c in children])))
 
     def _build_tree(self, depth: int, tree=None):
         """Show the component."""
@@ -232,7 +247,14 @@ class Component(Base, metaclass=ComponentMeta):
         s = self.class_schema
 
         for k, v in self.dict(metadata=False).items():
-            if k in {'_path', 'uuid', 'identifier'}:
+            if k in {
+                'component',
+                'branch',
+                'uuid',
+                'identifier',
+                'parent',
+                'upstream_uuids',
+            }:
                 continue
             if isinstance(v, Component):
                 subtree = tree.add(f"{k}: {v.huuid}")
@@ -275,11 +297,6 @@ class Component(Base, metaclass=ComponentMeta):
         self.db.apply(self, jobs=False, force=True)
 
     @property
-    def metadata(self):
-        """Get metadata of the component."""
-        return {k: getattr(self, k) for k in self.metadata_fields}
-
-    @property
     def uuid(self):
         """Get UUID."""
         t = self.get_merkle_tree(breaks=True)
@@ -293,15 +310,9 @@ class Component(Base, metaclass=ComponentMeta):
 
         :param breaks: If set `true` only regard the parameters which break a version.
         """
-        r = self._dict(metadata=False)
+        r = self.dict(metadata=False)
         s = self.class_schema
-        keys = sorted(
-            [
-                k
-                for k in r.keys()
-                if k in s.fields and k not in {'uuid', 'status', 'details'}
-            ]
-        )
+        keys = sorted([k for k in r.keys() if k in s.fields])
 
         def get_hash(x):
             if breaks:
@@ -359,12 +370,11 @@ class Component(Base, metaclass=ComponentMeta):
     @property
     def huuid(self):
         """Return a human-readable uuid."""
-        return f'{self.__class__.__name__}:{self.identifier}:{self.uuid}'
+        return f'{self.component}:{self.identifier}:{self.uuid}'
 
-    def get_children_refs(self, deep: bool = False, only_initializing: bool = False):
+    def get_children_refs(self, only_initializing: bool = False):
         """Get all the children of the component.
 
-        :param deep: If set `true` get all the children of the component.
         :param only_initializing: If set `true` get only the initializing children.
         """
         r = self.dict()
@@ -392,14 +402,15 @@ class Component(Base, metaclass=ComponentMeta):
         out = _find_refs(r)
         return sorted(list(set(out)))
 
-    def get_children(self, deep: bool = False) -> t.List["Component"]:
+    def get_children(self, deep: bool = False, metadata=True) -> t.List["Component"]:
         """Get all the children of the component.
 
         :param deep: If set `True` get all recursively.
+        :param metadata: Get component children also in the metadata.
         """
         from superduper.base.datatype import ComponentRef, Saveable
 
-        r = self.dict().encode(leaves_to_keep=(Component, Saveable))
+        r = self.dict(metadata=metadata).encode(leaves_to_keep=(Component, Saveable))
         out = [
             v.setup() or v
             for v in r['_builds'].values()
@@ -465,14 +476,14 @@ class Component(Base, metaclass=ComponentMeta):
         )
 
     @classmethod
-    def branch(cls):
+    def get_branch_and_parent(cls):
         mro = cls.__mro__
         try:
             i = mro.index(Component)
         except ValueError:
             raise TypeError(f"{cls.__name__} is not a subclass of Component")
         # If cls is Component itself, there is no class 'down' from Component
-        return None if i == 0 else mro[i - 1]
+        return (None, None) if i == 0 else (mro[i - 1].__name__, mro[0].__name__)
 
     @trigger('apply')
     def set_status(self):
@@ -481,7 +492,7 @@ class Component(Base, metaclass=ComponentMeta):
         :param status: The status to set the component to.
         """
         return self.db.metadata.set_component_status(
-            self.__class__.__name__,
+            self.component,
             self.uuid,
             status=STATUS_RUNNING,
             reason='The component is ready to use',
@@ -546,8 +557,7 @@ class Component(Base, metaclass=ComponentMeta):
                         )
                     except KeyError as e:
                         r = self.db.metadata.get_component_by_uuid(uuid=child_uuid)
-                        class_name = r['_path'].split('.')[-1]
-                        huuid = f'{class_name}:{r["identifier"]}:{r["uuid"]}'
+                        huuid = f'{r["component"]}:{r["identifier"]}:{r["uuid"]}'
                         if event_type == 'apply':
                             if r['status'] == STATUS_PENDING:
                                 raise Exception(
@@ -598,7 +608,7 @@ class Component(Base, metaclass=ComponentMeta):
             status_update: 'Job' = self.set_status(job=True, context=context)
             children_set = {(c.component, c.uuid) for c in self.get_children()}
             children_jobs = [
-                job for job in jobs if (job.component, job.uuid) in children_set
+                job for job in jobs if (job.parent_component, job.uuid) in children_set
             ]
             status_update.dependencies = [j.job_id for j in local_jobs + children_jobs]
             local_jobs.append(status_update)
@@ -703,9 +713,6 @@ class Component(Base, metaclass=ComponentMeta):
 
         context_swap.set(context_swap_value)
 
-    def postinit(self):
-        """Post initialization method."""
-
     def cleanup(self):
         """Method to clean the component."""
         # TODO deprecate in favour of dropping services and associated tables
@@ -805,6 +812,7 @@ class Component(Base, metaclass=ComponentMeta):
             )
         if variables:
             config_object['variables'].update(variables)
+
         return Component.decode(config_object)
 
     def export(
@@ -906,18 +914,14 @@ class Component(Base, metaclass=ComponentMeta):
             else:
                 shutil.copy(file_path, save_path)
 
-    def _dict(self, metadata: bool = True):
-        return super().dict(metadata=metadata)
-
-    def dict(self, metadata: bool = True):
-        """Get the dictionary representation of the component.
-
-        :param metadata: If set `True` include metadata in the dictionary.
-        """
-        r = self._dict(metadata=metadata)
-        r['uuid'] = self.uuid
-        r['_path'] = self.__module__ + '.' + self.__class__.__name__
-        return r
+    @property
+    def status(self):
+        r = self.db['Deployment'].get(
+            component=self.component, identifier=self.identifier
+        )
+        if r['uuid'] != self.uuid:
+            return STATUS_DEPRECATED
+        return r['status']
 
     @property
     def hash(self):

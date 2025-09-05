@@ -42,49 +42,31 @@ class LocalVectorSearchBackend(VectorSearchBackend):
 
     def initialize(self):
         """Initialize the vector search."""
-        components = []
-        from superduper import VectorIndex
+        t = self.db.metadata.db['Deployment']
+        components = (
+            t.filter(t['parent'] == 'VectorIndex')
+            .select('component', 'uuid', 'identifier')
+            .execute()
+        )
 
-        for cls in self.db.show('Table'):
-            t = self.db.load('Table', identifier=cls)
-            if t.is_component and t.cls is not None:
-                if issubclass(t.cls, VectorIndex):
-                    components.append(t.identifier)
-                    
         for component in components:
             try:
-                for identifier in self.db.show(component):
-                    try:
-                        vector_index = self.db.load(component, identifier=identifier)
-                        self.put_component(component, vector_index.uuid)
-                        all_ids = vector_index.list()
-                        tool = self.get_tool(vector_index.uuid)
-                        deployed_ids = tool.list()
-                        to_deploy_ids = list(set(all_ids) - set(deployed_ids))
-                        if to_deploy_ids:
-                            vectors = vector_index.get_vectors(ids=to_deploy_ids)
-                            vectors = [VectorItem(**vector) for vector in vectors]
-                            self.get_tool(vector_index.uuid).add(vectors)
-                        else:
-                            logging.info(
-                                'Skipping since have already deployed vectors for '
-                                f'component: {component}, vector_index: {vector_index.uuid}'
-                            )
+                self.put_component(component['component'], uuid=component['uuid'])
 
-                    except FileNotFoundError:
-                        logging.error(
-                            f'Could not load vector index: {identifier} '
-                            'Is the artifact store correctly configured?'
-                        )
-                        continue
-                    except TypeError as e:
-                        import traceback
+            except FileNotFoundError:
+                logging.error(
+                    f'Could not load vector index: {component["identifier"]} '
+                    'Is the artifact store correctly configured?'
+                )
+                continue
+            except TypeError as e:
+                import traceback
 
-                        logging.error(
-                            f'Could not load vector index: {identifier} ' f'{e}'
-                        )
-                        logging.error(traceback.format_exc())
-                        continue
+                logging.error(
+                    f'Could not load vector index: {component["identifier"]} ' f'{e}'
+                )
+                logging.error(traceback.format_exc())
+                continue
             except exceptions.NotFound:
                 pass
 

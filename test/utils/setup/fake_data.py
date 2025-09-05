@@ -17,19 +17,20 @@ GLOBAL_TEST_N_DATA_POINTS = 100
 
 
 def get_valid_dataset(db):
-    table = db["documents"]
-    select = db["documents"].select().filter(table["_fold"] == "valid")
+    table = db["documentz"]
+    select = db["documentz"].select().filter(table["_fold"] == "valid")
     d = Dataset(
         identifier="my_valid",
         select=select,
         sample_size=100,
+        db=db,
     )
     return d
 
 
 def add_random_data(
     db: Datalayer,
-    table_name: str = "documents",
+    table_name: str = "documentz",
     n: int = GLOBAL_TEST_N_DATA_POINTS,
 ):
     fields = {
@@ -91,7 +92,7 @@ def add_models(db: Datalayer):
     db.show()
 
 
-def add_listeners(db: Datalayer, collection_name="documents"):
+def add_listeners(db: Datalayer, collection_name="documentz"):
     add_models(db)
     model = db.load("ObjectModel", "linear_a")
     select = db[collection_name].select()

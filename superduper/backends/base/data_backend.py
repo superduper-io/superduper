@@ -1,3 +1,4 @@
+import copy
 import functools
 import hashlib
 import json
@@ -643,11 +644,7 @@ class KeyedDatabackend(BaseDataBackend):
         :param table: The table to delete from.
         :param condition: The condition to delete.
         """
-        r_table = self._get_with_component_identifier('Table', table)
-        if r_table is None:
-            raise exceptions.NotFound("Table", table)
-
-        if not r_table['is_component']:
+        if table not in {'Deployment', 'Component'}:
             pid = self.primary_id(table)
             if pid in condition:
                 docs = self.get_many(table, condition[pid])
@@ -660,13 +657,16 @@ class KeyedDatabackend(BaseDataBackend):
             if 'uuid' in condition:
                 docs = self.get_many(table, '*', condition['uuid'])
             elif 'identifier' in condition:
-                docs = self.get_many(table, condition['identifier'], '*')
+                assert 'component' in condition
+                docs = self.get_many(
+                    table, condition['component'], condition['identifier'], '*'
+                )
                 docs = self._do_filter(docs, condition)
             else:
-                docs = self.get_many(table, '*', '*')
+                docs = self.get_many(table, '*', '*', '*')
                 docs = self._do_filter(docs, condition)
             for r in docs:
-                del self[table, r['identifier'], r['uuid']]
+                del self[table, r['component'], r['identifier'], r['uuid']]
 
     def drop_table(self, table):
         """Drop data from table.
@@ -735,9 +735,7 @@ class KeyedDatabackend(BaseDataBackend):
         :param condition: The condition to update.
         :param r: The document to replace.
         """
-        r_table = self._get_with_component_identifier('Table', table)
-
-        if not r_table['is_component']:
+        if table not in {'Component', 'Deployment'}:
             pid = self.primary_id(table)
             if pid in condition:
                 docs = self.get_many(table, condition[pid])
@@ -749,18 +747,21 @@ class KeyedDatabackend(BaseDataBackend):
                 self[table, s[pid]] = r
         else:
             if 'uuid' in condition:
-                s = self.get_many(table, '*', condition['uuid'])[0]
-                self[table, s['identifier'], condition['uuid']] = r
+                s = self.get_many(table, '*', '*', condition['uuid'])[0]
+                self[table, s['component'], s['identifier'], condition['uuid']] = r
             elif 'identifier' in condition:
-                docs = self.get_many(table, condition['identifier'], '*')
+                assert 'component' in condition
+                docs = self.get_many(
+                    table, condition['component'], condition['identifier'], '*'
+                )
                 docs = self._do_filter(docs, condition)
                 for s in docs:
-                    self[table, s['identifier'], s['uuid']] = r
+                    self[table, s['component'], s['identifier'], s['uuid']] = r
             else:
-                docs = self.get_many(table, '*', '*')
+                docs = self.get_many(table, '*', '*', '*')
                 docs = self._do_filter(docs, condition)
                 for s in docs:
-                    self[table, s['identifier'], s['uuid']] = r
+                    self[table, s['component'], s['identifier'], s['uuid']] = r
 
     def update(self, table, condition, key, value):
         """Update data in the database.
@@ -770,9 +771,7 @@ class KeyedDatabackend(BaseDataBackend):
         :param key: The key to update.
         :param value: The value to update.
         """
-        r_table = self._get_with_component_identifier('Table', table)
-
-        if not r_table['is_component']:
+        if table not in {'Component', 'Deployment'}:
             pid = self.primary_id(table)
             if pid in condition:
                 docs = self.get_many(table, '*', condition[pid]) + self.get_many(
@@ -788,19 +787,21 @@ class KeyedDatabackend(BaseDataBackend):
             if 'uuid' in condition:
                 s = self.get_many(table, '*', condition['uuid'])[0]
                 s[key] = value
-                self[table, s['identifier'], condition['uuid']] = s
+                self[table, s['component'], s['identifier'], condition['uuid']] = s
             elif 'identifier' in condition:
-                docs = self.get_many(table, condition['identifier'], '*')
+                docs = self.get_many(
+                    table, condition['component'], condition['identifier'], '*'
+                )
                 docs = self._do_filter(docs, condition)
                 for s in docs:
                     s[key] = value
-                    self[table, s['identifier'], s['uuid']] = s
+                    self[table, s['component'], s['identifier'], s['uuid']] = s
             else:
-                docs = self.get_many(table, '*', '*')
+                docs = self.get_many(table, '*', '*', '*')
                 docs = self._do_filter(docs, condition)
                 for s in docs:
                     s[key] = value
-                    self[table, s['identifier'], s['uuid']] = s
+                    self[table, s['component'], s['identifier'], s['uuid']] = s
 
     @abstractmethod
     def keys(self, *pattern) -> t.List[t.Tuple[str, str, str]]:
@@ -882,9 +883,11 @@ class KeyedDatabackend(BaseDataBackend):
         except exceptions.NotFound:
             pid = None
 
-        if ('uuid' == pid or not pid) and "uuid" in documents[0]:
+        if table in {'Component', 'Deployment'}:
             for r in documents:
-                self[table, r['identifier'], r['uuid']] = r
+                self[table, r['component'], r['identifier'], r['uuid']] = copy.deepcopy(
+                    r
+                )
                 ids.append(r['uuid'])
         elif pid:
             pid = self.primary_id(table)
@@ -944,13 +947,7 @@ class KeyedDatabackend(BaseDataBackend):
                         return False
                 return True
 
-        tables = self.get_many('Table', query.table, '*')
-        if not tables:
-            raise exceptions.NotFound("Table", query.table)
-
-        is_component = max(tables, key=lambda x: x['version'])['is_component']
-
-        if not is_component:
+        if query.table not in {'Component', 'Deployment'}:
             pid = self.primary_id(query.table)
 
             if pid in filter_kwargs:
@@ -966,22 +963,23 @@ class KeyedDatabackend(BaseDataBackend):
         else:
 
             if not filter_kwargs:
-                keys = self.keys(query.table, '*', '*')
+                keys = self.keys(query.table, '*', '*', '*')
                 docs = [self[k] for k in keys]
             elif set(filter_kwargs.keys()) == {'uuid'}:
-                keys = self.keys(query.table, '*', filter_kwargs['uuid']['value'])
+                keys = self.keys(query.table, '*', '*', filter_kwargs['uuid']['value'])
                 docs = [self[k] for k in keys]
             elif set(filter_kwargs.keys()) == {'identifier'}:
                 assert filter_kwargs['identifier']['op'] == '=='
-
                 keys = self.keys(query.table, filter_kwargs['identifier']['value'], '*')
                 docs = [self[k] for k in keys]
-            elif set(filter_kwargs.keys()) == {'identifier', 'uuid'}:
+            elif set(filter_kwargs.keys()) == {'component', 'identifier', 'uuid'}:
                 assert filter_kwargs['identifier']['op'] == '=='
                 assert filter_kwargs['uuid']['op'] == '=='
+                assert filter_kwargs['component']['op'] == '=='
 
                 r = self[
                     query.table,
+                    filter_kwargs['component']['value'],
                     filter_kwargs['identifier']['value'],
                     filter_kwargs['uuid']['value'],
                 ]
@@ -989,18 +987,23 @@ class KeyedDatabackend(BaseDataBackend):
                     docs = []
                 else:
                     docs = [r]
-            elif set(filter_kwargs.keys()) == {'identifier', 'version'}:
+            elif set(filter_kwargs.keys()) == {'component', 'identifier', 'version'}:
                 assert filter_kwargs['identifier']['op'] == '=='
+                assert filter_kwargs['component']['op'] == '=='
                 assert filter_kwargs['version']['op'] == '=='
 
-                keys = self.keys(query.table, filter_kwargs['identifier']['value'], '*')
+                keys = self.keys(
+                    query.table,
+                    filter_kwargs['component']['value'],
+                    filter_kwargs['identifier']['value'],
+                    '*',
+                )
                 docs = [self[k] for k in keys]
                 docs = [
                     r for r in docs if r['version'] == filter_kwargs['version']['value']
                 ]
             else:
-
-                keys = self.keys(query.table, '*', '*')
+                keys = self.keys(query.table, '*', '*', '*')
                 docs = [self[k] for k in keys]
                 docs = [r for r in docs if do_test(r)]
 
@@ -1011,4 +1014,4 @@ class KeyedDatabackend(BaseDataBackend):
             cols = query.decomposition.select.args
             for i, r in enumerate(docs):
                 docs[i] = {k: v for k, v in r.items() if k in cols}
-        return docs
+        return [copy.deepcopy(r) for r in docs]

@@ -17,7 +17,7 @@ import dill
 import numpy
 
 from superduper import CFG, logging
-from superduper.base.base import Base
+from superduper.base.base import REGISTRY, Base
 from superduper.components.component import Component
 from superduper.misc.utils import hash_item, str_shape
 
@@ -239,9 +239,13 @@ class BaseType(BaseDataType):
 
 
 def _decode_base(r, builds, db: t.Optional['Datalayer'] = None):
-    assert '_path' in r
-    cls = Base.get_cls_from_path(path=r['_path'])
-    dict_ = {k: v for k, v in r.items() if k != '_path'}
+    if 'component' in REGISTRY:
+        cls = REGISTRY[r['component']]
+    elif '_path' in r:
+        cls = Base.get_cls_from_path(r['_path'])
+    else:
+        raise ValueError(f'Could not find class for {r}; no _path field found')
+    dict_ = r
 
     if inspect.isfunction(cls):
         signature_params = inspect.signature(cls).parameters

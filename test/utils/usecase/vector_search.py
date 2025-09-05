@@ -11,7 +11,8 @@ if t.TYPE_CHECKING:
 VECTOR_SIZE = 300
 
 
-class documents(Base):
+class searchable_documents(Base):
+    primary_id = '_id'
     x: int
     label: int
 
@@ -22,7 +23,9 @@ def add_data(db: "Datalayer", start: int, end: int):
     :param start: int to start assigning to `x` column
     :param end: int to stop assigning to `x` column
     """
-    db.insert([documents(x=i, label=int(i % 2 == 0)) for i in range(start, end)])
+    db.insert(
+        [searchable_documents(x=i, label=int(i % 2 == 0)) for i in range(start, end)]
+    )
 
 
 def build_vector_index(
@@ -55,7 +58,7 @@ def build_vector_index(
     indexing_listener = Listener(
         model=indexing_model,
         key="x",
-        select=db["documents"].select(),
+        select=db["searchable_documents"].select(),
         identifier="vector",
     )
 

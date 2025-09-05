@@ -86,6 +86,7 @@ class VectorIndex(CDC):
         return self
 
     def list(self):
+        """List the available ids."""
         return self.db[self.indexing_listener.outputs].ids()
 
     @ensure_setup

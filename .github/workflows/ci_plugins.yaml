@@ -95,6 +95,9 @@ jobs:
       - name: Plugin Testing
         run: |
           export PYTHONPATH=./
+          if [ "${{ matrix.plugin }}" = "sql" ]; then
+            sqlite3 test.db "create table t(f int); drop table t;"
+          fi
           if [ -d "plugins/${{ matrix.plugin }}/plugin_test" ]; then
             pytest --cov=superduper --cov-report=xml plugins/${{ matrix.plugin }}/plugin_test
           else
@@ -103,6 +106,9 @@ jobs:
 
       - name: Optionally run the base testing
         run: |
+          if [ "${{ matrix.plugin }}" = "sql" ]; then
+            sqlite3 test.db "create table t(f int); drop table t;"
+          fi
           SUPERDUPER_CONFIG="plugins/${{ matrix.plugin }}/plugin_test/config.yaml"
           if [ -f "$SUPERDUPER_CONFIG" ]; then
             echo "Running the base testing..."

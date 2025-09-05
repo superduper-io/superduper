@@ -251,8 +251,8 @@ def _apply(
     deprecated_context: str | None = None,
 ):
 
-    if object.status == STATUS_UNINITIALIZED:
-        object.status, object.details = pending_status()
+    # if object.status == STATUS_UNINITIALIZED:
+    #     object.status, object.details = pending_status()
 
     processed_components = processed_components or set()
     if context is None:
@@ -311,7 +311,6 @@ def _apply(
         if current.hash == object.hash:
             apply_status = 'same'
             object.version = current.version
-            object.status, object.details = running_status()
         elif current.uuid == object.uuid:
             apply_status = 'update'
             object.version = current.version
@@ -350,7 +349,7 @@ def _apply(
     if apply_status == 'new':
         metadata_event = Create(
             context=context,
-            path=f'{object.__module__}.{object.__class__.__name__}',
+            component=object.component,
             data=serialized,
             parent=parent,
             children=children,
@@ -361,21 +360,28 @@ def _apply(
             jobs=list(job_events.values()),
             context=context,
         )
-        # TODO - add multiple services (potentially empty)
-        for service in object.services:
-            put_events[f'{object.huuid}/{service}'] = PutComponent(
-                component=object.component,
-                identifier=object.identifier,
-                uuid=object.uuid,
-                context=context,
-                version=object.version,
-                service=service,
-            )
+        filter = getattr(object, 'filter_deployment', None)
+        if filter:
+            filter = getattr(object, filter)
+
+        branch, parent = object.get_branch_and_parent()
+        put_events[object.huuid] = PutComponent(
+            component=object.component,
+            identifier=object.identifier,
+            uuid=object.uuid,
+            context=context,
+            version=object.version,
+            services=object.services,
+            branch=branch,
+            parent=parent,
+            tags={tag: getattr(object, tag) for tag in object.tags},
+            filter=filter,
+        )
 
     elif apply_status == 'breaking':
         metadata_event = Create(
             context=context,
-            path=f'{object.__module__}.{object.__class__.__name__}',
+            component=object.component,
             data=serialized,
             parent=parent,
             children=children,
@@ -387,15 +393,23 @@ def _apply(
             jobs=list(job_events.values()),
             context=context,
         )
-        for service in object.services:
-            put_events[f'{object.huuid}/{service}'] = PutComponent(
-                component=object.component,
-                identifier=object.identifier,
-                uuid=object.uuid,
-                context=context,
-                version=object.version,
-                service=service,
-            )
+        filter = getattr(object, 'filter_deployment', None)
+        if filter:
+            filter = getattr(object, filter)
+
+        branch, parent = object.get_branch_and_parent()
+        put_events[object.huuid] = PutComponent(
+            component=object.component,
+            identifier=object.identifier,
+            uuid=object.uuid,
+            context=context,
+            version=object.version,
+            services=object.services,
+            branch=branch,
+            tags={tag: getattr(object, tag) for tag in object.tags},
+            parent=parent,
+            filter=filter,
+        )
 
         d = db['Deployment']
         assert deprecated_context is not None
@@ -420,7 +434,7 @@ def _apply(
         diff = object.diff(current)
         metadata_event = Update(
             context=context,
-            component=object.__class__.__name__,
+            component=object.component,
             data=serialized,
             parent=parent,
         )

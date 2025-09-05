@@ -197,6 +197,12 @@ def consume_events(
     :param batch_size: Batch size for processing events.
     :param batch_execute: Whether to execute events in batch.
     """
+    from superduper.base.metadata import Job
+
+    msg = f'Events must be of type Event or Job, got {set(type(event) for event in events)}'
+    assert all(
+        isinstance(event, Event) or isinstance(event, Job) for event in events
+    ), msg
     if table != '_apply':
         logging.info(f'Consuming {len(events)} events on {table}.')
         consume_streaming_events(

@@ -1,4 +1,4 @@
-data_backend: sqlite://
+data_backend: sqlite://./test.db
 auto_schema: false
 force_apply: true
 json_native: false

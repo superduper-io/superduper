@@ -50,13 +50,13 @@ def test_insert_and_recall(db):
 def test_encode_leaf():
     obj = Test(a=1, b='test_b', c=1.5)
     assert obj.dict().encode(keep_schema=False) == {
-        '_path': 'test.unittest.base.test_base.Test',
         'a': 1,
         'b': 'test_b',
         'c': 1.5,
         '_builds': {},
         '_files': {},
         '_blobs': {},
+        '_path': 'test.unittest.base.test_base.Test',
     }
 
 
@@ -67,13 +67,13 @@ def test_encode_leaf_with_children():
         c=OtherSer(d='test'),
     )
     assert obj.dict().encode(keep_schema=False) == {
-        '_path': 'test.unittest.base.test_base.MySer',
         'a': 1,
         'b': 'test_b',
         'c': (obj.c.dict().unpack()),
         '_builds': {},
         '_files': {},
         '_blobs': {},
+        '_path': 'test.unittest.base.test_base.MySer',
     }
 
 
@@ -153,7 +153,9 @@ def test_replace_variables(db):
                 indexing_listener=Listener(
                     'test',
                     key='x',
-                    model=MyModel('test', model='<var:model>'),
+                    model=MyModel(
+                        'test', model='<var:model>', datatype='vector[float:32]'
+                    ),
                     select=db['<var:table>'],
                 ),
             )

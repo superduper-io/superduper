@@ -160,7 +160,6 @@ class QdrantVectorSearcher(BaseVectorSearcher):
 
         return ids
 
-
     def _create_collection(self):
         measure = (
             self.measure.name

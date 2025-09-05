@@ -107,7 +107,6 @@ class CreateTable(Event):
     :param identifier: the identifier of the table
     :param primary_id: the primary id of the table
     :param fields: the schema of the table
-    :param is_component: whether the table is a component
     """
 
     queue: t.ClassVar[str] = '_apply'
@@ -116,7 +115,6 @@ class CreateTable(Event):
     identifier: str
     primary_id: str
     fields: t.Dict
-    is_component: bool = False
 
     @property
     def huuid(self):
@@ -146,7 +144,7 @@ class CreateTable(Event):
                 )
             )
             batch = events[i : i + cls.max_batch_size]
-            db.metadata.create_tables_and_schemas(batch)
+            db.databackend.create_tables_and_schemas(batch)
         logging.info('Created tables and schemas... DONE')
 
     def execute(self, db: 'Datalayer'):
@@ -154,11 +152,10 @@ class CreateTable(Event):
 
         :param db: Datalayer instance.
         """
-        return db.metadata.create_table_and_schema(
+        return db.databackend.create_table_and_schema(
             identifier=self.identifier,
             primary_id=self.primary_id,
             schema=Schema.build(**self.fields),
-            is_component=self.is_component,
         )
 
 
@@ -167,7 +164,7 @@ class Create(Event):
     Class for component creation events.
 
     :param context: the component context of creation.
-    :param path: path of the component to be created
+    :param component: the component to be created
     :param data: the data of the component
     :param parent: the parent of the component (if any)
     :param children: the children of the component (if any)
@@ -177,14 +174,10 @@ class Create(Event):
     max_batch_size: t.ClassVar[int] = 1000
 
     context: str
-    path: str
+    component: str
     data: t.Dict
     parent: list | None = None
     children: t.List | None = None
-
-    @property
-    def component(self):
-        return self.path.split('.')[-1]
 
     @staticmethod
     def cluster_by_component(events: t.List['Create']):
@@ -206,11 +199,10 @@ class Create(Event):
         :param db: Datalayer instance.
         """
         logging.info(
-            f'Creating {self.path.split("/")[-1]}:'
-            f'{self.data["identifier"]}:{self.data["uuid"]}'
+            f'Creating {self.component}:{self.data["identifier"]}:{self.data["uuid"]}'
         )
 
-        db.metadata.create_component(self.data, path=self.path)
+        db.metadata.create_component(self.data)
 
         try:
             artifact_ids, _ = db._find_artifacts(self.data)
@@ -234,7 +226,7 @@ class Create(Event):
                     )
 
             logging.info(
-                f'Creating {self.path.split("/")[-1]}:'
+                f'Creating {self.component}:'
                 f'{self.data["identifier"]}:{self.data["uuid"]}... DONE'
             )
 
@@ -264,8 +256,12 @@ class PutComponent(Event):
     :param component: the type of component to be created
     :param identifier: the identifier of the component to be created
     :param version: the version of the component to be created
+    :param branch: the branch below `Component`
+    :param parent: the class above `self.component`
     :param uuid: the uuid of the component to be created
-    :param service: the service to put the component on
+    :param services: the services to put the component on
+    :param tags: the tags to associate with the component
+    :param filter: an additional database filter to use
     """
 
     queue: t.ClassVar[str] = '_apply'
@@ -275,8 +271,12 @@ class PutComponent(Event):
     component: str
     identifier: str
     version: int
+    branch: str
+    parent: str
     uuid: str
-    service: str
+    services: t.List[str]
+    tags: t.Dict[str, str] = dc.field(default_factory=dict)
+    filter: str | None = None
 
     @property
     def cls(self):
@@ -285,7 +285,7 @@ class PutComponent(Event):
 
     @property
     def huuid(self):
-        return f'{self.component}:{self.identifier}:{self.uuid}/{self.service}'
+        return f'{self.component}:{self.identifier}:{self.uuid}'
 
     @classmethod
     def batch_execute(
@@ -361,27 +361,38 @@ class PutComponent(Event):
             version=self.version,
             identifier=self.identifier,
             context=self.context,
+            branch=self.branch,
+            parent=self.parent,
+            tags=self.tags,
+            filter=self.filter,
+        )
+        logging.info(
+            f'Creating deployment for {self.component}:{self.identifier}:{self.uuid}'
         )
         db.metadata.create_deployment(deployment)
         logging.info(
-            f'Putting {self.component}:'
-            f'{self.identifier}:{self.uuid} on {self.service}'
+            f'Creating deployment for {self.component}:{self.identifier}:{self.uuid}... DONE'
         )
-        service = getattr(db.cluster, self.service)
-        if service is None:
-            logging.warn(
-                f'Skipping {self.service} since no connector is available in {db.cluster}'
+        for service in self.services:
+            logging.info(
+                f'Putting {self.component}:'
+                f'{self.identifier}:{self.uuid} on {service}'
             )
-            return
-        service.put_component(
-            component=self.component,
-            uuid=self.uuid,
-        )
-        logging.info(
-            f'Putting {self.component}:'
-            f'{self.identifier}:{self.uuid} on {self.service}'
-            '... DONE'
-        )
+            service_connect = getattr(db.cluster, service)
+            if service_connect is None:
+                logging.warn(
+                    f'Skipping {service} since no connector is available in {db.cluster}'
+                )
+                continue
+            service_connect.put_component(
+                component=self.component,
+                uuid=self.uuid,
+            )
+            logging.info(
+                f'Putting {self.component}:'
+                f'{self.identifier}:{self.uuid} on {service}'
+                '... DONE'
+            )
 
 
 class Teardown(Event):
@@ -466,7 +477,9 @@ class Delete(Event):
             for table in managed_tables:
                 db.databackend.drop_table(table)
 
-            db.metadata.delete_deployment(identifier=self.identifier)
+            db.metadata.delete_deployment(
+                component=self.component, identifier=self.identifier
+            )
             db.metadata.delete_component(self.component, self.identifier)
             artifact_ids = db.metadata.get_artifact_relations_for_component(
                 self.component, self.identifier

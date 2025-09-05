@@ -6,7 +6,7 @@ from superduper.components.listener import Listener
 from superduper.misc import typing as st  # noqa: F401
 
 
-class MyModel(Model):
+class MyReapplyModel(Model):
     breaks = ('b',)
     signature: str = 'singleton'
     a: str
@@ -16,21 +16,21 @@ class MyModel(Model):
         return x + 1
 
 
-class docs(Base):
+class reapply_docs(Base):
     x: int
 
 
 def test_reapply(db):
-    db.create(docs)
+    db.create(reapply_docs)
 
-    db['docs'].insert([{'x': i} for i in range(10)])
+    db['reapply_docs'].insert([{'x': i} for i in range(10)])
 
     def build(name, data):
-        model = MyModel('test', a=name, b=data, datatype='int')
+        model = MyReapplyModel('test', a=name, b=data, datatype='int')
         listener_1 = Listener(
             model=model,
             key='x',
-            select=db['docs'].select(),
+            select=db['reapply_docs'].select(),
             identifier='listener_1',
         )
         return Listener(

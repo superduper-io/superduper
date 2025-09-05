@@ -103,6 +103,7 @@ jobs:
 
     - name: Unit Testing
       run: |
+        sqlite3 test.db "create table t(f int); drop table t;"
         make unit_testing pytest_arguments="--cov=superduper --cov-report=xml" SUPERDUPER_CONFIG=test/configs/${{ matrix.config }}
 
     - name: Usecase Testing

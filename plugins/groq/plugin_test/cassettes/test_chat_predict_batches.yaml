@@ -1,0 +1,200 @@
+interactions:
+- request:
+    body: '{"messages":[{"role":"system","content":"You are a helpful assistant."},{"role":"user","content":"Hello"}],"model":"openai/gpt-oss-20b","temperature":null,"tool_choice":"auto","tools":null}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '189'
+      content-type:
+      - application/json
+      host:
+      - api.groq.com
+      user-agent:
+      - Groq/Python 0.31.1
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - Windows
+      x-stainless-package-version:
+      - 0.31.1
+      x-stainless-read-timeout:
+      - '60'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.12.3
+    method: POST
+    uri: https://api.groq.com/openai/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA1SSzW7bMBCE730Kds+SS9r65aXX9AGKHppCoMSVxJri0iTVxDD87oWSyEWvg/kW
+        M4O9gdEgYZhVGhZv834oK9U2x7w/jWNe8LLNm6Ye84qLutd9w0XJIQPqf+OQPsDDQIu3mAw5yGAI
+        qBJqkKIua1HyuhIZLKTRggTy6JT5MvmUU4z5kfcbMZMZMIL8eQPjNL6C5BksGKOaEOQNAlkECSpG
+        E5NyaWPIJXRbgie0lj6zJ3phg3LsG5vRenallSXS6voVMgioIjnjJpDwPWJgUV0je35Hn+HAfiCL
+        M61Ws4DRk9PMkzUJ7fUA9wwsTT5QH0G61doMRuNMnLv3syAhJvJw/5XBuie+rLhil8yCIPmBF1Vd
+        iLZoM/CBFp+6RGd0EWQj/km7mVecl7wQW8l91wdwbP+Xd+hYNnXT1GUGiZKyD78Q/CHt3pNomlMr
+        qvtH4K4PqM6aXtxeMF5jwqUbjZsw+GDehh59p8aiL4q6HwfI4LWbAl22tm8vFPDScXEuxnJeVMCp
+        SOXlfE5lFFyHaZsxYvhjhm0WDNsvuE7jopyG+6e/AAAA//8DAON8xCOHAgAA
+    headers:
+      CF-RAY:
+      - 97acec21e97d380b-MAA
+      Cache-Control:
+      - private, max-age=0, no-store, no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Sat, 06 Sep 2025 09:26:01 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=kQ5ckCGWP5WN31b4mSUSpqe.psOWJPVMlEsdVfhpoo0-1757150761-1.0.1.1-gEfCQ64QX3v8RxTCj2iKHtL4BANbCtO0IR4P5XpezI0dXdeLUag7oQoegwVTsfJMUf_a8vQFvGHCrLnBW5YePcuKA57NTVM_pqIYhJB0ig8;
+        path=/; expires=Sat, 06-Sep-25 09:56:01 GMT; domain=.groq.com; HttpOnly; Secure;
+        SameSite=None
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      vary:
+      - Origin
+      via:
+      - 1.1 google
+      x-groq-region:
+      - bom
+      x-ratelimit-limit-requests:
+      - '1000'
+      x-ratelimit-limit-tokens:
+      - '8000'
+      x-ratelimit-remaining-requests:
+      - '997'
+      x-ratelimit-remaining-tokens:
+      - '7849'
+      x-ratelimit-reset-requests:
+      - 4m18.417999999s
+      x-ratelimit-reset-tokens:
+      - 1.132499999s
+      x-request-id:
+      - req_01k4f5hmareg4t5qkkt5s10drg
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages":[{"role":"system","content":"You are a helpful assistant."},{"role":"user","content":"Summarize
+      AI history in 2 sentences"}],"model":"openai/gpt-oss-20b","temperature":null,"tool_choice":"auto","tools":null}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '219'
+      content-type:
+      - application/json
+      cookie:
+      - __cf_bm=kQ5ckCGWP5WN31b4mSUSpqe.psOWJPVMlEsdVfhpoo0-1757150761-1.0.1.1-gEfCQ64QX3v8RxTCj2iKHtL4BANbCtO0IR4P5XpezI0dXdeLUag7oQoegwVTsfJMUf_a8vQFvGHCrLnBW5YePcuKA57NTVM_pqIYhJB0ig8
+      host:
+      - api.groq.com
+      user-agent:
+      - Groq/Python 0.31.1
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - Windows
+      x-stainless-package-version:
+      - 0.31.1
+      x-stainless-read-timeout:
+      - '60'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.12.3
+    method: POST
+    uri: https://api.groq.com/openai/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2RUy27rNhDd9ysGs6ZdSbYsW7usLoJuAtx01VsYFDmS2FAkQ1JXcYIA/oUsC7Q/
+        5y8pKD/S2+6E0ZyZc87M8A2VxBpFz6MYnF5sebMhnreLbVZsFmvZNIum4dmCS5FzucqrQmyRoW3+
+        IBEvwKWwg9MUlTXIUHjikSTWeVVWeZlVm5zhYCVprNE6Mlz93Lm4sCEsiqxJiN4qQQHr395QGUkv
+        WGcMBwqBd4T1G3qrCWvkIagQuYkJY00kkxjc+ahaJRTXoEwkrVVHRhA01HEDk4o9EPf6AOEwNFYr
+        Adw5b7noKQA3EmJP8Dh6ZTqIFCIoM4cGJU/HjyKLPQgycfQHBpq4nPMs0IsjHyEcQqThs1CcLJyO
+        f93dw5TY+HA6/g22nf/luyo7Z+a7bRYYTL3SBJ4CcS/61NjQ6LkGQ3Gy/umcPHDRK0OpuTepe9B2
+        0gfouDIkIXoukvVLuD8TL7I8FW888afYezt2fUi1JZG7FWHw5eFX4EKQJs8Tns3NNPcdnY4fQXBN
+        oLnpRt4RzPMLEEbRAw/w5eHxdPxYzYjz9xqct460Jgl392kSFiYlKThPXIKbSQquk/laibnjWZ4n
+        QxNJsC6qQYUBeGPHOCtpFWl5Ov4ZoB3j6GmJDD3xYJMCrPGxJxgD+Rq+4ddxGLhXr5Ta9ypE6w9J
+        dQGB0qoICt9wCV97O+rEx8pREAhrhAoEYUYf0qR+hKd53gos4ZfkoYpX3K3eQCYpumza3T27bBT7
+        3LoU/FwL9q9RB/b/2Twu4cHb70rSfyjgO0NtO+dtE7A2o9YMW2VU6Pdna7DGEK3D998ZjtcLeh5p
+        pH1UA2GdLbP1pizW2S5n6LwdXNxH+0QmYL3dfYauydmmWpVltktHd73zGyDflD/GL6i8zMpdtctz
+        htFGrm+AolzfQrfcarVarYv3C+H9vLrSTuYq8Hxl+1aZjrzzaj781u3LXVtVLZFskeHLvvP2Oamd
+        nzRPz/ssf1q3ZT+0PXXrWE7t1rUuvr5Gk2wM5L8rkWwhn94ms5c0cCPx/ad/AAAA//8DACpx+A0X
+        BQAA
+    headers:
+      CF-RAY:
+      - 97acec22eb9d380b-MAA
+      Cache-Control:
+      - private, max-age=0, no-store, no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Sat, 06 Sep 2025 09:26:01 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      vary:
+      - Origin
+      via:
+      - 1.1 google
+      x-groq-region:
+      - bom
+      x-ratelimit-limit-requests:
+      - '1000'
+      x-ratelimit-limit-tokens:
+      - '8000'
+      x-ratelimit-remaining-requests:
+      - '996'
+      x-ratelimit-remaining-tokens:
+      - '7750'
+      x-ratelimit-reset-requests:
+      - 5m45.446999999s
+      x-ratelimit-reset-tokens:
+      - 1.868499999s
+      x-request-id:
+      - req_01k4f5hmfheg4t5wf8pfptzztn
+    status:
+      code: 200
+      message: OK
+version: 1
